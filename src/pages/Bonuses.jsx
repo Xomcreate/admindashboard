@@ -11,12 +11,10 @@ function Bonuses() {
     bonus: ""
   })
 
-  // FETCH INVESTORS
   useEffect(() => {
     fetchInvestors()
   }, [])
 
-  // GET INVESTORS FROM BACKEND
   const fetchInvestors = async () => {
     try {
       const res = await API.get("investors/")
@@ -28,26 +26,28 @@ function Bonuses() {
     }
   }
 
-  // ADD BONUS
+  // FIX: Use PATCH and send only the new bonus value (computed here).
+  // The old code sent the full investor object via PUT which stripped the email
+  // server-side and caused serializer validation to fail.
   const addBonus = async (e) => {
     e.preventDefault()
     try {
-      // FIND SELECTED INVESTOR
       const selectedInvestor = investors.find(
         (inv) => inv.id == form.investor
       )
+      if (!selectedInvestor) {
+        alert("Please select a valid investor.")
+        return
+      }
 
-      // UPDATE BONUS
-      await API.put(`investors/${form.investor}/`, {
-        ...selectedInvestor,
-        bonus: parseFloat(selectedInvestor.bonus) + parseFloat(form.bonus)
+      const newBonus = parseFloat(selectedInvestor.bonus) + parseFloat(form.bonus)
+
+      await API.patch(`investors/${form.investor}/`, {
+        bonus: newBonus
       })
 
       alert("Bonus Added Successfully")
-      setForm({
-        investor: "",
-        bonus: ""
-      })
+      setForm({ investor: "", bonus: "" })
       fetchInvestors()
     } catch (error) {
       console.log(error)
@@ -55,20 +55,16 @@ function Bonuses() {
     }
   }
 
-  // REMOVE BONUS
+  // FIX: PATCH only the bonus field
   const removeBonus = async (investor) => {
     try {
-      await API.put(`investors/${investor.id}/`, {
-        ...investor,
-        bonus: 0
-      })
+      await API.patch(`investors/${investor.id}/`, { bonus: 0 })
       fetchInvestors()
     } catch (error) {
       console.log(error)
     }
   }
 
-  // LOADER
   if (loading) {
     return <Loader />
   }
@@ -77,7 +73,7 @@ function Bonuses() {
     <>
       <DashboardLayout>
         <div className="text-white font-sans max-w-6xl mx-auto space-y-8">
-          
+
           {/* PAGE HEADER */}
           <div>
             <h1 className="text-3xl font-bold tracking-wide">Bonuses Management</h1>
@@ -100,12 +96,7 @@ function Bonuses() {
                 <select
                   className="bg-[#0a1128] border border-[#1e295d] p-3 rounded-lg text-white focus:outline-none focus:border-[#10b981] transition-colors cursor-pointer"
                   value={form.investor}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      investor: e.target.value
-                    })
-                  }
+                  onChange={(e) => setForm({ ...form, investor: e.target.value })}
                   required
                 >
                   <option value="" className="bg-[#111c44]">Select Investor</option>
@@ -123,20 +114,18 @@ function Bonuses() {
                 <input
                   type="number"
                   placeholder="0.00"
+                  min="0"
+                  step="0.01"
                   className="bg-[#0a1128] border border-[#1e295d] p-3 rounded-lg text-white placeholder-[#64748b] focus:outline-none focus:border-[#10b981] transition-colors"
                   value={form.bonus}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      bonus: e.target.value
-                    })
-                  }
+                  onChange={(e) => setForm({ ...form, bonus: e.target.value })}
                   required
                 />
               </div>
 
               {/* BUTTON */}
               <button
+                type="submit"
                 className="bg-[#10b981] hover:bg-[#0d9488] text-white p-3 rounded-lg font-semibold tracking-wide shadow-[0_0_15px_rgba(16,185,129,0.15)] hover:shadow-[0_0_20px_rgba(16,185,129,0.35)] transition-all duration-200 col-span-1 md:col-span-2 mt-2 cursor-pointer"
               >
                 Add Bonus

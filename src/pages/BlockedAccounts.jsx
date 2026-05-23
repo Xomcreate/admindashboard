@@ -7,20 +7,18 @@ function BlockedAccounts() {
   const [blockedUsers, setBlockedUsers] = useState([])
   const [loading, setLoading] = useState(true)
 
-  // FETCH BLOCKED USERS
   useEffect(() => {
     fetchBlockedUsers()
   }, [])
 
-  // GET BLOCKED USERS FROM BACKEND
+  // FIX: The fetch was correct — the data comes in fine.
+  // The bug was that unblockAccount used PUT with the full object,
+  // which caused the server to fail (email stripped → validation error),
+  // so the blocked flag never actually changed.
   const fetchBlockedUsers = async () => {
     try {
       const res = await API.get("investors/")
-
-      // FILTER ONLY BLOCKED USERS
-      const blocked = res.data.filter(
-        (user) => user.blocked === true
-      )
+      const blocked = res.data.filter((user) => user.blocked === true)
       setBlockedUsers(blocked)
     } catch (error) {
       console.log(error)
@@ -29,14 +27,10 @@ function BlockedAccounts() {
     }
   }
 
-  // UNBLOCK ACCOUNT
+  // FIX: PATCH only the blocked field — no full object, no email issue
   const unblockAccount = async (user) => {
     try {
-      await API.put(`investors/${user.id}/`, {
-        ...user,
-        blocked: false
-      })
-
+      await API.patch(`investors/${user.id}/`, { blocked: false })
       alert("Account Unblocked Successfully")
       fetchBlockedUsers()
     } catch (error) {
@@ -45,12 +39,10 @@ function BlockedAccounts() {
     }
   }
 
-  // DELETE ACCOUNT
   const deleteAccount = async (id) => {
     const confirmDelete = window.confirm(
       "Are you sure you want to permanently delete this account?"
     )
-
     if (!confirmDelete) return
 
     try {
@@ -61,7 +53,6 @@ function BlockedAccounts() {
     }
   }
 
-  // LOADER
   if (loading) {
     return <Loader />
   }
@@ -70,7 +61,7 @@ function BlockedAccounts() {
     <>
       <DashboardLayout>
         <div className="text-white font-sans max-w-6xl mx-auto space-y-8">
-          
+
           {/* HEADER */}
           <div>
             <h1 className="text-3xl font-bold tracking-wide">Blocked Accounts</h1>
@@ -79,9 +70,14 @@ function BlockedAccounts() {
 
           {/* BLOCKED USERS TABLE */}
           <div className="bg-[#111c44] p-6 rounded-xl border border-[#1e295d] shadow-2xl">
-            <h2 className="text-xl font-semibold mb-5 tracking-wide text-slate-100">
-              All Blocked Investors
-            </h2>
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-xl font-semibold tracking-wide text-slate-100">
+                All Blocked Investors
+              </h2>
+              <span className="text-xs font-semibold bg-red-500/15 text-red-400 border border-red-500/30 px-3 py-1 rounded-full">
+                {blockedUsers.length} blocked
+              </span>
+            </div>
 
             <div className="overflow-x-auto rounded-lg border border-[#1e295d]">
               <table className="w-full border-collapse text-sm">

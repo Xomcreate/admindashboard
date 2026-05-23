@@ -1,64 +1,80 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import API from "../api/axios";
 
 const Login = () => {
   const navigate = useNavigate();
-
-  const [form, setForm] = useState({
-    username: "",
-    password: "",
-  });
+  const [form, setForm]     = useState({ username: "", password: "" });
+  const [error, setError]   = useState("");
+  const [loading, setLoading] = useState(false);
 
   const submit = async (e) => {
     e.preventDefault();
+    setError("");
+    setLoading(true);
+
     try {
+      // 1. Get tokens
       const res = await API.post("token/", form);
-      localStorage.setItem("token", res.data.access);
-      localStorage.setItem("refresh_token", res.data.refresh); // save refresh token
-      navigate("/dashboard");
+      localStorage.setItem("token",         res.data.access);
+      localStorage.setItem("refresh_token", res.data.refresh);
+
+      // 2. Fetch profile to determine role
+      const profile = await API.get("user-dashboard/");
+      const role    = profile.data.profile.role;
+      localStorage.setItem("role", role);
+
+      // 3. Route based on role
+      if (role === "admin") {
+        navigate("/dashboard");        // admin dashboard
+      } else {
+        navigate("/user/dashboard");   // user dashboard
+      }
     } catch (err) {
-      alert("Invalid Login");
+      console.error(err.response?.data || err.message);
+      setError("Invalid username or password.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="h-screen flex justify-center items-center bg-[#0a1128] font-sans">
-      <form
-        onSubmit={submit}
-        className="bg-[#111c44] p-10 rounded-xl border border-[#1e295d] shadow-2xl w-full max-w-md mx-4"
-      >
-        <h1 className="text-3xl font-bold mb-2 text-center text-white tracking-wide">
-          Admin Login
-        </h1>
-        <p className="text-[#64748b] text-sm text-center mb-8">
-          Secure gateway to the investment portal
-        </p>
+    <div className="h-screen flex items-center justify-center bg-[#0a1128]">
+      <form onSubmit={submit} className="bg-[#111c44] p-8 rounded-lg w-96">
 
-        <div className="mb-4">
-          <input
-            type="text"
-            placeholder="Username"
-            className="w-full bg-[#0a1128] border border-[#1e295d] p-3 rounded-lg text-white placeholder-[#64748b] focus:outline-none focus:border-[#10b981] transition-colors"
-            onChange={(e) => setForm({ ...form, username: e.target.value })}
-          />
-        </div>
+        <h1 className="text-white text-2xl mb-6 font-bold">Login</h1>
 
-        <div className="mb-6">
-          <input
-            type="password"
-            placeholder="Password"
-            className="w-full bg-[#0a1128] border border-[#1e295d] p-3 rounded-lg text-white placeholder-[#64748b] focus:outline-none focus:border-[#10b981] transition-colors"
-            onChange={(e) => setForm({ ...form, password: e.target.value })}
-          />
-        </div>
+        {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
+
+        <input
+          placeholder="Username"
+          className="w-full p-3 mb-4 rounded bg-[#0a1128] text-white border border-[#1e295d]"
+          value={form.username}
+          onChange={(e) => setForm({ ...form, username: e.target.value })}
+          required
+        />
+
+        <input
+          type="password"
+          placeholder="Password"
+          className="w-full p-3 mb-6 rounded bg-[#0a1128] text-white border border-[#1e295d]"
+          value={form.password}
+          onChange={(e) => setForm({ ...form, password: e.target.value })}
+          required
+        />
 
         <button
-          type="submit"
-          className="bg-[#10b981] hover:bg-[#0d9488] text-white w-full p-3 rounded-lg font-semibold tracking-wide shadow-[0_0_15px_rgba(16,185,129,0.2)] hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all duration-200 cursor-pointer"
+          className="bg-green-500 w-full p-3 text-white rounded font-semibold disabled:opacity-50"
+          disabled={loading}
         >
-          Sign In Safely
+          {loading ? "Logging in..." : "Login"}
         </button>
+
+        <p className="text-white mt-4 text-sm">
+          Don't have an account?{" "}
+          <Link to="/register" className="text-green-400">Register</Link>
+        </p>
+
       </form>
     </div>
   );

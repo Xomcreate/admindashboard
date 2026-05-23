@@ -10,16 +10,15 @@ function Withdrawals() {
   const [form, setForm] = useState({
     investor: "",
     amount: "",
+    wallet_address: "",
     status: "Pending"
   })
 
-  // FETCH DATA
   useEffect(() => {
     fetchWithdrawals()
     fetchInvestors()
   }, [])
 
-  // FETCH WITHDRAWALS FROM BACKEND
   const fetchWithdrawals = async () => {
     try {
       const res = await API.get("withdrawals/")
@@ -31,7 +30,6 @@ function Withdrawals() {
     }
   }
 
-  // FETCH INVESTORS
   const fetchInvestors = async () => {
     try {
       const res = await API.get("investors/")
@@ -41,51 +39,46 @@ function Withdrawals() {
     }
   }
 
-  // CREATE WITHDRAWAL
+  // FIX: The Withdrawal model requires wallet_address. The form now collects it.
+  // The backend perform_create reads `investor` from request.data when the caller
+  // is an admin, so we include it in the POST payload.
   const createWithdrawal = async (e) => {
     e.preventDefault()
     try {
-      await API.post("withdrawals/", form)
-      alert("Withdrawal Created Successfully")
-      setForm({
-        investor: "",
-        amount: "",
-        status: "Pending"
+      await API.post("withdrawals/", {
+        investor:       form.investor,       // admin picks the investor
+        amount:         form.amount,
+        wallet_address: form.wallet_address,
+        status:         form.status,
       })
+      alert("Withdrawal Created Successfully")
+      setForm({ investor: "", amount: "", wallet_address: "", status: "Pending" })
       fetchWithdrawals()
     } catch (error) {
-      console.log(error)
+      console.log(error?.response?.data || error)
       alert("Failed To Create Withdrawal")
     }
   }
 
-  // APPROVE WITHDRAWAL
+  // FIX: PATCH only the status field instead of full PUT
   const approveWithdrawal = async (withdrawal) => {
     try {
-      await API.put(`withdrawals/${withdrawal.id}/`, {
-        ...withdrawal,
-        status: "Approved"
-      })
+      await API.patch(`withdrawals/${withdrawal.id}/`, { status: "Approved" })
       fetchWithdrawals()
     } catch (error) {
       console.log(error)
     }
   }
 
-  // REJECT WITHDRAWAL
   const rejectWithdrawal = async (withdrawal) => {
     try {
-      await API.put(`withdrawals/${withdrawal.id}/`, {
-        ...withdrawal,
-        status: "Rejected"
-      })
+      await API.patch(`withdrawals/${withdrawal.id}/`, { status: "Rejected" })
       fetchWithdrawals()
     } catch (error) {
       console.log(error)
     }
   }
 
-  // DELETE WITHDRAWAL
   const deleteWithdrawal = async (id) => {
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this withdrawal?"
@@ -100,7 +93,12 @@ function Withdrawals() {
     }
   }
 
-  // LOADER
+  // Helper: find investor name by ID
+  const getInvestorName = (id) => {
+    const inv = investors.find((i) => i.id === id)
+    return inv ? inv.name : `#${id}`
+  }
+
   if (loading) {
     return <Loader />
   }
@@ -109,7 +107,7 @@ function Withdrawals() {
     <>
       <DashboardLayout>
         <div className="text-white font-sans max-w-6xl mx-auto space-y-8">
-          
+
           {/* HEADER SECTION */}
           <div>
             <h1 className="text-3xl font-bold tracking-wide">Withdrawals</h1>
@@ -124,7 +122,7 @@ function Withdrawals() {
 
             <form
               onSubmit={createWithdrawal}
-              className="grid grid-cols-1 md:grid-cols-3 gap-5"
+              className="grid grid-cols-1 md:grid-cols-2 gap-5"
             >
               {/* SELECT INVESTOR */}
               <div className="flex flex-col gap-1.5">
@@ -132,12 +130,7 @@ function Withdrawals() {
                 <select
                   className="bg-[#0a1128] border border-[#1e295d] p-3 rounded-lg text-white focus:outline-none focus:border-[#10b981] transition-colors cursor-pointer"
                   value={form.investor}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      investor: e.target.value
-                    })
-                  }
+                  onChange={(e) => setForm({ ...form, investor: e.target.value })}
                   required
                 >
                   <option value="" className="bg-[#111c44]">Select Investor</option>
@@ -155,14 +148,24 @@ function Withdrawals() {
                 <input
                   type="number"
                   placeholder="0.00"
+                  min="0"
+                  step="0.01"
                   className="bg-[#0a1128] border border-[#1e295d] p-3 rounded-lg text-white placeholder-[#64748b] focus:outline-none focus:border-[#10b981] transition-colors"
                   value={form.amount}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      amount: e.target.value
-                    })
-                  }
+                  onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                  required
+                />
+              </div>
+
+              {/* WALLET ADDRESS */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-[#94a3b8] uppercase tracking-wider">Wallet Address</label>
+                <input
+                  type="text"
+                  placeholder="BTC / ETH wallet address"
+                  className="bg-[#0a1128] border border-[#1e295d] p-3 rounded-lg text-white placeholder-[#64748b] focus:outline-none focus:border-[#10b981] transition-colors font-mono text-sm"
+                  value={form.wallet_address}
+                  onChange={(e) => setForm({ ...form, wallet_address: e.target.value })}
                   required
                 />
               </div>
@@ -173,12 +176,7 @@ function Withdrawals() {
                 <select
                   className="bg-[#0a1128] border border-[#1e295d] p-3 rounded-lg text-white focus:outline-none focus:border-[#10b981] transition-colors cursor-pointer"
                   value={form.status}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      status: e.target.value
-                    })
-                  }
+                  onChange={(e) => setForm({ ...form, status: e.target.value })}
                 >
                   <option value="Pending" className="bg-[#111c44]">Pending</option>
                   <option value="Approved" className="bg-[#111c44]">Approved</option>
@@ -188,7 +186,8 @@ function Withdrawals() {
 
               {/* SUBMIT BUTTON */}
               <button
-                className="bg-[#10b981] hover:bg-[#0d9488] text-white p-3 rounded-lg font-semibold tracking-wide shadow-[0_0_15px_rgba(16,185,129,0.15)] hover:shadow-[0_0_20px_rgba(16,185,129,0.35)] transition-all duration-200 col-span-1 md:col-span-3 mt-2 cursor-pointer"
+                type="submit"
+                className="bg-[#10b981] hover:bg-[#0d9488] text-white p-3 rounded-lg font-semibold tracking-wide shadow-[0_0_15px_rgba(16,185,129,0.15)] hover:shadow-[0_0_20px_rgba(16,185,129,0.35)] transition-all duration-200 col-span-1 md:col-span-2 mt-2 cursor-pointer"
               >
                 Create Withdrawal
               </button>
@@ -205,8 +204,9 @@ function Withdrawals() {
               <table className="w-full border-collapse text-sm">
                 <thead>
                   <tr className="bg-[#0f1a3e] text-[#94a3b8] uppercase text-xs font-semibold tracking-wider">
-                    <th className="p-4 text-left border-b border-[#1e295d]">Investor ID</th>
+                    <th className="p-4 text-left border-b border-[#1e295d]">Investor</th>
                     <th className="p-4 text-left border-b border-[#1e295d]">Amount</th>
+                    <th className="p-4 text-left border-b border-[#1e295d]">Wallet</th>
                     <th className="p-4 text-center border-b border-[#1e295d]">Status</th>
                     <th className="p-4 text-left border-b border-[#1e295d]">Date</th>
                     <th className="p-4 text-center border-b border-[#1e295d]">Actions</th>
@@ -220,11 +220,14 @@ function Withdrawals() {
                         key={withdrawal.id}
                         className="border-b border-[#1e295d] hover:bg-[#172554] transition-colors"
                       >
-                        <td className="p-4 font-mono text-[#38bdf8] font-medium">
-                          #{withdrawal.investor}
+                        <td className="p-4 font-medium text-[#38bdf8]">
+                          {getInvestorName(withdrawal.investor)}
                         </td>
                         <td className="p-4 font-semibold text-white">
                           ${Number(withdrawal.amount).toLocaleString()}
+                        </td>
+                        <td className="p-4 text-[#94a3b8] font-mono text-xs max-w-35 truncate">
+                          {withdrawal.wallet_address || '—'}
                         </td>
                         <td className="p-4 text-center">
                           {withdrawal.status === "Approved" ? (
@@ -279,7 +282,7 @@ function Withdrawals() {
                   ) : (
                     <tr>
                       <td
-                        colSpan="5"
+                        colSpan="6"
                         className="text-center p-8 text-[#64748b] bg-[#0f1a3e]/50 italic"
                       >
                         No Withdrawals Found
