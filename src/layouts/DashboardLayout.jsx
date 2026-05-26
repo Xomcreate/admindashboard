@@ -1,25 +1,30 @@
 // src/layouts/DashboardLayout.jsx
 
+import { useState } from "react";
 import Sidebar from "../MainComponets/Sidebar";
 import Navbar from "../MainComponets/Navbar";
 
 const DashboardLayout = ({ children }) => {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex">
+    <div className="flex min-h-screen bg-[#0f172a]">
 
-      <Sidebar />
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <div className="ml-62.5 w-full p-5">
+      {/* Main content — offset by sidebar width on large screens only */}
+      <div className="flex-1 lg:ml-64 min-w-0 w-full">
 
-        <Navbar />
+        <Navbar onMenuClick={() => setSidebarOpen(true)} />
 
-        {children}
+        <div className="p-4 sm:p-5">
+          {children}
+        </div>
 
       </div>
 
     </div>
-  )
-}
+  );
+};
 
 export default DashboardLayout;
