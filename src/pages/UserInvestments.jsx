@@ -83,7 +83,7 @@ function UserInvestments() {
         {/* HEADER */}
         <div>
           <h1 className="text-3xl font-bold tracking-wide">My Investments</h1>
-          <p className="text-[#64748b] text-sm mt-1">
+          <p className="text-[#8f9cae] text-sm mt-1">
             Submit a new investment or track your existing portfolio.
           </p>
         </div>
@@ -91,18 +91,18 @@ function UserInvestments() {
         {/* SUMMARY CARDS */}
         {!fetching && investments.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-[#111c44] border border-[#1e295d] rounded-xl p-5">
-              <p className="text-xs text-[#94a3b8] uppercase tracking-wider mb-2">Active Investments</p>
-              <p className="text-2xl font-bold text-[#10b981]">{activeInvestments.length}</p>
+            <div className="bg-[#121824] border border-[#1e2638] rounded-xl p-5 shadow-2xl">
+              <p className="text-xs text-[#8f9cae] uppercase tracking-wider mb-2">Active Investments</p>
+              <p className="text-2xl font-bold text-[#0b66e4]">{activeInvestments.length}</p>
             </div>
-            <div className="bg-[#111c44] border border-[#1e295d] rounded-xl p-5">
-              <p className="text-xs text-[#94a3b8] uppercase tracking-wider mb-2">Total Invested</p>
+            <div className="bg-[#121824] border border-[#1e2638] rounded-xl p-5 shadow-2xl">
+              <p className="text-xs text-[#8f9cae] uppercase tracking-wider mb-2">Total Invested</p>
               <p className="text-2xl font-bold text-slate-100">
                 ${totalInvested.toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </p>
             </div>
-            <div className="bg-[#111c44] border border-[#1e295d] rounded-xl p-5">
-              <p className="text-xs text-[#94a3b8] uppercase tracking-wider mb-2">Total ROI Earned</p>
+            <div className="bg-[#121824] border border-[#1e2638] rounded-xl p-5 shadow-2xl">
+              <p className="text-xs text-[#8f9cae] uppercase tracking-wider mb-2">Total ROI Earned</p>
               <p className="text-2xl font-bold text-yellow-400">
                 ${totalProfit.toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </p>
@@ -111,60 +111,60 @@ function UserInvestments() {
         )}
 
         {/* NEW INVESTMENT FORM */}
-        <div className="bg-[#111c44] p-6 rounded-xl border border-[#1e295d]">
+        <div className="bg-[#121824] p-6 rounded-xl border border-[#1e2638] shadow-2xl">
           <h2 className="text-lg font-semibold mb-5 text-slate-100">New Investment</h2>
           <form onSubmit={submitInvestment} className="space-y-4">
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-[#94a3b8] uppercase tracking-wider">Category</label>
+              <label className="text-xs font-semibold text-[#8f9cae] uppercase tracking-wider">Category</label>
               <select
-                className="w-full bg-[#0a1128] p-3 rounded-lg border border-[#1e295d] text-white focus:outline-none focus:border-[#10b981] transition-colors"
+                className="w-full bg-[#090d16] p-3 rounded-lg border border-[#1e2638] text-white focus:outline-none focus:border-[#0b66e4] transition-colors cursor-pointer"
                 value={form.category}
                 onChange={(e) => setForm({ ...form, category: e.target.value })}
                 required
               >
-                <option value="">Choose Category</option>
-                <option value="Bitcoin Mining">Bitcoin Mining</option>
-                <option value="Forex Trading">Forex Trading</option>
-                <option value="Real Estate">Real Estate</option>
-                <option value="Crypto Arbitrage">Crypto Arbitrage</option>
+                <option value="" className="bg-[#121824]">Choose Category</option>
+                <option value="Bitcoin Mining" className="bg-[#121824]">Bitcoin Mining</option>
+                <option value="Forex Trading" className="bg-[#121824]">Forex Trading</option>
+                <option value="Real Estate" className="bg-[#121824]">Real Estate</option>
+                <option value="Crypto Arbitrage" className="bg-[#121824]">Crypto Arbitrage</option>
               </select>
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-[#94a3b8] uppercase tracking-wider">Investment Amount ($)</label>
+              <label className="text-xs font-semibold text-[#8f9cae] uppercase tracking-wider">Investment Amount ($)</label>
               <input
                 type="number"
                 placeholder="0.00"
                 min="0"
                 step="0.01"
-                className="w-full bg-[#0a1128] p-3 rounded-lg border border-[#1e295d] text-white placeholder-[#64748b] focus:outline-none focus:border-[#10b981] transition-colors"
+                className="w-full bg-[#090d16] p-3 rounded-lg border border-[#1e2638] text-white placeholder-[#8f9cae] focus:outline-none focus:border-[#0b66e4] transition-colors"
                 value={form.amount}
                 onChange={(e) => setForm({ ...form, amount: e.target.value })}
                 required
               />
             </div>
 
-            <div className="bg-[#0a1128] p-4 rounded-lg border border-[#1e295d]">
-              <p className="text-sm text-[#94a3b8]">Send payment to BTC Wallet:</p>
-              <p className="text-[#10b981] break-all mt-1.5 font-mono text-sm font-semibold">
+            <div className="bg-[#090d16] p-4 rounded-lg border border-[#1e2638]">
+              <p className="text-sm text-[#8f9cae]">Send payment to BTC Wallet:</p>
+              <p className="text-[#0b66e4] break-all mt-1.5 font-mono text-sm font-semibold">
                 1FfmbHfnpaZjKFvyi1okTjJJusN455paPH
               </p>
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-[#94a3b8] uppercase tracking-wider">Upload Payment Proof</label>
+              <label className="text-xs font-semibold text-[#8f9cae] uppercase tracking-wider">Upload Payment Proof</label>
               <input
                 type="file"
                 accept="image/*"
                 onChange={(e) => setForm({ ...form, payment_proof: e.target.files[0] })}
-                className="w-full bg-[#0a1128] p-3 rounded-lg border border-[#1e295d] text-white file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-[#10b981] file:text-white"
+                className="w-full bg-[#090d16] p-3 rounded-lg border border-[#1e2638] text-white file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-[#0b66e4] file:text-white cursor-pointer"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full bg-[#10b981] hover:bg-[#0d9488] px-6 py-3 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-[#0b66e4] hover:bg-[#0055cc] px-6 py-3 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               disabled={loading}
             >
               {loading ? "Submitting..." : "Submit Investment"}
@@ -177,11 +177,11 @@ function UserInvestments() {
           <h2 className="text-lg font-semibold text-slate-100">Investment History</h2>
 
           {fetching && (
-            <p className="text-[#94a3b8] text-center py-8">Loading investments…</p>
+            <p className="text-[#8f9cae] text-center py-8">Loading investments…</p>
           )}
 
           {!fetching && investments.length === 0 && (
-            <div className="bg-[#111c44] border border-[#1e295d] rounded-xl p-10 text-center text-[#64748b] italic">
+            <div className="bg-[#121824] border border-[#1e2638] rounded-xl p-10 text-center text-[#8f9cae] shadow-2xl italic">
               No investments yet. Submit one above to get started.
             </div>
           )}
@@ -189,7 +189,7 @@ function UserInvestments() {
           {!fetching && investments.map((inv) => (
             <div
               key={inv.id}
-              className="bg-[#111c44] p-5 rounded-xl border border-[#1e295d] hover:bg-[#172554] transition-colors"
+              className="bg-[#121824] p-5 rounded-xl border border-[#1e2638] hover:bg-[#1e2638] transition-colors shadow-2xl"
             >
               <div className="flex justify-between items-start gap-4">
                 <div className="flex-1 min-w-0">
@@ -197,16 +197,16 @@ function UserInvestments() {
                     <h2 className="font-semibold text-white">{inv.category}</h2>
                     <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
                       inv.active
-                        ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                        ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
                         : "bg-slate-700/60 text-slate-400 border border-slate-600"
                     }`}>
                       {inv.active ? "Active" : "Expired"}
                     </span>
                   </div>
-                  <p className="text-sm text-[#94a3b8] mt-1">
+                  <p className="text-sm text-[#8f9cae] mt-1">
                     {inv.daily_roi}% daily ROI · {inv.payment_method}
                   </p>
-                  <p className="text-xs text-[#64748b] mt-0.5">
+                  <p className="text-xs text-[#8f9cae] mt-0.5">
                     Started {new Date(inv.created_at).toLocaleDateString(undefined, {
                       year: "numeric", month: "short", day: "numeric",
                     })}
@@ -214,7 +214,7 @@ function UserInvestments() {
                 </div>
 
                 <div className="text-right shrink-0 flex flex-col items-end gap-2">
-                  <p className="text-[#10b981] font-bold text-lg">
+                  <p className="text-[#0b66e4] font-bold text-lg">
                     ${Number(inv.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </p>
                   <p className="text-yellow-400 text-sm">
@@ -225,7 +225,7 @@ function UserInvestments() {
                   {!inv.active && (
                     <button
                       onClick={() => deleteInvestment(inv.id)}
-                      className="bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/30 text-xs font-semibold px-3 py-1.5 rounded-md transition-all"
+                      className="bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/30 text-xs font-semibold px-3 py-1.5 rounded-md transition-all cursor-pointer"
                     >
                       Delete
                     </button>

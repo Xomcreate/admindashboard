@@ -36,107 +36,117 @@ function Profile() {
         phone: profile.phone,
       });
       setSuccess("Profile updated successfully!");
-      fetchProfile(); // re-fetch to get latest balances
+      fetchProfile(); // re-fetch profile to sync changes
     } catch (err) {
-      console.error(err.response?.data || err);
-      setError("Update failed. Please try again.");
+      console.error(err);
+      setError("Failed to update profile. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
+  // Extracting basic color palette variables for clarity
+  const pageBg = "bg-[#090d16]";
+  const cardBg = "bg-[#121824]";
+  const borderCol = "border-[#1e2638]";
+  const primaryBlue = "text-[#0b66e4]";
+  const mutedText = "text-[#8f9cae]";
+  const inputBg = "bg-[#090d16]";
+
   return (
     <DashboardLayout>
-      <div className="max-w-3xl mx-auto text-white">
-
-        <h1 className="text-3xl font-bold mb-8">My Profile</h1>
-
-        {/* Balance Cards */}
-        <div className="grid grid-cols-2 gap-4 mb-8">
-
-          <div className="bg-[#111c44] p-5 rounded-xl border border-[#1e295d]">
-            <p className="text-[#94a3b8] text-xs uppercase tracking-wider mb-1">Wallet Balance</p>
-            <h2 className="text-2xl font-bold text-[#10b981] mt-1">
-              ${parseFloat(profile.wallet_balance || 0).toFixed(2)}
-            </h2>
-            <p className="text-xs text-[#64748b] mt-1">Available to withdraw</p>
-          </div>
-
-          <div className="bg-[#111c44] p-5 rounded-xl border border-[#1e295d]">
-            <p className="text-[#94a3b8] text-xs uppercase tracking-wider mb-1">Active Profits</p>
-            <h2 className="text-2xl font-bold text-yellow-400 mt-1">
-              ${parseFloat(profile.active_profits || 0).toFixed(2)}
-            </h2>
-            <p className="text-xs text-[#64748b] mt-1">Accumulating daily</p>
-          </div>
-
-          <div className="bg-[#111c44] p-5 rounded-xl border border-[#1e295d]">
-            <p className="text-[#94a3b8] text-xs uppercase tracking-wider mb-1">Total Balance</p>
-            <h2 className="text-2xl font-bold text-blue-400 mt-1">
-              ${parseFloat(profile.live_balance || 0).toFixed(2)}
-            </h2>
-            <p className="text-xs text-[#64748b] mt-1">Wallet + active profits</p>
-          </div>
-
-          <div className="bg-[#111c44] p-5 rounded-xl border border-[#1e295d]">
-            <p className="text-[#94a3b8] text-xs uppercase tracking-wider mb-1">Bonus</p>
-            <h2 className="text-2xl font-bold text-purple-400 mt-1">
-              ${parseFloat(profile.bonus || 0).toFixed(2)}
-            </h2>
-            <p className="text-xs text-[#64748b] mt-1">Awarded by admin</p>
-          </div>
-
+      <div className={`text-white space-y-8 max-w-4xl mx-auto p-4`}>
+        
+        {/* HEADER */}
+        <div>
+          <h1 className="text-3xl font-bold tracking-wide">Account Settings</h1>
+          <p className={`${mutedText} text-sm mt-1`}>Manage your personal information and view account balances.</p>
         </div>
 
-        {/* Edit Form */}
-        <form
-          onSubmit={updateProfile}
-          className="bg-[#111c44] p-8 rounded-xl border border-[#1e295d] space-y-5"
-        >
-          {success && <p className="text-green-400 text-sm">{success}</p>}
-          {error   && <p className="text-red-400   text-sm">{error}</p>}
+        {/* BALANCE SUMMARY CARDS */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className={`${cardBg} p-5 rounded-xl border ${borderCol} shadow-2xl`}>
+            <p className={`${mutedText} text-xs uppercase tracking-wider mb-1`}>Wallet Balance</p>
+            <h2 className={`text-2xl font-bold ${primaryBlue}`}>
+              ${parseFloat(profile.wallet_balance || 0).toFixed(2)}
+            </h2>
+          </div>
+          <div className={`${cardBg} p-5 rounded-xl border ${borderCol} shadow-2xl`}>
+            <p className={`${mutedText} text-xs uppercase tracking-wider mb-1`}>Active Profits</p>
+            <h2 className="text-2xl font-bold text-yellow-400">
+              ${parseFloat(profile.active_profits || 0).toFixed(2)}
+            </h2>
+          </div>
+          <div className={`${cardBg} p-5 rounded-xl border ${borderCol} shadow-2xl`}>
+            <p className={`${mutedText} text-xs uppercase tracking-wider mb-1`}>Live Balance</p>
+            <h2 className="text-2xl font-bold text-slate-100">
+              ${parseFloat(profile.live_balance || 0).toFixed(2)}
+            </h2>
+          </div>
+          <div className={`${cardBg} p-5 rounded-xl border ${borderCol} shadow-2xl`}>
+            <p className={`${mutedText} text-xs uppercase tracking-wider mb-1`}>Bonus</p>
+            <h2 className="text-2xl font-bold text-white">
+              ${parseFloat(profile.bonus || 0).toFixed(2)}
+            </h2>
+          </div>
+        </div>
 
-          <div>
-            <label className="text-sm text-[#94a3b8] mb-1 block">Full Name</label>
-            <input
-              type="text"
-              value={profile.name}
-              onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-              className="w-full bg-[#0a1128] p-3 rounded-lg border border-[#1e295d] text-white focus:outline-none focus:border-[#10b981]"
-            />
+        {/* PERSONAL DETAILS FORM */}
+        <form onSubmit={updateProfile} className={`${cardBg} p-8 rounded-xl border ${borderCol} shadow-2xl space-y-6`}>
+          <h2 className="text-xl font-semibold text-slate-100 mb-6">Personal Details</h2>
+
+          {success && (
+            <p className="bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-sm px-4 py-3 rounded-lg">
+              {success}
+            </p>
+          )}
+          {error && (
+            <p className="bg-red-500/15 border border-red-500/30 text-red-400 text-sm px-4 py-3 rounded-lg">
+              {error}
+            </p>
+          )}
+
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label className={`${mutedText} text-xs uppercase tracking-wider mb-1.5 block`}>Full Name</label>
+              <input
+                type="text"
+                className={`w-full ${inputBg} p-3 rounded-lg border ${borderCol} text-white focus:outline-none focus:border-[#0b66e4] transition-colors`}
+                value={profile.name}
+                onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                required
+              />
+            </div>
+            <div>
+              <label className={`${mutedText} text-xs uppercase tracking-wider mb-1.5 block`}>Email Address</label>
+              <input
+                type="email"
+                className={`w-full ${inputBg} p-3 rounded-lg border ${borderCol} text-slate-400 cursor-not-allowed`}
+                value={profile.email}
+                disabled // Email is usually fixed or changed through a different process
+              />
+            </div>
+            <div>
+              <label className={`${mutedText} text-xs uppercase tracking-wider mb-1.5 block`}>Phone Number</label>
+              <input
+                type="tel"
+                className={`w-full ${inputBg} p-3 rounded-lg border ${borderCol} text-white focus:outline-none focus:border-[#0b66e4] transition-colors`}
+                value={profile.phone}
+                onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                placeholder="Enter phone number"
+              />
+            </div>
           </div>
 
-          <div>
-            <label className="text-sm text-[#94a3b8] mb-1 block">
-              Email
-              <span className="ml-2 text-xs text-yellow-500 font-medium">🔒 Cannot be changed</span>
-            </label>
-            <input
-              type="email"
-              value={profile.email}
-              readOnly
-              disabled
-              className="w-full bg-[#0a1128] p-3 rounded-lg border border-[#1e295d] text-[#94a3b8] cursor-not-allowed opacity-60"
-            />
+          <div className="flex justify-end pt-4 border-t border-[#1e295d]">
+            <button
+              type="submit"
+              className={`bg-[#0b66e4] hover:bg-[#0055cc] px-8 py-3 rounded-lg font-semibold text-white transition-colors disabled:opacity-50 cursor-pointer shadow-2xl`}
+              disabled={loading}
+            >
+              {loading ? "Saving..." : "Save Changes"}
+            </button>
           </div>
-
-          <div>
-            <label className="text-sm text-[#94a3b8] mb-1 block">Phone</label>
-            <input
-              type="text"
-              value={profile.phone}
-              onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-              className="w-full bg-[#0a1128] p-3 rounded-lg border border-[#1e295d] text-white focus:outline-none focus:border-[#10b981]"
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="bg-[#10b981] px-6 py-3 rounded-lg font-semibold disabled:opacity-50 hover:bg-[#059669] transition-colors"
-            disabled={loading}
-          >
-            {loading ? "Updating..." : "Update Profile"}
-          </button>
         </form>
 
       </div>

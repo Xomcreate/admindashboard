@@ -17,19 +17,19 @@ function Loader() {
         <p style={styles.subtext}>Fetching real-time market data...</p>
       </div>
 
-      {/* Injecting keyframes directly into the document */}
+      {/* Injecting keyframes with updated blue fintech accents */}
       <style>{`
         @keyframes growAndGlow {
           0%, 100% {
             height: 15px;
-            opacity: 0.5;
-            background-color: #0d9488; /* Teal-green */
+            opacity: 0.4;
+            background-color: #0b66e4;
           }
           50% {
             height: 45px;
             opacity: 1;
-            background-color: #10b981; /* Vibrant Emerald Green */
-            box-shadow: 0 0 12px #10b981;
+            background-color: #0066ff; 
+            box-shadow: 0 0 14px rgba(0, 102, 255, 0.6);
           }
         }
       `}</style>
@@ -37,7 +37,6 @@ function Loader() {
   );
 }
 
-// Inline styling utilizing standard financial color palettes
 const styles = {
   container: {
     display: 'flex',
@@ -45,7 +44,7 @@ const styles = {
     alignItems: 'center',
     height: '100vh',
     width: '100vw',
-    backgroundColor: '#0a1128', // Deep Trust Navy background
+    backgroundColor: '#090d16', // Deep page background from your screenshot
     fontFamily: 'system-ui, -apple-system, sans-serif',
   },
   wrapper: {
@@ -64,7 +63,6 @@ const styles = {
     borderRadius: '3px',
     animation: 'growAndGlow 1.2s ease-in-out infinite',
   },
-  // Staggering the animations to look like a rising market trend
   bar1: { animationDelay: '0.1s' },
   bar2: { animationDelay: '0.3s' },
   bar3: { animationDelay: '0.5s' },
@@ -77,7 +75,7 @@ const styles = {
     margin: '0 0 8px 0',
   },
   subtext: {
-    color: '#64748b', // Soft Slate neutral gray
+    color: '#8f9cae', // Muted text color from your screenshot description
     fontSize: '0.85rem',
     margin: 0,
   },

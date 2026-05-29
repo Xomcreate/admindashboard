@@ -11,30 +11,40 @@ const Navbar = ({ onMenuClick }) => {
   const role = localStorage.getItem("role");
 
   return (
-    <div className="flex justify-between items-center p-4 bg-[#111c44] text-white mb-5">
+    <div className="flex justify-between items-center px-5 py-3.5 bg-[#121824] border-b border-[#1e2638] text-white mb-5">
 
-      {/* Left: hamburger (mobile) + title */}
+      {/* Left: hamburger + brand */}
       <div className="flex items-center gap-3">
         <button
           onClick={onMenuClick}
-          className="lg:hidden p-1.5 rounded-lg hover:bg-[#1e295d] transition-colors text-gray-300 hover:text-white"
+          className="lg:hidden p-1.5 rounded-lg hover:bg-[#1e2638] transition-colors text-[#8f9cae] hover:text-white border border-[#1e2638]"
           aria-label="Open menu"
         >
-          <FaBars size={18} />
+          <FaBars size={16} />
         </button>
 
-        <h1 className="font-semibold text-sm sm:text-base">
-          {role === "admin" ? "Admin Panel" : "User Panel"}
-        </h1>
+        <div className="flex flex-col">
+          <span className="text-white font-semibold text-sm leading-tight">
+            <span className="inline-block w-2 h-2 rounded-full bg-[#0b66e4] mr-1.5 align-middle" />
+            IPO Stock
+          </span>
+          <span className="text-[#8f9cae] text-xs leading-tight mt-0.5">
+            {role === "admin" ? "Admin Panel" : "User Panel"}
+          </span>
+        </div>
       </div>
 
       {/* Right: profile + logout */}
       <div className="flex gap-3 items-center">
-        <FaUserCircle className="text-lg text-gray-300" />
+        <div className="flex items-center gap-2 text-[#8f9cae] text-sm">
+          <div className="w-7 h-7 rounded-full bg-[#0b66e4]/10 border border-[#0b66e4]/25 flex items-center justify-center">
+            <FaUserCircle className="text-[#0b66e4] text-sm" />
+          </div>
+        </div>
 
         <button
           onClick={logout}
-          className="text-red-400 hover:text-red-300 flex items-center gap-1.5 text-sm transition-colors"
+          className="flex items-center gap-1.5 text-sm text-red-400 hover:text-red-300 px-2.5 py-1.5 rounded-lg border border-red-500/20 hover:bg-red-500/10 transition-all"
         >
           <FaSignOutAlt />
           <span className="hidden sm:inline">Logout</span>

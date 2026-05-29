@@ -63,8 +63,6 @@ function Investors() {
     }
   };
 
-  // FIX: Use PATCH with only the `blocked` field — avoids email uniqueness
-  // validation errors that occurred when sending the full object via PUT.
   const blockUser = async (id) => {
     try {
       await API.patch(`investors/${id}/`, { blocked: true });
@@ -92,29 +90,27 @@ function Investors() {
       <div className="space-y-10 font-sans text-white">
 
         {/* ─── INVESTORS SECTION ─── */}
-        <div className="bg-[#111c44] p-6 rounded-xl border border-[#1e295d] shadow-2xl">
+        <div className="bg-[#121824] p-6 rounded-xl border border-[#1e2638]">
 
-          {/* Header */}
           <div className="flex justify-between items-center mb-6">
             <div>
               <h1 className="text-3xl font-bold tracking-wide">Investors</h1>
-              <p className="text-[#64748b] text-sm mt-1">
+              <p className="text-[#8f9cae] text-sm mt-1">
                 Manage registered investor accounts.
               </p>
             </div>
             <button
               onClick={() => setShowModal(true)}
-              className="bg-[#10b981] hover:bg-[#0d9488] text-white px-5 py-2.5 rounded-lg font-semibold transition-colors"
+              className="bg-[#0b66e4] hover:bg-[#0055cc] text-white px-5 py-2.5 rounded-lg font-semibold transition-colors"
             >
               Add Investor
             </button>
           </div>
 
-          {/* Investors Table */}
-          <div className="overflow-x-auto rounded-lg border border-[#1e295d]">
+          <div className="overflow-x-auto rounded-lg border border-[#1e2638]">
             <table className="w-full border-collapse text-sm">
               <thead>
-                <tr className="bg-[#0f1a3e] text-[#94a3b8] uppercase text-xs font-semibold">
+                <tr className="bg-[#090d16] text-[#8f9cae] uppercase text-xs font-semibold">
                   <th className="p-4 text-left">Name</th>
                   <th className="p-4 text-left">Email</th>
                   <th className="p-4 text-left">Phone</th>
@@ -129,11 +125,11 @@ function Investors() {
                   investors.map((investor) => (
                     <tr
                       key={investor.id}
-                      className="border-b border-[#1e295d] hover:bg-[#172554] transition-colors"
+                      className="border-b border-[#1e2638] hover:bg-[#1e2638]/50 transition-colors"
                     >
                       <td className="p-4">{investor.name}</td>
-                      <td className="p-4">{investor.email}</td>
-                      <td className="p-4">{investor.phone}</td>
+                      <td className="p-4 text-[#8f9cae]">{investor.email}</td>
+                      <td className="p-4 text-[#8f9cae]">{investor.phone}</td>
                       <td className="p-4 font-semibold">${investor.balance}</td>
                       <td className="p-4 text-[#10b981] font-semibold">${investor.bonus}</td>
                       <td className="p-4 text-center">
@@ -142,7 +138,7 @@ function Investors() {
                             Blocked
                           </span>
                         ) : (
-                          <span className="bg-emerald-500/15 text-[#10b981] border border-emerald-500/30 px-3 py-1 rounded-full text-xs font-medium">
+                          <span className="bg-[#0b66e4]/15 text-[#0b66e4] border border-[#0b66e4]/30 px-3 py-1 rounded-full text-xs font-medium">
                             Active
                           </span>
                         )}
@@ -151,7 +147,7 @@ function Investors() {
                         {investor.blocked ? (
                           <button
                             onClick={() => unblockUser(investor.id)}
-                            className="bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/30 text-xs font-semibold px-4 py-1.5 rounded-md transition-all"
+                            className="bg-[#0b66e4]/15 hover:bg-[#0b66e4] text-[#0b66e4] hover:text-white border border-[#0b66e4]/30 text-xs font-semibold px-4 py-1.5 rounded-md transition-all"
                           >
                             Unblock
                           </button>
@@ -168,7 +164,7 @@ function Investors() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="7" className="text-center p-8 text-[#64748b] italic">
+                    <td colSpan="7" className="text-center p-8 text-[#8f9cae] italic">
                       No Investors Found
                     </td>
                   </tr>
@@ -178,21 +174,20 @@ function Investors() {
           </div>
         </div>
 
-
         {/* ─── REGISTERED USERS SECTION ─── */}
-        <div className="bg-[#111c44] p-6 rounded-xl border border-[#1e295d] shadow-2xl">
+        <div className="bg-[#121824] p-6 rounded-xl border border-[#1e2638]">
 
           <div className="mb-6">
             <h2 className="text-2xl font-bold tracking-wide">Registered Users</h2>
-            <p className="text-[#64748b] text-sm mt-1">
+            <p className="text-[#8f9cae] text-sm mt-1">
               All Django auth accounts on the platform.
             </p>
           </div>
 
-          <div className="overflow-x-auto rounded-lg border border-[#1e295d]">
+          <div className="overflow-x-auto rounded-lg border border-[#1e2638]">
             <table className="w-full border-collapse text-sm">
               <thead>
-                <tr className="bg-[#0f1a3e] text-[#94a3b8] uppercase text-xs font-semibold">
+                <tr className="bg-[#090d16] text-[#8f9cae] uppercase text-xs font-semibold">
                   <th className="p-4 text-left">ID</th>
                   <th className="p-4 text-left">Username</th>
                   <th className="p-4 text-left">Email</th>
@@ -205,16 +200,16 @@ function Investors() {
                   users.map((user) => (
                     <tr
                       key={user.id}
-                      className="border-b border-[#1e295d] hover:bg-[#172554] transition-colors"
+                      className="border-b border-[#1e2638] hover:bg-[#1e2638]/50 transition-colors"
                     >
-                      <td className="p-4 font-mono text-[#38bdf8] font-medium">
+                      <td className="p-4 font-mono text-[#0b66e4] font-medium">
                         #{user.id}
                       </td>
                       <td className="p-4 font-medium">{user.username}</td>
-                      <td className="p-4 text-[#94a3b8]">{user.email || "—"}</td>
+                      <td className="p-4 text-[#8f9cae]">{user.email || "—"}</td>
                       <td className="p-4 text-center">
                         {user.is_active ? (
-                          <span className="bg-emerald-500/15 text-[#10b981] border border-emerald-500/30 px-3 py-1 rounded-full text-xs font-medium">
+                          <span className="bg-[#0b66e4]/15 text-[#0b66e4] border border-[#0b66e4]/30 px-3 py-1 rounded-full text-xs font-medium">
                             Active
                           </span>
                         ) : (
@@ -223,7 +218,7 @@ function Investors() {
                           </span>
                         )}
                       </td>
-                      <td className="p-4 text-[#94a3b8]">
+                      <td className="p-4 text-[#8f9cae]">
                         {new Date(user.date_joined).toLocaleDateString(undefined, {
                           year: "numeric",
                           month: "short",
@@ -234,7 +229,7 @@ function Investors() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="5" className="text-center p-8 text-[#64748b] italic">
+                    <td colSpan="5" className="text-center p-8 text-[#8f9cae] italic">
                       No Users Found
                     </td>
                   </tr>
@@ -249,13 +244,13 @@ function Investors() {
       {/* ADD INVESTOR MODAL */}
       {showModal && (
         <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-50">
-          <div className="bg-[#111c44] w-125 p-6 rounded-xl border border-[#1e295d]">
+          <div className="bg-[#121824] w-125 p-6 rounded-xl border border-[#1e2638]">
             <h2 className="text-2xl font-bold text-white mb-5">Add Investor</h2>
             <form onSubmit={addInvestor} className="grid grid-cols-2 gap-4">
               <input
                 type="text"
                 placeholder="Full Name"
-                className="bg-[#0f1a3e] border border-[#1e295d] p-3 rounded text-white placeholder-[#64748b] focus:outline-none focus:border-[#10b981] transition-colors"
+                className="bg-[#090d16] border border-[#1e2638] p-3 rounded text-white placeholder-[#8f9cae] focus:outline-none focus:border-[#0b66e4] transition-colors"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 required
@@ -263,7 +258,7 @@ function Investors() {
               <input
                 type="email"
                 placeholder="Email"
-                className="bg-[#0f1a3e] border border-[#1e295d] p-3 rounded text-white placeholder-[#64748b] focus:outline-none focus:border-[#10b981] transition-colors"
+                className="bg-[#090d16] border border-[#1e2638] p-3 rounded text-white placeholder-[#8f9cae] focus:outline-none focus:border-[#0b66e4] transition-colors"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 required
@@ -271,7 +266,7 @@ function Investors() {
               <input
                 type="text"
                 placeholder="Phone"
-                className="bg-[#0f1a3e] border border-[#1e295d] p-3 rounded text-white placeholder-[#64748b] focus:outline-none focus:border-[#10b981] transition-colors"
+                className="bg-[#090d16] border border-[#1e2638] p-3 rounded text-white placeholder-[#8f9cae] focus:outline-none focus:border-[#0b66e4] transition-colors"
                 value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
                 required
@@ -279,7 +274,7 @@ function Investors() {
               <input
                 type="number"
                 placeholder="Balance"
-                className="bg-[#0f1a3e] border border-[#1e295d] p-3 rounded text-white placeholder-[#64748b] focus:outline-none focus:border-[#10b981] transition-colors"
+                className="bg-[#090d16] border border-[#1e2638] p-3 rounded text-white placeholder-[#8f9cae] focus:outline-none focus:border-[#0b66e4] transition-colors"
                 value={form.balance}
                 onChange={(e) => setForm({ ...form, balance: e.target.value })}
                 required
@@ -287,7 +282,7 @@ function Investors() {
               <input
                 type="number"
                 placeholder="Bonus"
-                className="bg-[#0f1a3e] border border-[#1e295d] p-3 rounded text-white placeholder-[#64748b] focus:outline-none focus:border-[#10b981] transition-colors"
+                className="bg-[#090d16] border border-[#1e2638] p-3 rounded text-white placeholder-[#8f9cae] focus:outline-none focus:border-[#0b66e4] transition-colors"
                 value={form.bonus}
                 onChange={(e) => setForm({ ...form, bonus: e.target.value })}
                 required
@@ -295,7 +290,7 @@ function Investors() {
               <div className="col-span-2 flex gap-3 mt-2">
                 <button
                   type="submit"
-                  className="bg-[#10b981] hover:bg-[#0d9488] flex-1 py-3 rounded font-semibold text-white transition-colors"
+                  className="bg-[#0b66e4] hover:bg-[#0055cc] flex-1 py-3 rounded font-semibold text-white transition-colors"
                 >
                   Save Investor
                 </button>
