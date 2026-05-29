@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "https://adminback-1.onrender.com",
+  baseURL: "https://adminback-1.onrender.com/api/",
 });
 
 // Attach token
@@ -15,7 +15,7 @@ API.interceptors.request.use((req) => {
   return req;
 });
 
-// Refresh logic
+// Refresh token logic
 API.interceptors.response.use(
   (res) => res,
   async (error) => {
@@ -42,10 +42,7 @@ API.interceptors.response.use(
 
         localStorage.setItem("token", newAccess);
 
-        original.headers = {
-          ...original.headers,
-          Authorization: `Bearer ${newAccess}`,
-        };
+        original.headers.Authorization = `Bearer ${newAccess}`;
 
         return axios(original);
       } catch (err) {
