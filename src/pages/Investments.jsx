@@ -3,12 +3,18 @@ import DashboardLayout from "../layouts/DashboardLayout";
 import API from "../api/axios";
 import Loader from "../MainComponets/Loader";
 
-const CATEGORY_ROI = {
-  "Forex Trading":    2.5,
-  "Bitcoin Mining":   3.0,
-  "Real Estate":      2.0,
-  "Crypto Arbitrage": 3.5,
-};
+const STOCK_CATEGORIES = [
+  "Tesla (TSLA)",
+  "Apple (AAPL)",
+  "Amazon (AMZN)",
+  "McDonald's (MCD)",
+  "GameStop (GME)",
+  "Coca-Cola (KO)",
+  "Meta (META)",
+  "Alphabet (GOOG)",
+  "Netflix (NFLX)",
+  "Intel (INTC)",
+];
 
 const getStatus = (investment) => {
   if (!investment.approved) return "pending";
@@ -29,9 +35,9 @@ function Investments() {
   const [investments, setInvestments] = useState([]);
   const [investors,   setInvestors]   = useState([]);
   const [loading,     setLoading]     = useState(true);
-  const [tab,         setTab]         = useState("all"); // "all" | "pending"
+  const [tab,         setTab]         = useState("all");
   const [form, setForm] = useState({
-    investor: "", amount: "", category: "Bitcoin Mining", active: true,
+    investor: "", amount: "", category: "Tesla (TSLA)", active: true,
   });
 
   useEffect(() => { fetchAll(); }, []);
@@ -62,13 +68,12 @@ function Investments() {
     e.preventDefault();
     try {
       await API.post("investments/", {
-        investor:  form.investor,
-        amount:    form.amount,
-        category:  form.category,
-        // daily_roi is set server-side automatically
+        investor: form.investor,
+        amount:   form.amount,
+        category: form.category,
       });
       alert("Investment Created Successfully");
-      setForm({ investor: "", amount: "", category: "Bitcoin Mining", active: true });
+      setForm({ investor: "", amount: "", category: "Tesla (TSLA)", active: true });
       fetchInvestments();
     } catch (err) {
       const msg = err.response?.data?.amount?.[0] || "Failed to create investment";
@@ -98,8 +103,8 @@ function Investments() {
     return found ? found.name : `#${id}`;
   };
 
-  const pendingList = investments.filter((i) => !i.approved);
-  const displayList = tab === "pending" ? pendingList : investments;
+  const pendingList  = investments.filter((i) => !i.approved);
+  const displayList  = tab === "pending" ? pendingList : investments;
 
   if (loading) return <Loader />;
 
@@ -110,7 +115,7 @@ function Investments() {
         <div>
           <h1 className="text-3xl font-bold tracking-wide">Investments</h1>
           <p className="text-[#8f9cae] text-sm mt-1">
-            Manage and approve investment contracts. ROI is auto-assigned by category.
+            Manage and approve investment contracts. All plans earn 10% daily ROI for 14 days.
           </p>
         </div>
 
@@ -141,10 +146,9 @@ function Investments() {
                 value={form.category}
                 onChange={(e) => setForm({ ...form, category: e.target.value })}
               >
-                <option value="Bitcoin Mining">Bitcoin Mining</option>
-                <option value="Forex Trading">Forex Trading</option>
-                <option value="Real Estate">Real Estate</option>
-                <option value="Crypto Arbitrage">Crypto Arbitrage</option>
+                {STOCK_CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
               </select>
             </div>
 
@@ -165,16 +169,14 @@ function Investments() {
               />
             </div>
 
-            {/* ROI preview */}
+            {/* ROI preview — always 10% */}
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-semibold text-[#8f9cae] uppercase tracking-wider">
-                Auto-assigned Daily ROI
+                Daily ROI (all plans)
               </label>
               <div className="bg-[#090d16] border border-[#1e2638] p-3 rounded-lg flex items-center justify-between">
-                <span className="text-[#8f9cae] text-sm">Based on category</span>
-                <span className="text-[#10b981] font-bold text-lg">
-                  {CATEGORY_ROI[form.category] ?? 2.0}%
-                </span>
+                <span className="text-[#8f9cae] text-sm">Flat rate · 14-day duration</span>
+                <span className="text-[#10b981] font-bold text-lg">10%</span>
               </div>
             </div>
 

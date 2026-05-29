@@ -6,18 +6,17 @@ const MIN = 100;
 const MAX = 500;
 
 const COMPANIES = [
-  { name: "Apex Capital", category: "Forex Trading",    roi: 2.5, dividends: "10%", min: "$100", max: "$500" },
-  { name: "BitMine Pro",  category: "Bitcoin Mining",   roi: 3.0, dividends: "10%", min: "$100", max: "$500" },
-  { name: "UrbanVest",    category: "Real Estate",      roi: 2.0, dividends: "10%", min: "$100", max: "$500" },
-  { name: "ArbitrageX",   category: "Crypto Arbitrage", roi: 3.5, dividends: "10%", min: "$100", max: "$500" },
+  { name: "Tesla, Inc.",             category: "Tesla (TSLA)",      roi: 10 },
+  { name: "Apple Inc.",              category: "Apple (AAPL)",      roi: 10 },
+  { name: "Amazon.com, Inc.",        category: "Amazon (AMZN)",     roi: 10 },
+  { name: "McDonald's Corporation",  category: "McDonald's (MCD)",  roi: 10 },
+  { name: "GameStop Corporation",    category: "GameStop (GME)",    roi: 10 },
+  { name: "Coca-Cola Company",       category: "Coca-Cola (KO)",    roi: 10 },
+  { name: "Meta Platforms, Inc.",    category: "Meta (META)",       roi: 10 },
+  { name: "Alphabet Inc. (Class C)", category: "Alphabet (GOOG)",   roi: 10 },
+  { name: "Netflix, Inc.",           category: "Netflix (NFLX)",    roi: 10 },
+  { name: "Intel Corporation",       category: "Intel (INTC)",      roi: 10 },
 ];
-
-const CATEGORY_ROI = {
-  "Forex Trading":    2.5,
-  "Bitcoin Mining":   3.0,
-  "Real Estate":      2.0,
-  "Crypto Arbitrage": 3.5,
-};
 
 function UserInvestments() {
   const [investments, setInvestments] = useState([]);
@@ -81,7 +80,6 @@ function UserInvestments() {
   const activeInvestments = investments.filter((i) => i.active);
   const totalProfit   = activeInvestments.reduce((s, i) => s + parseFloat(i.current_profit || 0), 0);
   const totalInvested = activeInvestments.reduce((s, i) => s + parseFloat(i.amount || 0), 0);
-  const selectedROI   = CATEGORY_ROI[form.category];
 
   return (
     <DashboardLayout>
@@ -114,12 +112,12 @@ function UserInvestments() {
           </div>
         )}
 
-        {/* COMPANY PLANS TABLE */}
+        {/* AVAILABLE PLANS TABLE */}
         <div className="bg-[#121824] border border-[#1e2638] rounded-xl overflow-hidden">
           <div className="px-6 py-4 border-b border-[#1e2638]">
             <h2 className="text-lg font-semibold">Available Investment Plans</h2>
             <p className="text-xs text-[#8f9cae] mt-0.5">
-              All plans pay 10% dividends every 2 weeks. Range: $100 – $500.
+              All plans earn 10% daily ROI for 14 days. Range: $100 – $500.
             </p>
           </div>
           <div className="overflow-x-auto">
@@ -129,7 +127,6 @@ function UserInvestments() {
                   <th className="p-4 text-left">Company</th>
                   <th className="p-4 text-left">Category</th>
                   <th className="p-4 text-right">Daily ROI</th>
-                  <th className="p-4 text-right">Dividends</th>
                   <th className="p-4 text-right">Duration</th>
                   <th className="p-4 text-right">Min</th>
                   <th className="p-4 text-right">Max</th>
@@ -141,10 +138,9 @@ function UserInvestments() {
                     <td className="p-4 font-semibold text-white">{c.name}</td>
                     <td className="p-4 text-[#8f9cae]">{c.category}</td>
                     <td className="p-4 text-right font-semibold text-[#10b981]">{c.roi}%</td>
-                    <td className="p-4 text-right text-yellow-400 font-semibold">{c.dividends}</td>
                     <td className="p-4 text-right text-[#8f9cae]">14 days</td>
-                    <td className="p-4 text-right text-white">{c.min}</td>
-                    <td className="p-4 text-right text-white">{c.max}</td>
+                    <td className="p-4 text-right text-white">$100</td>
+                    <td className="p-4 text-right text-white">$500</td>
                   </tr>
                 ))}
               </tbody>
@@ -165,20 +161,19 @@ function UserInvestments() {
                 onChange={(e) => setForm({ ...form, category: e.target.value })}
                 required
               >
-                <option value="">Choose Category</option>
-                <option value="Bitcoin Mining">Bitcoin Mining</option>
-                <option value="Forex Trading">Forex Trading</option>
-                <option value="Real Estate">Real Estate</option>
-                <option value="Crypto Arbitrage">Crypto Arbitrage</option>
+                <option value="">Choose Stock Category</option>
+                {COMPANIES.map((c) => (
+                  <option key={c.category} value={c.category}>{c.category}</option>
+                ))}
               </select>
             </div>
 
-            {/* Auto ROI pill */}
-            {selectedROI && (
+            {/* ROI pill — shows once category is selected */}
+            {form.category && (
               <div className="flex items-center gap-3 bg-[#0b66e4]/10 border border-[#0b66e4]/25 rounded-lg px-4 py-3">
                 <span className="text-xs text-[#8f9cae]">Daily ROI for this plan</span>
-                <span className="ml-auto text-[#10b981] font-bold text-lg">{selectedROI}%</span>
-                <span className="text-xs text-[#8f9cae]">· auto-assigned · 10% dividends / 2 wks</span>
+                <span className="ml-auto text-[#10b981] font-bold text-lg">10%</span>
+                <span className="text-xs text-[#8f9cae]">· 14-day duration</span>
               </div>
             )}
 
@@ -256,7 +251,7 @@ function UserInvestments() {
                     )}
                   </div>
                   <p className="text-sm text-[#8f9cae] mt-1">
-                    {inv.daily_roi}% daily ROI · 10% dividends / 2 wks · {inv.payment_method}
+                    10% daily ROI · 14-day duration · {inv.payment_method}
                   </p>
                   <p className="text-xs text-[#8f9cae] mt-0.5">
                     Started {new Date(inv.created_at).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
