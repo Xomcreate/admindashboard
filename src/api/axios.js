@@ -1,11 +1,10 @@
 import axios from "axios";
 
-// Create Axios instance
 const API = axios.create({
-  baseURL: "https://adminback-1.onrender.com/api/",
+  baseURL: "https://adminback-1.onrender.com",
 });
 
-// Attach access token to every request
+// Attach token
 API.interceptors.request.use((req) => {
   const token = localStorage.getItem("token");
 
@@ -16,7 +15,7 @@ API.interceptors.request.use((req) => {
   return req;
 });
 
-// Handle token refresh on 401
+// Refresh logic
 API.interceptors.response.use(
   (res) => res,
   async (error) => {
@@ -34,23 +33,25 @@ API.interceptors.response.use(
       }
 
       try {
-        const res = await API.post("/token/refresh/", {
-          refresh,
-        });
+        const res = await axios.post(
+          "https://adminback-1.onrender.com/api/token/refresh/",
+          { refresh }
+        );
 
         const newAccess = res.data.access;
 
-        // Save new access token
         localStorage.setItem("token", newAccess);
 
-        // Update header and retry original request
-        original.headers.Authorization = `Bearer ${newAccess}`;
+        original.headers = {
+          ...original.headers,
+          Authorization: `Bearer ${newAccess}`,
+        };
 
-        return API(original);
-      } catch (refreshError) {
+        return axios(original);
+      } catch (err) {
         localStorage.clear();
         window.location.href = "/";
-        return Promise.reject(refreshError);
+        return Promise.reject(err);
       }
     }
 
