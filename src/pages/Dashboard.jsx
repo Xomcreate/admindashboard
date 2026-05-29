@@ -1,5 +1,3 @@
-// src/pages/Dashboard.jsx
-
 import { useEffect, useState } from "react";
 import DashboardLayout from "../layouts/DashboardLayout";
 import API from "../api/axios";
@@ -11,10 +9,20 @@ import {
 
 const PIE_COLORS = ["#10b981", "#0b66e4", "#f59e0b", "#a78bfa", "#f472b6", "#34d399"];
 
-const RANK_STYLE = {
-  1: { bg: "bg-yellow-500/20",  text: "text-yellow-400",  border: "border-yellow-500/40",  label: "🥇" },
-  2: { bg: "bg-slate-400/15",   text: "text-slate-300",   border: "border-slate-400/30",   label: "🥈" },
-  3: { bg: "bg-orange-600/15",  text: "text-orange-400",  border: "border-orange-500/30",  label: "🥉" },
+const TIER_STYLE = {
+  silver: { bg: "bg-slate-400/15",  text: "text-slate-300",  border: "border-slate-400/30",  label: "🥈 Silver" },
+  gold:   { bg: "bg-yellow-500/20", text: "text-yellow-400", border: "border-yellow-500/40", label: "🥇 Gold"   },
+  bronze: { bg: "bg-orange-600/15", text: "text-orange-400", border: "border-orange-500/30", label: "🥉 Bronze" },
+  none:   { bg: "bg-[#1e2638]",     text: "text-[#8f9cae]",  border: "border-[#1e2638]",     label: "—"         },
+};
+
+const TierBadge = ({ tier }) => {
+  const s = TIER_STYLE[tier] || TIER_STYLE.none;
+  return (
+    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${s.bg} ${s.text} ${s.border}`}>
+      {s.label}
+    </span>
+  );
 };
 
 const StatCard = ({ label, value, color = "text-white", accent, icon }) => (
@@ -46,9 +54,9 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 const Dashboard = () => {
-  const [stats, setStats]           = useState(null);
-  const [topList, setTopList]       = useState([]);
-  const [loading, setLoading]       = useState(true);
+  const [stats,      setStats]      = useState(null);
+  const [topList,    setTopList]    = useState([]);
+  const [loading,    setLoading]    = useState(true);
   const [topLoading, setTopLoading] = useState(true);
 
   useEffect(() => {
@@ -60,22 +68,16 @@ const Dashboard = () => {
     try {
       const res = await API.get("dashboard-stats/");
       setStats(res.data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
   };
 
   const fetchTopInvestors = async () => {
     try {
       const res = await API.get("top-investors/");
       setTopList(res.data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setTopLoading(false);
-    }
+    } catch (err) { console.error(err); }
+    finally { setTopLoading(false); }
   };
 
   if (loading) return <Loader />;
@@ -94,32 +96,29 @@ const Dashboard = () => {
           </p>
         </div>
 
-        {/* METRICS GRID */}
+        {/* METRICS */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           <StatCard label="Total Users"
             value={stats?.users ?? 0}
             color="text-white" accent="hover:border-[#1e2638]" icon="👥" />
-          <StatCard
-            label="Total Investments"
-            value={`$${Number(stats?.investments ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+          <StatCard label="Total Investments"
+            value={`$${Number(stats?.investments ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
             color="text-[#10b981]" accent="hover:border-[#10b981]/40" icon="📈" />
-          <StatCard
-            label="Total Withdrawals"
-            value={`$${Number(stats?.withdrawals ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+          <StatCard label="Total Withdrawals"
+            value={`$${Number(stats?.withdrawals ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
             color="text-[#0b66e4]" accent="hover:border-[#0b66e4]/30" icon="💸" />
           <StatCard label="Blocked Accounts"
             value={stats?.blocked_users ?? 0}
             color="text-red-400" accent="hover:border-red-500/30" icon="🚫" />
         </div>
 
-        {/* CHARTS ROW */}
+        {/* CHARTS */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
           <div className="bg-[#121824] border border-[#1e2638] rounded-xl p-6">
             <h2 className="text-lg font-semibold text-white mb-1">Investments by Category</h2>
             <p className="text-xs text-[#8f9cae] mb-5">Total capital allocated per investment type</p>
             {categoryData.length === 0 ? (
-              <div className="flex items-center justify-center h-48 text-[#8f9cae] italic text-sm">No investment data yet</div>
+              <div className="flex items-center justify-center h-48 text-[#8f9cae] italic text-sm">No data yet</div>
             ) : (
               <ResponsiveContainer width="100%" height={240}>
                 <BarChart data={categoryData} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
@@ -137,7 +136,7 @@ const Dashboard = () => {
             <h2 className="text-lg font-semibold text-white mb-1">Portfolio Distribution</h2>
             <p className="text-xs text-[#8f9cae] mb-5">Share of total capital by category</p>
             {categoryData.length === 0 ? (
-              <div className="flex items-center justify-center h-48 text-[#8f9cae] italic text-sm">No investment data yet</div>
+              <div className="flex items-center justify-center h-48 text-[#8f9cae] italic text-sm">No data yet</div>
             ) : (
               <div className="flex items-center gap-4">
                 <ResponsiveContainer width="55%" height={220}>
@@ -164,7 +163,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Monthly Trend */}
+        {/* MONTHLY TREND */}
         {monthlyData.length > 0 && (
           <div className="bg-[#121824] border border-[#1e2638] rounded-xl p-6">
             <h2 className="text-lg font-semibold text-white mb-1">Monthly Investment Trend</h2>
@@ -182,12 +181,14 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* TOP INVESTORS LEADERBOARD */}
+        {/* TOP INVESTORS */}
         <div className="bg-[#121824] border border-[#1e2638] rounded-xl overflow-hidden">
           <div className="flex items-center justify-between px-6 py-5 border-b border-[#1e2638]">
             <div>
               <h2 className="text-lg font-semibold text-white">🏆 Top Investors</h2>
-              <p className="text-xs text-[#8f9cae] mt-0.5">Ranked by total capital invested</p>
+              <p className="text-xs text-[#8f9cae] mt-0.5">
+                Tier by investment count · Silver (1–2) · Gold (3–5) · Bronze elite (6+)
+              </p>
             </div>
             <span className="text-xs bg-[#090d16] border border-[#1e2638] text-[#8f9cae] px-3 py-1 rounded-full">
               Top {topList.length}
@@ -201,7 +202,7 @@ const Dashboard = () => {
             </div>
           ) : topList.length === 0 ? (
             <div className="text-center py-16 text-[#8f9cae] italic text-sm">
-              No investors with active investments yet.
+              No investors yet.
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -210,31 +211,33 @@ const Dashboard = () => {
                   <tr className="bg-[#090d16] text-[#8f9cae] uppercase text-xs font-semibold tracking-wider">
                     <th className="p-4 text-center w-16">Rank</th>
                     <th className="p-4 text-left">Investor</th>
+                    <th className="p-4 text-center">Tier</th>
                     <th className="p-4 text-right">Total Invested</th>
                     <th className="p-4 text-right">Total Profit</th>
                     <th className="p-4 text-right">Wallet Balance</th>
                     <th className="p-4 text-center">Active Plans</th>
+                    <th className="p-4 text-center"># Investments</th>
                   </tr>
                 </thead>
                 <tbody>
                   {topList.map((inv) => {
-                    const style = RANK_STYLE[inv.rank] || {
-                      bg: "bg-transparent", text: "text-[#8f9cae]",
-                      border: "border-transparent", label: `#${inv.rank}`
-                    };
+                    const rankLabel =
+                      inv.rank === 1 ? "🥇" :
+                      inv.rank === 2 ? "🥈" :
+                      inv.rank === 3 ? "🥉" : `#${inv.rank}`;
                     return (
-                      <tr
-                        key={inv.rank}
-                        className="border-b border-[#1e2638] transition-colors hover:bg-[#1e2638]/50"
-                      >
+                      <tr key={inv.rank} className="border-b border-[#1e2638] hover:bg-[#1e2638]/50 transition-colors">
                         <td className="p-4 text-center">
-                          <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold border ${style.bg} ${style.text} ${style.border}`}>
-                            {inv.rank <= 3 ? style.label : inv.rank}
+                          <span className="inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold bg-[#090d16] border border-[#1e2638] text-[#8f9cae]">
+                            {rankLabel}
                           </span>
                         </td>
                         <td className="p-4">
                           <p className="font-semibold text-white">{inv.name}</p>
                           <p className="text-xs text-[#8f9cae]/60 mt-0.5">{inv.email}</p>
+                        </td>
+                        <td className="p-4 text-center">
+                          <TierBadge tier={inv.tier} />
                         </td>
                         <td className="p-4 text-right font-bold text-[#10b981]">
                           ${Number(inv.total_invested).toLocaleString(undefined, { minimumFractionDigits: 2 })}
@@ -253,6 +256,9 @@ const Dashboard = () => {
                           }`}>
                             {inv.active_plans} plan{inv.active_plans !== 1 ? "s" : ""}
                           </span>
+                        </td>
+                        <td className="p-4 text-center text-[#8f9cae] font-semibold">
+                          {inv.investment_count}
                         </td>
                       </tr>
                     );

@@ -2,10 +2,40 @@ import { useEffect, useState } from "react";
 import API from "../api/axios";
 import DashboardLayout from "../layouts/DashboardLayout";
 
-const RANK_STYLE = {
-  1: { bg: "bg-yellow-500/20",  text: "text-yellow-400",  border: "border-yellow-500/40",  label: "🥇" },
-  2: { bg: "bg-slate-400/15",   text: "text-slate-300",   border: "border-slate-400/30",   label: "🥈" },
-  3: { bg: "bg-orange-600/15",  text: "text-orange-400",  border: "border-orange-500/30",  label: "🥉" },
+const TIER_STYLE = {
+  silver: {
+    bg:     "bg-slate-400/15",
+    text:   "text-slate-300",
+    border: "border-slate-400/30",
+    label:  "🥈 Silver",
+  },
+  gold: {
+    bg:     "bg-yellow-500/20",
+    text:   "text-yellow-400",
+    border: "border-yellow-500/40",
+    label:  "🥇 Gold",
+  },
+  bronze: {
+    bg:     "bg-orange-600/15",
+    text:   "text-orange-400",
+    border: "border-orange-500/30",
+    label:  "🥉 Bronze",
+  },
+  none: {
+    bg:     "bg-[#1e2638]",
+    text:   "text-[#8f9cae]",
+    border: "border-[#1e2638]",
+    label:  "—",
+  },
+};
+
+const TierBadge = ({ tier }) => {
+  const s = TIER_STYLE[tier] || TIER_STYLE.none;
+  return (
+    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${s.bg} ${s.text} ${s.border}`}>
+      {s.label}
+    </span>
+  );
 };
 
 const UserDashboard = () => {
@@ -27,35 +57,21 @@ const UserDashboard = () => {
       setProfile(res.data.profile);
       setInvestments(res.data.investments);
       setWithdrawals(res.data.withdrawals);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
   };
 
   const fetchTopInvestors = async () => {
     try {
       const res = await API.get("top-investors/");
       setTopList(res.data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setTopLoading(false);
-    }
+    } catch (err) { console.error(err); }
+    finally { setTopLoading(false); }
   };
 
   const totalWithdrawals = withdrawals
     .filter((w) => w.status === "Approved")
     .reduce((sum, w) => sum + parseFloat(w.amount || 0), 0);
-
-  const totalInvested = investments.reduce(
-    (sum, inv) => sum + parseFloat(inv.amount || 0), 0
-  );
-
-  const totalProfit = investments.reduce(
-    (sum, inv) => sum + parseFloat(inv.current_profit || 0), 0
-  );
 
   if (loading) {
     return (
@@ -71,18 +87,24 @@ const UserDashboard = () => {
     <DashboardLayout>
       <div className="text-white space-y-8">
 
-        {/* Welcome Banner */}
+        {/* WELCOME */}
         <div className="bg-[#121824] rounded-2xl p-6 border border-[#1e2638]">
           <p className="text-[#8f9cae] text-sm mb-1">Welcome back,</p>
           <h1 className="text-3xl font-bold text-white">
             {profile.name || profile.email || "Investor"} 👋
           </h1>
-          <p className="text-[#8f9cae] text-sm mt-2">
-            Here's an overview of your portfolio today.
-          </p>
+          <div className="flex items-center gap-3 mt-3">
+            <TierBadge tier={profile.tier || "none"} />
+            <span className="text-xs text-[#8f9cae]">
+              {profile.tier === "none"   && "Make your first investment to earn a tier"}
+              {profile.tier === "silver" && "1–2 investments · keep going for Gold!"}
+              {profile.tier === "gold"   && "3–5 investments · almost at Bronze elite!"}
+              {profile.tier === "bronze" && "6+ investments · elite investor status!"}
+            </span>
+          </div>
         </div>
 
-        {/* Stats Cards */}
+        {/* STAT CARDS */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-[#121824] rounded-xl p-5 border border-[#1e2638]">
             <p className="text-[#8f9cae] text-xs uppercase tracking-wider mb-1">Wallet Balance</p>
@@ -114,7 +136,7 @@ const UserDashboard = () => {
           </div>
         </div>
 
-        {/* Investments Table */}
+        {/* INVESTMENTS TABLE */}
         <div className="bg-[#121824] rounded-2xl border border-[#1e2638] overflow-hidden">
           <div className="p-5 border-b border-[#1e2638] flex items-center justify-between">
             <h2 className="text-lg font-semibold">My Investments</h2>
@@ -140,7 +162,7 @@ const UserDashboard = () => {
                       </p>
                     </div>
                   </div>
-                  <div className="flex gap-6 text-sm">
+                  <div className="flex gap-6 text-sm flex-wrap">
                     <div>
                       <p className="text-[#8f9cae] text-xs">Amount</p>
                       <p className="font-semibold text-white">${parseFloat(inv.amount).toFixed(2)}</p>
@@ -150,6 +172,10 @@ const UserDashboard = () => {
                       <p className="font-semibold text-yellow-400">{inv.daily_roi}%</p>
                     </div>
                     <div>
+                      <p className="text-[#8f9cae] text-xs">Dividends</p>
+                      <p className="font-semibold text-[#10b981]">10% / 2 wks</p>
+                    </div>
+                    <div>
                       <p className="text-[#8f9cae] text-xs">Profit</p>
                       <p className="font-semibold text-[#10b981]">
                         ${parseFloat(inv.current_profit || 0).toFixed(2)}
@@ -157,13 +183,13 @@ const UserDashboard = () => {
                     </div>
                     <div>
                       <p className="text-[#8f9cae] text-xs">Status</p>
-                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                        inv.active
-                          ? "bg-green-900/40 text-green-400"
-                          : "bg-red-900/40 text-red-400"
-                      }`}>
-                        {inv.active ? "Active" : "Expired"}
-                      </span>
+                      {inv.active ? (
+                        <span className="text-xs px-2 py-1 rounded-full font-medium bg-green-900/40 text-green-400">Active</span>
+                      ) : inv.approved ? (
+                        <span className="text-xs px-2 py-1 rounded-full font-medium bg-red-900/40 text-red-400">Expired</span>
+                      ) : (
+                        <span className="text-xs px-2 py-1 rounded-full font-medium bg-yellow-900/40 text-yellow-400">Pending</span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -172,12 +198,14 @@ const UserDashboard = () => {
           )}
         </div>
 
-        {/* Top Investors Leaderboard */}
+        {/* TOP INVESTORS LEADERBOARD */}
         <div className="bg-[#121824] border border-[#1e2638] rounded-xl overflow-hidden">
           <div className="flex items-center justify-between px-6 py-5 border-b border-[#1e2638]">
             <div>
               <h2 className="text-lg font-semibold text-white">🏆 Top Investors</h2>
-              <p className="text-xs text-[#8f9cae]/60 mt-0.5">Ranked by total capital invested</p>
+              <p className="text-xs text-[#8f9cae]/60 mt-0.5">
+                Tier earned by number of investments · Silver (1–2) · Gold (3–5) · Bronze (6+)
+              </p>
             </div>
             <span className="text-xs bg-[#090d16] border border-[#1e2638] text-[#8f9cae] px-3 py-1 rounded-full">
               Top {topList.length}
@@ -200,42 +228,45 @@ const UserDashboard = () => {
                   <tr className="bg-[#090d16] text-[#8f9cae] uppercase text-xs font-semibold tracking-wider">
                     <th className="p-4 text-center w-16">Rank</th>
                     <th className="p-4 text-left">Investor</th>
+                    <th className="p-4 text-center">Tier</th>
                     <th className="p-4 text-right">Total Invested</th>
                     <th className="p-4 text-right">Total Profit</th>
                     <th className="p-4 text-center">Active Plans</th>
+                    <th className="p-4 text-center">Investments</th>
                   </tr>
                 </thead>
                 <tbody>
                   {topList.map((inv) => {
-                    const isCurrentUser = inv.email === profile.email;
-                    const style = RANK_STYLE[inv.rank] || {
-                      bg: "bg-transparent", text: "text-[#8f9cae]",
-                      border: "border-transparent", label: `#${inv.rank}`,
-                    };
+                    const isMe = inv.email === profile.email;
+                    const rankLabel =
+                      inv.rank === 1 ? "🥇" :
+                      inv.rank === 2 ? "🥈" :
+                      inv.rank === 3 ? "🥉" : `#${inv.rank}`;
                     return (
                       <tr
                         key={inv.rank}
                         className={`border-b border-[#1e2638] transition-colors ${
-                          isCurrentUser
-                            ? "bg-[#0b66e4]/10 hover:bg-[#0b66e4]/15"
-                            : "hover:bg-[#1e2638]/60"
+                          isMe ? "bg-[#0b66e4]/10 hover:bg-[#0b66e4]/15" : "hover:bg-[#1e2638]/60"
                         }`}
                       >
                         <td className="p-4 text-center">
-                          <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold border ${style.bg} ${style.text} ${style.border}`}>
-                            {inv.rank <= 3 ? style.label : inv.rank}
+                          <span className="inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold bg-[#090d16] border border-[#1e2638] text-[#8f9cae]">
+                            {rankLabel}
                           </span>
                         </td>
                         <td className="p-4">
                           <div className="flex items-center gap-2">
                             <p className="font-semibold text-white">{inv.name}</p>
-                            {isCurrentUser && (
+                            {isMe && (
                               <span className="text-xs bg-[#0b66e4]/15 text-[#0b66e4] border border-[#0b66e4]/25 px-2 py-0.5 rounded-full">
                                 You
                               </span>
                             )}
                           </div>
                           <p className="text-xs text-[#8f9cae]/60 mt-0.5">{inv.email}</p>
+                        </td>
+                        <td className="p-4 text-center">
+                          <TierBadge tier={inv.tier} />
                         </td>
                         <td className="p-4 text-right font-bold text-[#10b981]">
                           ${Number(inv.total_invested).toLocaleString(undefined, { minimumFractionDigits: 2 })}
@@ -252,6 +283,9 @@ const UserDashboard = () => {
                             {inv.active_plans} plan{inv.active_plans !== 1 ? "s" : ""}
                           </span>
                         </td>
+                        <td className="p-4 text-center text-[#8f9cae] font-semibold">
+                          {inv.investment_count}
+                        </td>
                       </tr>
                     );
                   })}
@@ -261,7 +295,7 @@ const UserDashboard = () => {
           )}
         </div>
 
-        {/* Withdrawals Summary */}
+        {/* WITHDRAWALS */}
         <div className="bg-[#121824] rounded-2xl border border-[#1e2638] overflow-hidden">
           <div className="p-5 border-b border-[#1e2638] flex items-center justify-between">
             <h2 className="text-lg font-semibold">Recent Withdrawals</h2>
@@ -283,16 +317,14 @@ const UserDashboard = () => {
                     <p className="text-xs text-[#8f9cae] font-mono mt-0.5 break-all">{w.wallet_address}</p>
                     <p className="text-xs text-[#8f9cae]/60 mt-0.5">
                       {new Date(w.created_at).toLocaleDateString(undefined, {
-                        year: "numeric", month: "short", day: "numeric"
+                        year: "numeric", month: "short", day: "numeric",
                       })}
                     </p>
                   </div>
                   <span className={`text-xs px-3 py-1 rounded-full font-semibold shrink-0 ${
-                    w.status === "Approved"
-                      ? "bg-green-900/40 text-green-400"
-                      : w.status === "Rejected"
-                      ? "bg-red-900/40 text-red-400"
-                      : "bg-yellow-900/40 text-yellow-400"
+                    w.status === "Approved" ? "bg-green-900/40 text-green-400"
+                    : w.status === "Rejected" ? "bg-red-900/40 text-red-400"
+                    : "bg-yellow-900/40 text-yellow-400"
                   }`}>
                     {w.status}
                   </span>
