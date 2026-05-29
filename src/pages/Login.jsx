@@ -10,9 +10,11 @@ const Login = () => {
     password: "",
   });
 
-  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Password visibility state
+  const [showPassword, setShowPassword] = useState(false);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -20,65 +22,106 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // LOGIN
+      // 1. Get tokens
       const res = await API.post("token/", form);
 
       localStorage.setItem("token", res.data.access);
       localStorage.setItem("refresh_token", res.data.refresh);
 
-      // GET USER ROLE
+      // 2. Fetch profile to determine role
       const profile = await API.get("user-dashboard/");
       const role = profile.data.profile.role;
 
       localStorage.setItem("role", role);
 
+      // 3. Route based on role
       if (role === "admin") {
         navigate("/dashboard");
       } else {
         navigate("/user/dashboard");
       }
     } catch (err) {
-      console.log(err.response?.data);
-      setError("Invalid username or password");
+      console.error(err.response?.data || err.message);
+      setError("Invalid username or password.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={submit}>
-      <input
-        placeholder="Username"
-        value={form.username}
-        onChange={(e) =>
-          setForm({ ...form, username: e.target.value })
-        }
-      />
+    <div className="h-screen flex items-center justify-center bg-[#090d16]">
+      <form
+        onSubmit={submit}
+        className="bg-[#121824] border border-[#1e2638] p-8 rounded-xl w-96 shadow-2xl"
+      >
+        <h1 className="text-white text-2xl mb-6 font-bold">
+          Login
+        </h1>
 
-      <div>
+        {error && (
+          <p className="text-red-400 text-sm mb-4">
+            {error}
+          </p>
+        )}
+
         <input
-          type={showPassword ? "text" : "password"}
-          placeholder="Password"
-          value={form.password}
+          placeholder="Username"
+          className="w-full p-3 mb-4 rounded-lg bg-[#090d16] text-white border border-[#1e2638] placeholder-[#8f9cae] focus:outline-none focus:border-[#0b66e4]"
+          value={form.username}
           onChange={(e) =>
-            setForm({ ...form, password: e.target.value })
+            setForm({
+              ...form,
+              username: e.target.value,
+            })
           }
+          required
         />
 
+        {/* Password Input */}
+        <div className="relative mb-6">
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Password"
+            className="w-full p-3 rounded-lg bg-[#090d16] text-white border border-[#1e2638] placeholder-[#8f9cae] focus:outline-none focus:border-[#0b66e4]"
+            value={form.password}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                password: e.target.value,
+              })
+            }
+            required
+          />
+
+          <button
+            type="button"
+            onClick={() =>
+              setShowPassword(!showPassword)
+            }
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8f9cae] text-sm"
+          >
+            {showPassword ? "Hide" : "Show"}
+          </button>
+        </div>
+
         <button
-          type="button"
-          onClick={() => setShowPassword(!showPassword)}
+          className="bg-[#0b66e4] hover:bg-[#0055cc] w-full p-3 text-white rounded-lg font-semibold transition-colors disabled:opacity-50"
+          disabled={loading}
         >
-          {showPassword ? "Hide" : "Show"}
+          {loading ? "Logging in..." : "Login"}
         </button>
-      </div>
 
-      <button disabled={loading}>
-        {loading ? "Logging in..." : "Login"}
-      </button>
-
-      <Link to="/register">Register</Link>
-    </form>
+        <p className="text-[#8f9cae] mt-4 text-sm text-center">
+          Don't have an account?{" "}
+          <Link
+            to="/register"
+            className="text-[#0b66e4] hover:underline"
+          >
+            Register
+          </Link>
+        </p>
+      </form>
+    </div>
   );
 };
 
