@@ -94,6 +94,17 @@ function Investors() {
     }
   };
 
+  const deleteUser = async (id, username) => {
+    if (!window.confirm(`Delete user "${username}"? This will also remove their investor profile and cannot be undone.`)) return;
+    try {
+      await API.delete(`users/${id}/delete/`);
+      fetchAll(); // refresh both tables since investor may also be removed
+    } catch (error) {
+      console.log(error);
+      alert(error.response?.data?.error || "Failed to delete user.");
+    }
+  };
+
   if (loading) return <Loader />;
 
   return (
@@ -212,6 +223,7 @@ function Investors() {
                   <th className="p-4 text-left">Email</th>
                   <th className="p-4 text-center">Account Status</th>
                   <th className="p-4 text-left">Date Joined</th>
+                  <th className="p-4 text-center">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -244,11 +256,19 @@ function Investors() {
                           day: "numeric",
                         })}
                       </td>
+                      <td className="p-4 text-center">
+                        <button
+                          onClick={() => deleteUser(user.id, user.username)}
+                          className="bg-red-900/30 hover:bg-red-700 text-red-400 hover:text-white border border-red-800/40 text-xs font-semibold px-4 py-1.5 rounded-md transition-all"
+                        >
+                          Delete
+                        </button>
+                      </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="5" className="text-center p-8 text-[#8f9cae] italic">
+                    <td colSpan="6" className="text-center p-8 text-[#8f9cae] italic">
                       No Users Found
                     </td>
                   </tr>
