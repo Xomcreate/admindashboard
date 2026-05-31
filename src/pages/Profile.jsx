@@ -36,7 +36,7 @@ function Profile() {
         phone: profile.phone,
       });
       setSuccess("Profile updated successfully!");
-      fetchProfile(); // re-fetch profile to sync changes
+      fetchProfile();
     } catch (err) {
       console.error(err);
       setError("Failed to update profile. Please try again.");
@@ -45,18 +45,17 @@ function Profile() {
     }
   };
 
-  // Extracting basic color palette variables for clarity
-  const pageBg = "bg-[#090d16]";
-  const cardBg = "bg-[#121824]";
-  const borderCol = "border-[#1e2638]";
+  const pageBg      = "bg-[#090d16]";
+  const cardBg      = "bg-[#121824]";
+  const borderCol   = "border-[#1e2638]";
   const primaryBlue = "text-[#0b66e4]";
-  const mutedText = "text-[#8f9cae]";
-  const inputBg = "bg-[#090d16]";
+  const mutedText   = "text-[#8f9cae]";
+  const inputBg     = "bg-[#090d16]";
 
   return (
     <DashboardLayout>
       <div className={`text-white space-y-8 max-w-4xl mx-auto p-4`}>
-        
+
         {/* HEADER */}
         <div>
           <h1 className="text-3xl font-bold tracking-wide">Account Settings</h1>
@@ -72,7 +71,8 @@ function Profile() {
             </h2>
           </div>
           <div className={`${cardBg} p-5 rounded-xl border ${borderCol} shadow-2xl`}>
-            <p className={`${mutedText} text-xs uppercase tracking-wider mb-1`}>Active Profits</p>
+            {/* CHANGED: label updated from "Active Profits" to "Total Profits" */}
+            <p className={`${mutedText} text-xs uppercase tracking-wider mb-1`}>Total Profits</p>
             <h2 className="text-2xl font-bold text-yellow-400">
               ${parseFloat(profile.active_profits || 0).toFixed(2)}
             </h2>
@@ -123,7 +123,7 @@ function Profile() {
                 type="email"
                 className={`w-full ${inputBg} p-3 rounded-lg border ${borderCol} text-slate-400 cursor-not-allowed`}
                 value={profile.email}
-                disabled // Email is usually fixed or changed through a different process
+                disabled
               />
             </div>
             <div>
