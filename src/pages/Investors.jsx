@@ -83,6 +83,17 @@ function Investors() {
     }
   };
 
+  const deleteInvestor = async (id, name) => {
+    if (!window.confirm(`Delete investor "${name}"? This cannot be undone.`)) return;
+    try {
+      await API.delete(`investors/${id}/`);
+      fetchInvestors();
+    } catch (error) {
+      console.log(error);
+      alert("Failed to delete investor.");
+    }
+  };
+
   if (loading) return <Loader />;
 
   return (
@@ -144,21 +155,29 @@ function Investors() {
                         )}
                       </td>
                       <td className="p-4 text-center">
-                        {investor.blocked ? (
+                        <div className="flex items-center justify-center gap-2">
+                          {investor.blocked ? (
+                            <button
+                              onClick={() => unblockUser(investor.id)}
+                              className="bg-[#0b66e4]/15 hover:bg-[#0b66e4] text-[#0b66e4] hover:text-white border border-[#0b66e4]/30 text-xs font-semibold px-4 py-1.5 rounded-md transition-all"
+                            >
+                              Unblock
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => blockUser(investor.id)}
+                              className="bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/30 text-xs font-semibold px-4 py-1.5 rounded-md transition-all"
+                            >
+                              Block
+                            </button>
+                          )}
                           <button
-                            onClick={() => unblockUser(investor.id)}
-                            className="bg-[#0b66e4]/15 hover:bg-[#0b66e4] text-[#0b66e4] hover:text-white border border-[#0b66e4]/30 text-xs font-semibold px-4 py-1.5 rounded-md transition-all"
+                            onClick={() => deleteInvestor(investor.id, investor.name)}
+                            className="bg-red-900/30 hover:bg-red-700 text-red-400 hover:text-white border border-red-800/40 text-xs font-semibold px-4 py-1.5 rounded-md transition-all"
                           >
-                            Unblock
+                            Delete
                           </button>
-                        ) : (
-                          <button
-                            onClick={() => blockUser(investor.id)}
-                            className="bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/30 text-xs font-semibold px-4 py-1.5 rounded-md transition-all"
-                          >
-                            Block
-                          </button>
-                        )}
+                        </div>
                       </td>
                     </tr>
                   ))

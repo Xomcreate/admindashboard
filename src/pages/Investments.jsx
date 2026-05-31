@@ -40,6 +40,11 @@ function Investments() {
     investor: "", amount: "", category: "Tesla (TSLA)", active: true,
   });
 
+  // Manual profit modal state
+  const [profitModal, setProfitModal] = useState(null); // holds the investment object
+  const [profitAmount, setProfitAmount] = useState("");
+  const [profitLoading, setProfitLoading] = useState(false);
+
   useEffect(() => { fetchAll(); }, []);
 
   const fetchAll = async () => {
@@ -96,6 +101,35 @@ function Investments() {
       await API.delete(`investments/${id}/`);
       fetchInvestments();
     } catch (e) { console.error(e); }
+  };
+
+  // Open the manual profit modal
+  const openProfitModal = (inv) => {
+    setProfitModal(inv);
+    setProfitAmount("");
+  };
+
+  // Submit manual profit
+  const submitManualProfit = async (e) => {
+    e.preventDefault();
+    if (!profitAmount || isNaN(profitAmount) || Number(profitAmount) <= 0) {
+      alert("Please enter a valid profit amount.");
+      return;
+    }
+    setProfitLoading(true);
+    try {
+      await API.post(`investments/${profitModal.id}/add_profit/`, {
+        amount: profitAmount,
+      });
+      alert("Profit added successfully.");
+      setProfitModal(null);
+      fetchInvestments();
+    } catch (err) {
+      const msg = err.response?.data?.error || "Failed to add profit.";
+      alert(msg);
+    } finally {
+      setProfitLoading(false);
+    }
   };
 
   const getInvestorName = (id) => {
@@ -169,7 +203,7 @@ function Investments() {
               />
             </div>
 
-            {/* ROI preview — always 10% */}
+            {/* ROI preview */}
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-semibold text-[#8f9cae] uppercase tracking-wider">
                 Daily ROI (all plans)
@@ -239,7 +273,7 @@ function Investments() {
                       })}
                     </td>
                     <td className="p-4 text-center">
-                      <div className="flex items-center justify-center gap-2">
+                      <div className="flex items-center justify-center gap-2 flex-wrap">
                         {!inv.approved && (
                           <button
                             onClick={() => approveInvestment(inv.id)}
@@ -248,6 +282,13 @@ function Investments() {
                             Approve
                           </button>
                         )}
+                        {/* Manual Profit Button */}
+                        <button
+                          onClick={() => openProfitModal(inv)}
+                          className="bg-yellow-500/15 hover:bg-yellow-500 text-yellow-400 hover:text-white border border-yellow-500/30 text-xs font-semibold px-3 py-1.5 rounded-md transition-all cursor-pointer"
+                        >
+                          + Profit
+                        </button>
                         <button
                           onClick={() => deleteInvestment(inv.id)}
                           className="bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/30 text-xs font-semibold px-3 py-1.5 rounded-md transition-all cursor-pointer"
@@ -270,6 +311,59 @@ function Investments() {
         </div>
 
       </div>
+
+      {/* MANUAL PROFIT MODAL */}
+      {profitModal && (
+        <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-50">
+          <div className="bg-[#121824] w-full max-w-md p-6 rounded-xl border border-[#1e2638]">
+            <h2 className="text-xl font-bold text-white mb-1">Add Manual Profit</h2>
+            <p className="text-[#8f9cae] text-sm mb-5">
+              Investor: <span className="text-white font-medium">{getInvestorName(profitModal.investor)}</span>
+              &nbsp;·&nbsp;
+              Category: <span className="text-white font-medium">{profitModal.category}</span>
+              &nbsp;·&nbsp;
+              Current Profit: <span className="text-[#0b66e4] font-medium">
+                ${Number(profitModal.current_profit).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </span>
+            </p>
+            <form onSubmit={submitManualProfit} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-[#8f9cae] uppercase tracking-wider">
+                  Profit Amount to Add ($)
+                </label>
+                <input
+                  type="number"
+                  placeholder="0.00"
+                  min="0.01"
+                  step="0.01"
+                  className="bg-[#090d16] border border-[#1e2638] p-3 rounded-lg text-white placeholder-[#8f9cae] focus:outline-none focus:border-[#0b66e4] transition-colors"
+                  value={profitAmount}
+                  onChange={(e) => setProfitAmount(e.target.value)}
+                  required
+                  autoFocus
+                />
+              </div>
+              <div className="flex gap-3 mt-1">
+                <button
+                  type="submit"
+                  disabled={profitLoading}
+                  className="bg-yellow-500 hover:bg-yellow-400 disabled:opacity-50 flex-1 py-3 rounded-lg font-semibold text-black transition-colors cursor-pointer"
+                >
+                  {profitLoading ? "Adding..." : "Add Profit"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setProfitModal(null)}
+                  className="bg-[#1e2638] hover:bg-[#2a3448] flex-1 py-3 rounded-lg font-semibold text-white transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </DashboardLayout>
   );
 }
