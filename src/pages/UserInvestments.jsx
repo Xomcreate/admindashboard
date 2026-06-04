@@ -5,6 +5,7 @@ import API from "../api/axios";
 const MIN = 500000;
 const MAX = 2000000;
 
+// Tier info is DISPLAY ONLY — assigned automatically by investment count
 const PLANS = [
   {
     name:     "Silver Plan",
@@ -35,6 +36,7 @@ const PLANS = [
   },
 ];
 
+// These are the ONLY things a user can invest in
 const COMPANIES = [
   { name: "Tesla, Inc.",             category: "Tesla (TSLA)"      },
   { name: "Apple Inc.",              category: "Apple (AAPL)"      },
@@ -71,6 +73,12 @@ function TierBadge({ tier }) {
       {s.label}
     </span>
   );
+}
+
+// Find display name for a stock category
+function getCompanyDisplayName(category) {
+  const c = COMPANIES.find((c) => c.category === category);
+  return c ? c.name : category;
 }
 
 function UserInvestments() {
@@ -201,12 +209,12 @@ function UserInvestments() {
           </div>
         )}
 
-        {/* TIER SYSTEM INFO */}
+        {/* TIER SYSTEM INFO — read-only, auto-upgrades by investment count */}
         <div className="bg-[#121824] border border-[#1e2638] rounded-xl overflow-hidden">
           <div className="px-6 py-4 border-b border-[#1e2638]">
             <h2 className="text-lg font-semibold">Investor Tier System</h2>
             <p className="text-xs text-[#8f9cae] mt-0.5">
-              Your tier upgrades automatically based on your total number of investments.
+              Your tier upgrades <span className="text-white font-semibold">automatically</span> based on how many stocks you invest in. Tiers cannot be selected manually.
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-[#1e2638]">
@@ -226,7 +234,7 @@ function UserInvestments() {
                   </div>
                   <div className="space-y-1.5 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-[#8f9cae]">Required</span>
+                      <span className="text-[#8f9cae]">Unlocks at</span>
                       <span className={`font-bold ${plan.color}`}>{plan.levels}</span>
                     </div>
                     <div className="flex justify-between">
@@ -265,7 +273,7 @@ function UserInvestments() {
           <div className="px-6 py-4 border-b border-[#1e2638]">
             <h2 className="text-lg font-semibold">Stock Companies</h2>
             <p className="text-xs text-[#8f9cae] mt-0.5">
-              Invest in top-performing companies.{" "}
+              Choose a company below to invest in.{" "}
               <span className="text-[#10b981] font-semibold">25% daily ROI</span>{" "}·{" "}
               <span className="text-white font-semibold">120-day lock</span>{" "}·{" "}
               Range: $500,000 – $2,000,000.
@@ -299,14 +307,17 @@ function UserInvestments() {
           </div>
         </div>
 
-        {/* NEW INVESTMENT FORM */}
+        {/* NEW INVESTMENT FORM — stock companies only */}
         <div className="bg-[#121824] p-6 rounded-xl border border-[#1e2638]">
-          <h2 className="text-lg font-semibold mb-5 text-slate-100">New Investment</h2>
+          <h2 className="text-lg font-semibold mb-1 text-slate-100">New Investment</h2>
+          <p className="text-xs text-[#8f9cae] mb-5">
+            Select a stock company to invest in. Your investor tier is assigned automatically based on how many investments you make.
+          </p>
           <form onSubmit={submitInvestment} className="space-y-4">
 
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-semibold text-[#8f9cae] uppercase tracking-wider">
-                Select Plan or Stock
+                Select Stock Company
               </label>
               <select
                 className="w-full bg-[#090d16] p-3 rounded-lg border border-[#1e2638] text-white focus:outline-none focus:border-[#0b66e4] transition-colors cursor-pointer"
@@ -314,25 +325,26 @@ function UserInvestments() {
                 onChange={(e) => setForm({ ...form, category: e.target.value })}
                 required
               >
-                <option value="">Choose a Plan or Stock</option>
-                <optgroup label="── Investment Plans ──">
-                  {PLANS.map((p) => (
-                    <option key={p.category} value={p.category}>
-                      {p.icon} {p.name} ({p.levels})
-                    </option>
-                  ))}
-                </optgroup>
-                <optgroup label="── Stock Companies ──">
-                  {COMPANIES.map((c) => (
-                    <option key={c.category} value={c.category}>{c.category}</option>
-                  ))}
-                </optgroup>
+                <option value="">Choose a Stock Company</option>
+                {COMPANIES.map((c) => (
+                  <option key={c.category} value={c.category}>{c.name} — {c.category}</option>
+                ))}
               </select>
             </div>
 
+            {/* Tier hint based on current count */}
+            {totalCount > 0 && (
+              <div className="flex items-center gap-3 bg-[#1e2638]/60 border border-[#1e2638] rounded-lg px-4 py-3">
+                <span className="text-xs text-[#8f9cae]">After this investment your tier will be:</span>
+                <span className="ml-auto">
+                  <TierBadge tier={getTier(totalCount + 1)} />
+                </span>
+              </div>
+            )}
+
             {form.category && (
               <div className="flex items-center gap-3 bg-[#0b66e4]/10 border border-[#0b66e4]/25 rounded-lg px-4 py-3">
-                <span className="text-xs text-[#8f9cae]">Daily ROI for this plan</span>
+                <span className="text-xs text-[#8f9cae]">Daily ROI for this stock</span>
                 <span className="ml-auto text-[#10b981] font-bold text-lg">25%</span>
                 <span className="text-xs text-[#8f9cae]">· 120-day lock · No early withdrawal</span>
               </div>
@@ -407,7 +419,8 @@ function UserInvestments() {
           )}
 
           {!fetching && investments.map((inv) => {
-            const plan      = PLAN_MAP[inv.category];
+            // For history cards, category is a stock — show it directly
+            // Plans no longer appear here as user-submitted investments
             const start     = new Date(inv.created_at);
             const daysSince = Math.floor((now - start) / (1000 * 60 * 60 * 24));
             const daysLeft  = Math.max(0, 120 - daysSince);
@@ -418,8 +431,9 @@ function UserInvestments() {
                 <div className="flex justify-between items-start gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-lg">{plan?.icon || "📈"}</span>
-                      <h2 className="font-semibold text-white">{inv.category}</h2>
+                      <span className="text-lg">📈</span>
+                      <h2 className="font-semibold text-white">{getCompanyDisplayName(inv.category)}</h2>
+                      <span className="text-xs text-[#8f9cae]">{inv.category}</span>
                       {inv.active ? (
                         <span className="text-xs px-2.5 py-0.5 rounded-full font-medium bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">Active</span>
                       ) : inv.approved ? (

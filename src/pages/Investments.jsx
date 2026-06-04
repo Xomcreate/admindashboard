@@ -3,17 +3,55 @@ import DashboardLayout from "../layouts/DashboardLayout";
 import API from "../api/axios";
 import Loader from "../MainComponets/Loader";
 
-const PLAN_CATEGORIES = [
-  "Silver Plan",
-  "Gold Plan",
-  "Diamond Plan",
-];
-
+// Tier display only — auto-assigned by investment count, never selectable
 const PLAN_META = {
   "Silver Plan":  { color: "#94a3b8", bg: "bg-slate-400/15",   border: "border-slate-400/30",   label: "🥈 Silver"  },
   "Gold Plan":    { color: "#f59e0b", bg: "bg-amber-400/15",   border: "border-amber-400/30",   label: "🥇 Gold"    },
   "Diamond Plan": { color: "#a78bfa", bg: "bg-violet-400/15",  border: "border-violet-400/30",  label: "💎 Diamond" },
 };
+
+// Stock companies — the actual investable assets
+const COMPANIES = [
+  { name: "Tesla, Inc.",             category: "Tesla (TSLA)"      },
+  { name: "Apple Inc.",              category: "Apple (AAPL)"      },
+  { name: "Amazon.com, Inc.",        category: "Amazon (AMZN)"     },
+  { name: "McDonald's Corporation",  category: "McDonald's (MCD)"  },
+  { name: "GameStop Corporation",    category: "GameStop (GME)"    },
+  { name: "Coca-Cola Company",       category: "Coca-Cola (KO)"    },
+  { name: "Meta Platforms, Inc.",    category: "Meta (META)"       },
+  { name: "Alphabet Inc. (Class C)", category: "Alphabet (GOOG)"   },
+  { name: "Netflix, Inc.",           category: "Netflix (NFLX)"    },
+  { name: "Intel Corporation",       category: "Intel (INTC)"      },
+];
+
+function getTier(count) {
+  if (count >= 6) return "diamond";
+  if (count >= 3) return "gold";
+  if (count >= 1) return "silver";
+  return "none";
+}
+
+const TIER_STYLE = {
+  silver:  { bg: "bg-slate-400/15",  text: "text-slate-300",  border: "border-slate-400/30",  label: "🥈 Silver"  },
+  gold:    { bg: "bg-yellow-500/20", text: "text-yellow-400", border: "border-yellow-500/40", label: "🥇 Gold"    },
+  diamond: { bg: "bg-violet-500/15", text: "text-violet-300", border: "border-violet-500/30", label: "💎 Diamond" },
+  none:    { bg: "bg-[#1e2638]",     text: "text-[#8f9cae]",  border: "border-[#1e2638]",     label: "No Tier"    },
+};
+
+function TierBadge({ tier }) {
+  const s = TIER_STYLE[tier] || TIER_STYLE.none;
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold border ${s.bg} ${s.text} ${s.border}`}>
+      {s.label}
+    </span>
+  );
+}
+
+// Resolve a category string to a human-readable stock name
+function getStockLabel(category) {
+  const c = COMPANIES.find((c) => c.category === category);
+  return c ? `${c.name} (${category})` : category;
+}
 
 const getStatus = (investment) => {
   if (!investment.approved) return "pending";
@@ -35,8 +73,10 @@ function Investments() {
   const [investors,   setInvestors]   = useState([]);
   const [loading,     setLoading]     = useState(true);
   const [tab,         setTab]         = useState("all");
+
+  // Form now uses stock category only — no plan selection
   const [form, setForm] = useState({
-    investor: "", amount: "", category: "Silver Plan", active: true,
+    investor: "", amount: "", category: "Tesla (TSLA)",
   });
 
   const [profitModal,  setProfitModal]  = useState(null);
@@ -76,7 +116,7 @@ function Investments() {
         category: form.category,
       });
       alert("Investment Created Successfully");
-      setForm({ investor: "", amount: "", category: "Silver Plan", active: true });
+      setForm({ investor: "", amount: "", category: "Tesla (TSLA)" });
       fetchInvestments();
     } catch (err) {
       const msg = err.response?.data?.amount?.[0] || "Failed to create investment";
@@ -133,8 +173,14 @@ function Investments() {
     return found ? found.name : `#${id}`;
   };
 
-  const pendingList = investments.filter((i) => !i.approved);
-  const displayList = tab === "pending" ? pendingList : investments;
+  // Count investments per investor to derive their tier
+  const getInvestorTier = (investorId) => {
+    const count = investments.filter((i) => i.investor === investorId).length;
+    return getTier(count);
+  };
+
+  const pendingList  = investments.filter((i) => !i.approved);
+  const displayList  = tab === "pending" ? pendingList : investments;
 
   if (loading) return <Loader />;
 
@@ -145,22 +191,24 @@ function Investments() {
         <div>
           <h1 className="text-3xl font-bold tracking-wide">Investments</h1>
           <p className="text-[#8f9cae] text-sm mt-1">
-            Manage and approve investment contracts. All plans earn <span className="text-[#10b981] font-semibold">25% daily ROI</span> for <span className="text-white font-semibold">120 days</span>. Withdrawals are locked until maturity.
+            Manage and approve investment contracts. All stocks earn{" "}
+            <span className="text-[#10b981] font-semibold">25% daily ROI</span> for{" "}
+            <span className="text-white font-semibold">120 days</span>. Investor tiers are assigned automatically by investment count.
           </p>
         </div>
 
-        {/* PLAN OVERVIEW CARDS */}
+        {/* TIER INFO — display only, not selectable */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
-            { key: "Silver Plan",  icon: "🥈", desc: "Entry-level plan" },
-            { key: "Gold Plan",    icon: "🥇", desc: "Mid-tier plan" },
-            { key: "Diamond Plan", icon: "💎", desc: "Premium plan" },
-          ].map(({ key, icon, desc }) => {
-            const meta = PLAN_META[key];
+            { tier: "silver",  icon: "🥈", label: "Silver Plan",  range: "1–2 investments"  },
+            { tier: "gold",    icon: "🥇", label: "Gold Plan",    range: "3–5 investments"  },
+            { tier: "diamond", icon: "💎", label: "Diamond Plan", range: "6+ investments"   },
+          ].map(({ tier, icon, label, range }) => {
+            const s = TIER_STYLE[tier];
             return (
-              <div key={key} className={`bg-[#121824] border ${meta.border} rounded-xl p-5`}>
-                <p className="text-lg font-bold text-white mb-1">{icon} {key}</p>
-                <p className="text-xs text-[#8f9cae] mb-3">{desc}</p>
+              <div key={tier} className={`bg-[#121824] border ${s.border} rounded-xl p-5`}>
+                <p className={`text-lg font-bold mb-1 ${s.text}`}>{icon} {label}</p>
+                <p className="text-xs text-[#8f9cae] mb-3">Auto-assigned · {range}</p>
                 <div className="flex justify-between text-xs text-[#8f9cae]">
                   <span>Daily ROI</span><span className="text-[#10b981] font-bold text-sm">25%</span>
                 </div>
@@ -175,9 +223,12 @@ function Investments() {
           })}
         </div>
 
-        {/* CREATE FORM */}
+        {/* CREATE INVESTMENT FORM — stock companies only */}
         <div className="bg-[#121824] p-6 rounded-xl border border-[#1e2638]">
-          <h2 className="text-xl font-semibold mb-5 text-white">Create Investment</h2>
+          <h2 className="text-xl font-semibold mb-1 text-white">Create Investment</h2>
+          <p className="text-xs text-[#8f9cae] mb-5">
+            Select a stock company to invest in. The investor's tier will update automatically based on their total investment count.
+          </p>
           <form onSubmit={createInvestment} className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
             <div className="flex flex-col gap-1.5">
@@ -196,14 +247,15 @@ function Investments() {
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-[#8f9cae] uppercase tracking-wider">Plan</label>
+              <label className="text-xs font-semibold text-[#8f9cae] uppercase tracking-wider">Stock Company</label>
               <select
                 className="bg-[#090d16] border border-[#1e2638] p-3 rounded-lg text-white focus:outline-none focus:border-[#0b66e4] transition-colors cursor-pointer"
                 value={form.category}
                 onChange={(e) => setForm({ ...form, category: e.target.value })}
+                required
               >
-                {PLAN_CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat}>{cat}</option>
+                {COMPANIES.map((c) => (
+                  <option key={c.category} value={c.category}>{c.name} — {c.category}</option>
                 ))}
               </select>
             </div>
@@ -225,16 +277,26 @@ function Investments() {
               />
             </div>
 
-            {/* ROI preview */}
+            {/* ROI info */}
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-semibold text-[#8f9cae] uppercase tracking-wider">
-                Plan Details (all plans)
+                Plan Details (all stocks)
               </label>
               <div className="bg-[#090d16] border border-[#1e2638] p-3 rounded-lg flex items-center justify-between">
                 <span className="text-[#8f9cae] text-sm">25% daily · 120-day lock · No early withdrawal</span>
                 <span className="text-[#10b981] font-bold text-lg">25%</span>
               </div>
             </div>
+
+            {/* Tier preview for selected investor */}
+            {form.investor && (
+              <div className="md:col-span-2 flex items-center gap-3 bg-[#1e2638]/60 border border-[#1e2638] rounded-lg px-4 py-3">
+                <span className="text-xs text-[#8f9cae]">Investor's current tier:</span>
+                <TierBadge tier={getInvestorTier(Number(form.investor))} />
+                <span className="text-xs text-[#8f9cae] ml-2">→ After this investment:</span>
+                <TierBadge tier={getTier(investments.filter((i) => i.investor === Number(form.investor)).length + 1)} />
+              </div>
+            )}
 
             <button
               type="submit"
@@ -269,7 +331,8 @@ function Investments() {
               <thead>
                 <tr className="bg-[#090d16] text-[#8f9cae] uppercase text-xs font-semibold tracking-wider">
                   <th className="p-4 text-left border-b border-[#1e2638]">Investor</th>
-                  <th className="p-4 text-left border-b border-[#1e2638]">Plan</th>
+                  <th className="p-4 text-left border-b border-[#1e2638]">Tier</th>
+                  <th className="p-4 text-left border-b border-[#1e2638]">Stock</th>
                   <th className="p-4 text-left border-b border-[#1e2638]">Amount</th>
                   <th className="p-4 text-left border-b border-[#1e2638]">Daily ROI</th>
                   <th className="p-4 text-left border-b border-[#1e2638]">Profit</th>
@@ -283,15 +346,15 @@ function Investments() {
                   <tr key={inv.id} className="border-b border-[#1e2638] hover:bg-[#1e2638]/50 transition-colors">
                     <td className="p-4 font-medium text-white">{getInvestorName(inv.investor)}</td>
                     <td className="p-4">
-                      {(() => {
-                        const meta = PLAN_META[inv.category] || {};
-                        return (
-                          <span className={`${meta.bg || "bg-[#1e2638]"} ${meta.border || "border-[#1e2638]"} border px-2 py-0.5 rounded-full text-xs font-semibold`}
-                                style={{ color: meta.color || "#8f9cae" }}>
-                            {meta.label || inv.category}
-                          </span>
-                        );
-                      })()}
+                      <TierBadge tier={getInvestorTier(inv.investor)} />
+                    </td>
+                    <td className="p-4">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-white font-semibold text-xs">
+                          {COMPANIES.find((c) => c.category === inv.category)?.name || inv.category}
+                        </span>
+                        <span className="text-[#8f9cae] text-xs">{inv.category}</span>
+                      </div>
                     </td>
                     <td className="p-4 font-semibold text-white">${Number(inv.amount).toLocaleString()}</td>
                     <td className="p-4 font-semibold text-[#10b981]">{inv.daily_roi}%</td>
@@ -331,7 +394,7 @@ function Investments() {
                   </tr>
                 )) : (
                   <tr>
-                    <td colSpan="8" className="text-center p-8 text-[#8f9cae] italic bg-[#090d16]/50">
+                    <td colSpan="9" className="text-center p-8 text-[#8f9cae] italic bg-[#090d16]/50">
                       {tab === "pending" ? "No pending investments" : "No investments found"}
                     </td>
                   </tr>
@@ -351,7 +414,7 @@ function Investments() {
             <p className="text-[#8f9cae] text-sm mb-5">
               Investor: <span className="text-white font-medium">{getInvestorName(profitModal.investor)}</span>
               &nbsp;·&nbsp;
-              Plan: <span className="text-white font-medium">{profitModal.category}</span>
+              Stock: <span className="text-white font-medium">{profitModal.category}</span>
               &nbsp;·&nbsp;
               Current Profit: <span className="text-[#0b66e4] font-medium">
                 ${Number(profitModal.current_profit).toLocaleString(undefined, { minimumFractionDigits: 2 })}
