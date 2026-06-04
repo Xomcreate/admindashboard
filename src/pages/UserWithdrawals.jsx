@@ -3,15 +3,17 @@ import DashboardLayout from "../layouts/DashboardLayout";
 import API from "../api/axios";
 
 function UserWithdrawals() {
-  const [withdrawals, setWithdrawals] = useState([]);
-  const [profile, setProfile]         = useState({ wallet_balance: 0 });
-  const [form, setForm]               = useState({ amount: "", wallet_address: "" });
-  const [loading, setLoading]         = useState(false);
-  const [error, setError]             = useState("");
+  const [withdrawals,   setWithdrawals]   = useState([]);
+  const [profile,       setProfile]       = useState({ wallet_balance: 0 });
+  const [investments,   setInvestments]   = useState([]);
+  const [form,          setForm]          = useState({ amount: "", wallet_address: "" });
+  const [loading,       setLoading]       = useState(false);
+  const [error,         setError]         = useState("");
 
   useEffect(() => {
     fetchWithdrawals();
     fetchProfile();
+    fetchInvestments();
   }, []);
 
   const fetchProfile = async () => {
@@ -32,9 +34,40 @@ function UserWithdrawals() {
     }
   };
 
+  const fetchInvestments = async () => {
+    try {
+      const res = await API.get("investments/");
+      setInvestments(res.data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  // Determine if any active investment is still within the 120-day lock
+  const now = new Date();
+  const lockedInvestment = investments.find((inv) => {
+    if (!inv.active || !inv.approved) return false;
+    const start = new Date(inv.created_at);
+    const daysSince = (now - start) / (1000 * 60 * 60 * 24);
+    return daysSince < 120;
+  });
+  const isLocked = Boolean(lockedInvestment);
+
+  // Earliest unlock date
+  let unlockDate = null;
+  if (lockedInvestment) {
+    const start = new Date(lockedInvestment.created_at);
+    unlockDate = new Date(start.getTime() + 120 * 24 * 60 * 60 * 1000);
+  }
+
   const submitWithdrawal = async (e) => {
     e.preventDefault();
     setError("");
+
+    if (isLocked) {
+      setError("Your investment is still locked. Withdrawals open after the 120-day period.");
+      return;
+    }
 
     if (parseFloat(form.amount) > parseFloat(profile.wallet_balance)) {
       setError(
@@ -52,7 +85,9 @@ function UserWithdrawals() {
       await fetchProfile();
     } catch (error) {
       console.error(error.response?.data || error);
-      const msg = error.response?.data?.error || "Submission failed. Please try again.";
+      const msg = error.response?.data?.error
+        || error.response?.data?.non_field_errors?.[0]
+        || "Submission failed. Please try again.";
       setError(msg);
     } finally {
       setLoading(false);
@@ -60,21 +95,21 @@ function UserWithdrawals() {
   };
 
   const deleteWithdrawal = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this withdrawal request?")) return;
+    if (!window.confirm("Are you sure you want to cancel this withdrawal request?")) return;
     try {
       await API.delete(`withdrawals/${id}/`);
       fetchWithdrawals();
       fetchProfile();
     } catch (error) {
       console.error(error);
-      alert("Failed to delete withdrawal.");
+      alert("Failed to cancel withdrawal.");
     }
   };
 
   const statusColor = (status) => {
     if (status === "Approved") return "bg-green-500/15 text-green-400 border border-green-500/30";
     if (status === "Rejected") return "bg-red-500/15 text-red-400 border border-red-500/30";
-    return "bg-amber-500/15 text-amber-400 border border-amber-500/30"; // Using standard amber/yellow for pending
+    return "bg-amber-500/15 text-amber-400 border border-amber-500/30";
   };
 
   const totalApproved = withdrawals
@@ -87,6 +122,24 @@ function UserWithdrawals() {
 
         <h1 className="text-3xl font-bold">Withdrawals</h1>
 
+        {/* Lock Banner */}
+        {isLocked && (
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl px-5 py-4 flex items-start gap-3">
+            <span className="text-amber-400 text-2xl mt-0.5">🔒</span>
+            <div>
+              <p className="text-amber-300 font-bold text-sm">Withdrawals Locked</p>
+              <p className="text-amber-400/80 text-xs mt-1 leading-relaxed">
+                Your investment plan is currently within the <strong>120-day lock period</strong>. Withdrawals will be available once your plan matures and profits are credited to your wallet.
+              </p>
+              {unlockDate && (
+                <p className="text-amber-300 text-xs mt-2 font-semibold">
+                  Estimated unlock: {unlockDate.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Balance Summary */}
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-[#121824] p-5 rounded-xl border border-[#1e2638] shadow-2xl">
@@ -94,7 +147,9 @@ function UserWithdrawals() {
             <h2 className="text-2xl font-bold text-[#0b66e4]">
               ${parseFloat(profile.wallet_balance || 0).toFixed(2)}
             </h2>
-            <p className="text-xs text-[#8f9cae] mt-1">Available to withdraw</p>
+            <p className="text-xs text-[#8f9cae] mt-1">
+              {isLocked ? "Locked · Available after 120 days" : "Available to withdraw"}
+            </p>
           </div>
           <div className="bg-[#121824] p-5 rounded-xl border border-[#1e2638] shadow-2xl">
             <p className="text-[#8f9cae] text-xs uppercase tracking-wider mb-1">Total Withdrawn</p>
@@ -106,61 +161,71 @@ function UserWithdrawals() {
         </div>
 
         {/* Form */}
-        <form
-          onSubmit={submitWithdrawal}
-          className="bg-[#121824] p-6 rounded-xl border border-[#1e2638] space-y-5 shadow-2xl"
-        >
-          <h2 className="text-lg font-semibold text-slate-100">New Withdrawal Request</h2>
+        <div className={`bg-[#121824] p-6 rounded-xl border shadow-2xl transition-all ${
+          isLocked ? "border-amber-500/20 opacity-60 pointer-events-none select-none" : "border-[#1e2638]"
+        }`}>
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-lg font-semibold text-slate-100">New Withdrawal Request</h2>
+            {isLocked && (
+              <span className="text-xs bg-amber-500/15 text-amber-400 border border-amber-500/30 px-3 py-1 rounded-full font-medium">
+                🔒 Locked
+              </span>
+            )}
+          </div>
 
           {error && (
-            <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 px-4 py-3 rounded-lg">
+            <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 px-4 py-3 rounded-lg mb-4">
               {error}
             </p>
           )}
 
-          <div>
-            <label className="text-xs font-semibold text-[#8f9cae] uppercase tracking-wider mb-1.5 block">
-              Withdrawal Amount ($)
-            </label>
-            <input
-              type="number"
-              placeholder="0.00"
-              min="0"
-              step="0.01"
-              className="w-full bg-[#090d16] p-3 rounded-lg border border-[#1e2638] text-white placeholder-[#8f9cae] focus:outline-none focus:border-[#0b66e4] transition-colors"
-              value={form.amount}
-              onChange={(e) => setForm({ ...form, amount: e.target.value })}
-              required
-            />
-            <p className="text-xs text-[#8f9cae] mt-1">
-              Max: ${parseFloat(profile.wallet_balance || 0).toFixed(2)}
-            </p>
-          </div>
+          <form onSubmit={submitWithdrawal} className="space-y-5">
+            <div>
+              <label className="text-xs font-semibold text-[#8f9cae] uppercase tracking-wider mb-1.5 block">
+                Withdrawal Amount ($)
+              </label>
+              <input
+                type="number"
+                placeholder="0.00"
+                min="0"
+                step="0.01"
+                className="w-full bg-[#090d16] p-3 rounded-lg border border-[#1e2638] text-white placeholder-[#8f9cae] focus:outline-none focus:border-[#0b66e4] transition-colors"
+                value={form.amount}
+                onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                required
+                disabled={isLocked}
+              />
+              <p className="text-xs text-[#8f9cae] mt-1">
+                Max: ${parseFloat(profile.wallet_balance || 0).toFixed(2)}
+              </p>
+            </div>
 
-          <div>
-            <label className="text-xs font-semibold text-[#8f9cae] uppercase tracking-wider mb-1.5 block">
-              Your BTC Wallet Address
-            </label>
-            <input
-              type="text"
-              placeholder="BTC wallet address"
-              className="w-full bg-[#090d16] p-3 rounded-lg border border-[#1e295d] text-white placeholder-[#8f9cae] focus:outline-none focus:border-[#0b66e4] transition-colors font-mono text-sm"
-              value={form.wallet_address}
-              onChange={(e) => setForm({ ...form, wallet_address: e.target.value })}
-              required
-            />
-          </div>
+            <div>
+              <label className="text-xs font-semibold text-[#8f9cae] uppercase tracking-wider mb-1.5 block">
+                Your BTC Wallet Address
+              </label>
+              <input
+                type="text"
+                placeholder="BTC wallet address"
+                className="w-full bg-[#090d16] p-3 rounded-lg border border-[#1e2638] text-white placeholder-[#8f9cae] focus:outline-none focus:border-[#0b66e4] transition-colors font-mono text-sm"
+                value={form.wallet_address}
+                onChange={(e) => setForm({ ...form, wallet_address: e.target.value })}
+                required
+                disabled={isLocked}
+              />
+            </div>
 
-          <button
-            type="submit"
-            className="w-full bg-[#0b66e4] hover:bg-[#0055cc] px-6 py-3 rounded-lg font-semibold disabled:opacity-50 transition-colors cursor-pointer"
-            disabled={loading}
-          >
-            {loading ? "Submitting..." : "Submit Withdrawal"}
-          </button>
-        </form>
+            <button
+              type="submit"
+              className="w-full bg-[#0b66e4] hover:bg-[#0055cc] px-6 py-3 rounded-lg font-semibold disabled:opacity-50 transition-colors cursor-pointer"
+              disabled={loading || isLocked}
+            >
+              {loading ? "Submitting..." : isLocked ? "🔒 Locked Until Day 120" : "Submit Withdrawal"}
+            </button>
+          </form>
+        </div>
 
-        {/* List */}
+        {/* History */}
         <div className="space-y-4">
           <h2 className="text-lg font-semibold text-slate-100">Withdrawal History</h2>
 
@@ -194,8 +259,6 @@ function UserWithdrawals() {
                   <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColor(w.status)}`}>
                     {w.status}
                   </span>
-
-                  {/* Only allow delete if still Pending */}
                   {w.status === "Pending" && (
                     <button
                       onClick={() => deleteWithdrawal(w.id)}

@@ -3,18 +3,17 @@ import DashboardLayout from "../layouts/DashboardLayout";
 import API from "../api/axios";
 import Loader from "../MainComponets/Loader";
 
-const STOCK_CATEGORIES = [
-  "Tesla (TSLA)",
-  "Apple (AAPL)",
-  "Amazon (AMZN)",
-  "McDonald's (MCD)",
-  "GameStop (GME)",
-  "Coca-Cola (KO)",
-  "Meta (META)",
-  "Alphabet (GOOG)",
-  "Netflix (NFLX)",
-  "Intel (INTC)",
+const PLAN_CATEGORIES = [
+  "Silver Plan",
+  "Gold Plan",
+  "Diamond Plan",
 ];
+
+const PLAN_META = {
+  "Silver Plan":  { color: "#94a3b8", bg: "bg-slate-400/15",   border: "border-slate-400/30",   label: "🥈 Silver"  },
+  "Gold Plan":    { color: "#f59e0b", bg: "bg-amber-400/15",   border: "border-amber-400/30",   label: "🥇 Gold"    },
+  "Diamond Plan": { color: "#a78bfa", bg: "bg-violet-400/15",  border: "border-violet-400/30",  label: "💎 Diamond" },
+};
 
 const getStatus = (investment) => {
   if (!investment.approved) return "pending";
@@ -37,11 +36,10 @@ function Investments() {
   const [loading,     setLoading]     = useState(true);
   const [tab,         setTab]         = useState("all");
   const [form, setForm] = useState({
-    investor: "", amount: "", category: "Tesla (TSLA)", active: true,
+    investor: "", amount: "", category: "Silver Plan", active: true,
   });
 
-  // Manual profit modal state
-  const [profitModal, setProfitModal] = useState(null); // holds the investment object
+  const [profitModal,  setProfitModal]  = useState(null);
   const [profitAmount, setProfitAmount] = useState("");
   const [profitLoading, setProfitLoading] = useState(false);
 
@@ -78,7 +76,7 @@ function Investments() {
         category: form.category,
       });
       alert("Investment Created Successfully");
-      setForm({ investor: "", amount: "", category: "Tesla (TSLA)", active: true });
+      setForm({ investor: "", amount: "", category: "Silver Plan", active: true });
       fetchInvestments();
     } catch (err) {
       const msg = err.response?.data?.amount?.[0] || "Failed to create investment";
@@ -103,13 +101,11 @@ function Investments() {
     } catch (e) { console.error(e); }
   };
 
-  // Open the manual profit modal
   const openProfitModal = (inv) => {
     setProfitModal(inv);
     setProfitAmount("");
   };
 
-  // Submit manual profit
   const submitManualProfit = async (e) => {
     e.preventDefault();
     if (!profitAmount || isNaN(profitAmount) || Number(profitAmount) <= 0) {
@@ -137,8 +133,8 @@ function Investments() {
     return found ? found.name : `#${id}`;
   };
 
-  const pendingList  = investments.filter((i) => !i.approved);
-  const displayList  = tab === "pending" ? pendingList : investments;
+  const pendingList = investments.filter((i) => !i.approved);
+  const displayList = tab === "pending" ? pendingList : investments;
 
   if (loading) return <Loader />;
 
@@ -149,8 +145,34 @@ function Investments() {
         <div>
           <h1 className="text-3xl font-bold tracking-wide">Investments</h1>
           <p className="text-[#8f9cae] text-sm mt-1">
-            Manage and approve investment contracts. All plans earn 10% daily ROI for 14 days.
+            Manage and approve investment contracts. All plans earn <span className="text-[#10b981] font-semibold">25% daily ROI</span> for <span className="text-white font-semibold">120 days</span>. Withdrawals are locked until maturity.
           </p>
+        </div>
+
+        {/* PLAN OVERVIEW CARDS */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {[
+            { key: "Silver Plan",  icon: "🥈", desc: "Entry-level plan" },
+            { key: "Gold Plan",    icon: "🥇", desc: "Mid-tier plan" },
+            { key: "Diamond Plan", icon: "💎", desc: "Premium plan" },
+          ].map(({ key, icon, desc }) => {
+            const meta = PLAN_META[key];
+            return (
+              <div key={key} className={`bg-[#121824] border ${meta.border} rounded-xl p-5`}>
+                <p className="text-lg font-bold text-white mb-1">{icon} {key}</p>
+                <p className="text-xs text-[#8f9cae] mb-3">{desc}</p>
+                <div className="flex justify-between text-xs text-[#8f9cae]">
+                  <span>Daily ROI</span><span className="text-[#10b981] font-bold text-sm">25%</span>
+                </div>
+                <div className="flex justify-between text-xs text-[#8f9cae] mt-1">
+                  <span>Duration</span><span className="text-white font-semibold">120 days</span>
+                </div>
+                <div className="flex justify-between text-xs text-[#8f9cae] mt-1">
+                  <span>Range</span><span className="text-white font-semibold">$500K – $2M</span>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         {/* CREATE FORM */}
@@ -174,13 +196,13 @@ function Investments() {
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-[#8f9cae] uppercase tracking-wider">Category</label>
+              <label className="text-xs font-semibold text-[#8f9cae] uppercase tracking-wider">Plan</label>
               <select
                 className="bg-[#090d16] border border-[#1e2638] p-3 rounded-lg text-white focus:outline-none focus:border-[#0b66e4] transition-colors cursor-pointer"
                 value={form.category}
                 onChange={(e) => setForm({ ...form, category: e.target.value })}
               >
-                {STOCK_CATEGORIES.map((cat) => (
+                {PLAN_CATEGORIES.map((cat) => (
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
               </select>
@@ -188,13 +210,13 @@ function Investments() {
 
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-semibold text-[#8f9cae] uppercase tracking-wider">
-                Amount ($100 – $500)
+                Amount ($500,000 – $2,000,000)
               </label>
               <input
                 type="number"
-                placeholder="100.00"
-                min="100"
-                max="500"
+                placeholder="500000.00"
+                min="500000"
+                max="2000000"
                 step="0.01"
                 className="bg-[#090d16] border border-[#1e2638] p-3 rounded-lg text-white placeholder-[#8f9cae] focus:outline-none focus:border-[#0b66e4] transition-colors"
                 value={form.amount}
@@ -206,11 +228,11 @@ function Investments() {
             {/* ROI preview */}
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-semibold text-[#8f9cae] uppercase tracking-wider">
-                Daily ROI (all plans)
+                Plan Details (all plans)
               </label>
               <div className="bg-[#090d16] border border-[#1e2638] p-3 rounded-lg flex items-center justify-between">
-                <span className="text-[#8f9cae] text-sm">Flat rate · 14-day duration</span>
-                <span className="text-[#10b981] font-bold text-lg">10%</span>
+                <span className="text-[#8f9cae] text-sm">25% daily · 120-day lock · No early withdrawal</span>
+                <span className="text-[#10b981] font-bold text-lg">25%</span>
               </div>
             </div>
 
@@ -247,7 +269,7 @@ function Investments() {
               <thead>
                 <tr className="bg-[#090d16] text-[#8f9cae] uppercase text-xs font-semibold tracking-wider">
                   <th className="p-4 text-left border-b border-[#1e2638]">Investor</th>
-                  <th className="p-4 text-left border-b border-[#1e2638]">Category</th>
+                  <th className="p-4 text-left border-b border-[#1e2638]">Plan</th>
                   <th className="p-4 text-left border-b border-[#1e2638]">Amount</th>
                   <th className="p-4 text-left border-b border-[#1e2638]">Daily ROI</th>
                   <th className="p-4 text-left border-b border-[#1e2638]">Profit</th>
@@ -260,7 +282,17 @@ function Investments() {
                 {displayList.length > 0 ? displayList.map((inv) => (
                   <tr key={inv.id} className="border-b border-[#1e2638] hover:bg-[#1e2638]/50 transition-colors">
                     <td className="p-4 font-medium text-white">{getInvestorName(inv.investor)}</td>
-                    <td className="p-4 text-[#8f9cae]">{inv.category}</td>
+                    <td className="p-4">
+                      {(() => {
+                        const meta = PLAN_META[inv.category] || {};
+                        return (
+                          <span className={`${meta.bg || "bg-[#1e2638]"} ${meta.border || "border-[#1e2638]"} border px-2 py-0.5 rounded-full text-xs font-semibold`}
+                                style={{ color: meta.color || "#8f9cae" }}>
+                            {meta.label || inv.category}
+                          </span>
+                        );
+                      })()}
+                    </td>
                     <td className="p-4 font-semibold text-white">${Number(inv.amount).toLocaleString()}</td>
                     <td className="p-4 font-semibold text-[#10b981]">{inv.daily_roi}%</td>
                     <td className="p-4 font-semibold text-[#0b66e4]">
@@ -282,7 +314,6 @@ function Investments() {
                             Approve
                           </button>
                         )}
-                        {/* Manual Profit Button */}
                         <button
                           onClick={() => openProfitModal(inv)}
                           className="bg-yellow-500/15 hover:bg-yellow-500 text-yellow-400 hover:text-white border border-yellow-500/30 text-xs font-semibold px-3 py-1.5 rounded-md transition-all cursor-pointer"
@@ -320,7 +351,7 @@ function Investments() {
             <p className="text-[#8f9cae] text-sm mb-5">
               Investor: <span className="text-white font-medium">{getInvestorName(profitModal.investor)}</span>
               &nbsp;·&nbsp;
-              Category: <span className="text-white font-medium">{profitModal.category}</span>
+              Plan: <span className="text-white font-medium">{profitModal.category}</span>
               &nbsp;·&nbsp;
               Current Profit: <span className="text-[#0b66e4] font-medium">
                 ${Number(profitModal.current_profit).toLocaleString(undefined, { minimumFractionDigits: 2 })}
