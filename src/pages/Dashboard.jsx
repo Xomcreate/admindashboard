@@ -7,13 +7,13 @@ import {
   PieChart, Pie, Cell, LineChart, Line,
 } from "recharts";
 
-const PIE_COLORS = ["#10b981", "#0b66e4", "#f59e0b", "#a78bfa", "#f472b6", "#34d399"];
+const PIE_COLORS = ["#94a3b8", "#f59e0b", "#a78bfa", "#10b981", "#0b66e4", "#f472b6"];
 
 const TIER_STYLE = {
-  silver: { bg: "bg-slate-400/15",  text: "text-slate-300",  border: "border-slate-400/30",  label: "🥈 Silver" },
-  gold:   { bg: "bg-yellow-500/20", text: "text-yellow-400", border: "border-yellow-500/40", label: "🥇 Gold"   },
-  bronze: { bg: "bg-orange-600/15", text: "text-orange-400", border: "border-orange-500/30", label: "🥉 Bronze" },
-  none:   { bg: "bg-[#1e2638]",     text: "text-[#8f9cae]",  border: "border-[#1e2638]",     label: "—"         },
+  silver:  { bg: "bg-slate-400/15",  text: "text-slate-300",  border: "border-slate-400/30",  label: "🥈 Silver"  },
+  gold:    { bg: "bg-yellow-500/20", text: "text-yellow-400", border: "border-yellow-500/40", label: "🥇 Gold"    },
+  diamond: { bg: "bg-violet-500/15", text: "text-violet-300", border: "border-violet-500/30", label: "💎 Diamond" },
+  none:    { bg: "bg-[#1e2638]",     text: "text-[#8f9cae]",  border: "border-[#1e2638]",     label: "—"          },
 };
 
 const TierBadge = ({ tier }) => {
@@ -112,11 +112,42 @@ const Dashboard = () => {
             color="text-red-400" accent="hover:border-red-500/30" icon="🚫" />
         </div>
 
+        {/* TIER LEGEND */}
+        <div className="bg-[#121824] border border-[#1e2638] rounded-xl p-5">
+          <h2 className="text-sm font-semibold text-[#8f9cae] uppercase tracking-wider mb-4">Investor Tier System</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="bg-slate-400/10 border border-slate-400/25 rounded-lg p-4 flex items-center gap-4">
+              <span className="text-3xl">🥈</span>
+              <div>
+                <p className="text-slate-300 font-bold">Silver</p>
+                <p className="text-xs text-[#8f9cae] mt-0.5">1 – 2 investments</p>
+                <p className="text-xs text-[#8f9cae]">Entry-level investor</p>
+              </div>
+            </div>
+            <div className="bg-yellow-500/10 border border-yellow-500/25 rounded-lg p-4 flex items-center gap-4">
+              <span className="text-3xl">🥇</span>
+              <div>
+                <p className="text-yellow-400 font-bold">Gold</p>
+                <p className="text-xs text-[#8f9cae] mt-0.5">3 – 5 investments</p>
+                <p className="text-xs text-[#8f9cae]">Mid-tier investor</p>
+              </div>
+            </div>
+            <div className="bg-violet-500/10 border border-violet-500/25 rounded-lg p-4 flex items-center gap-4">
+              <span className="text-3xl">💎</span>
+              <div>
+                <p className="text-violet-300 font-bold">Diamond</p>
+                <p className="text-xs text-[#8f9cae] mt-0.5">6+ investments</p>
+                <p className="text-xs text-[#8f9cae]">Elite investor status</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* CHARTS */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-[#121824] border border-[#1e2638] rounded-xl p-6">
-            <h2 className="text-lg font-semibold text-white mb-1">Investments by Category</h2>
-            <p className="text-xs text-[#8f9cae] mb-5">Total capital allocated per investment type</p>
+            <h2 className="text-lg font-semibold text-white mb-1">Investments by Plan</h2>
+            <p className="text-xs text-[#8f9cae] mb-5">Total capital allocated per plan</p>
             {categoryData.length === 0 ? (
               <div className="flex items-center justify-center h-48 text-[#8f9cae] italic text-sm">No data yet</div>
             ) : (
@@ -126,7 +157,11 @@ const Dashboard = () => {
                   <XAxis dataKey="category" tick={{ fill: "#8f9cae", fontSize: 11 }} axisLine={{ stroke: "#1e2638" }} tickLine={false} />
                   <YAxis tick={{ fill: "#8f9cae", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${Number(v).toLocaleString()}`} />
                   <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(11,102,228,0.06)" }} />
-                  <Bar dataKey="total" fill="#0b66e4" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="total" radius={[6, 6, 0, 0]}>
+                    {categoryData.map((_, i) => (
+                      <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -134,7 +169,7 @@ const Dashboard = () => {
 
           <div className="bg-[#121824] border border-[#1e2638] rounded-xl p-6">
             <h2 className="text-lg font-semibold text-white mb-1">Portfolio Distribution</h2>
-            <p className="text-xs text-[#8f9cae] mb-5">Share of total capital by category</p>
+            <p className="text-xs text-[#8f9cae] mb-5">Share of total capital by plan</p>
             {categoryData.length === 0 ? (
               <div className="flex items-center justify-center h-48 text-[#8f9cae] italic text-sm">No data yet</div>
             ) : (
@@ -187,7 +222,7 @@ const Dashboard = () => {
             <div>
               <h2 className="text-lg font-semibold text-white">🏆 Top Investors</h2>
               <p className="text-xs text-[#8f9cae] mt-0.5">
-                Tier by investment count · Silver (1–2) · Gold (3–5) · Bronze elite (6+)
+                Tier by investment count · 🥈 Silver (1–2) · 🥇 Gold (3–5) · 💎 Diamond (6+)
               </p>
             </div>
             <span className="text-xs bg-[#090d16] border border-[#1e2638] text-[#8f9cae] px-3 py-1 rounded-full">
@@ -201,9 +236,7 @@ const Dashboard = () => {
               Loading leaderboard…
             </div>
           ) : topList.length === 0 ? (
-            <div className="text-center py-16 text-[#8f9cae] italic text-sm">
-              No investors yet.
-            </div>
+            <div className="text-center py-16 text-[#8f9cae] italic text-sm">No investors yet.</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -236,9 +269,7 @@ const Dashboard = () => {
                           <p className="font-semibold text-white">{inv.name}</p>
                           <p className="text-xs text-[#8f9cae]/60 mt-0.5">{inv.email}</p>
                         </td>
-                        <td className="p-4 text-center">
-                          <TierBadge tier={inv.tier} />
-                        </td>
+                        <td className="p-4 text-center"><TierBadge tier={inv.tier} /></td>
                         <td className="p-4 text-right font-bold text-[#10b981]">
                           ${Number(inv.total_invested).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                         </td>
