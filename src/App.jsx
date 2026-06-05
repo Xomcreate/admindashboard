@@ -25,7 +25,7 @@ import Profile from "./pages/Profile";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
 // LOADER
-import Loader from "./MainComponents/Loader";
+import Loader from "./MainComponets/Loader";
 
 function App() {
   const [loading, setLoading] = useState(true);
