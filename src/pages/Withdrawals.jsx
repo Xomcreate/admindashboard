@@ -43,7 +43,7 @@ function Withdrawals() {
     e.preventDefault()
     try {
       await API.post("withdrawals/", {
-        investor:       form.investor,
+        investor:      form.investor,
         amount:         form.amount,
         wallet_address: form.wallet_address,
         status:         form.status,
@@ -101,17 +101,18 @@ function Withdrawals() {
   return (
     <>
       <DashboardLayout>
-        <div className="text-white font-sans max-w-6xl mx-auto space-y-8 p-4">
+        {/* Updated parent background class to match the Loader container theme seamlessly */}
+        <div className="text-white font-sans max-w-6xl mx-auto space-y-8 p-4 min-h-screen bg-[#171515]">
 
           {/* HEADER SECTION */}
           <div>
             <h1 className="text-3xl font-bold tracking-wide">Withdrawals</h1>
-            <p className="text-[#8f9cae] text-sm mt-1">Review balance requests, authorize distributions, or cancel tickets.</p>
+            <p className="text-[#9e9593] text-sm mt-1">Review balance requests, authorize distributions, or cancel tickets.</p>
           </div>
 
           {/* CREATE WITHDRAWAL FORM */}
-          <div className="bg-[#121824] p-6 rounded-xl border border-[#1e2638] shadow-2xl">
-            <h2 className="text-xl font-semibold mb-5 tracking-wide text-slate-100">
+          <div className="bg-[#1f1b1b] p-6 rounded-xl border border-[#2e2726] shadow-2xl">
+            <h2 className="text-xl font-semibold mb-5 tracking-wide text-neutral-200">
               Create Withdrawal Request
             </h2>
 
@@ -121,16 +122,16 @@ function Withdrawals() {
             >
               {/* SELECT INVESTOR */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-[#8f9cae] uppercase tracking-wider">Investor</label>
+                <label className="text-xs font-semibold text-[#9e9593] uppercase tracking-wider">Investor</label>
                 <select
-                  className="bg-[#090d16] border border-[#1e2638] p-3 rounded-lg text-white focus:outline-none focus:border-[#0b66e4] transition-colors cursor-pointer"
+                  className="bg-[#121010] border border-[#2e2726] p-3 rounded-lg text-white focus:outline-none focus:border-[#c45a45] transition-colors cursor-pointer"
                   value={form.investor}
                   onChange={(e) => setForm({ ...form, investor: e.target.value })}
                   required
                 >
-                  <option value="" className="bg-[#121824]">Select Investor</option>
+                  <option value="" className="bg-[#1f1b1b]">Select Investor</option>
                   {investors.map((investor) => (
-                    <option key={investor.id} value={investor.id} className="bg-[#121824]">
+                    <option key={investor.id} value={investor.id} className="bg-[#1f1b1b]">
                       {investor.name}
                     </option>
                   ))}
@@ -139,13 +140,13 @@ function Withdrawals() {
 
               {/* AMOUNT */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-[#8f9cae] uppercase tracking-wider">Withdrawal Amount ($)</label>
+                <label className="text-xs font-semibold text-[#9e9593] uppercase tracking-wider">Withdrawal Amount ($)</label>
                 <input
                   type="number"
                   placeholder="0.00"
                   min="0"
                   step="0.01"
-                  className="bg-[#090d16] border border-[#1e2638] p-3 rounded-lg text-white placeholder-[#8f9cae] focus:outline-none focus:border-[#0b66e4] transition-colors"
+                  className="bg-[#121010] border border-[#2e2726] p-3 rounded-lg text-white placeholder-[#9e9593] focus:outline-none focus:border-[#c45a45] transition-colors"
                   value={form.amount}
                   onChange={(e) => setForm({ ...form, amount: e.target.value })}
                   required
@@ -154,11 +155,11 @@ function Withdrawals() {
 
               {/* WALLET ADDRESS */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-[#8f9cae] uppercase tracking-wider">Wallet Address</label>
+                <label className="text-xs font-semibold text-[#9e9593] uppercase tracking-wider">Wallet Address</label>
                 <input
                   type="text"
                   placeholder="BTC / ETH wallet address"
-                  className="bg-[#090d16] border border-[#1e2638] p-3 rounded-lg text-white placeholder-[#8f9cae] focus:outline-none focus:border-[#0b66e4] transition-colors font-mono text-sm"
+                  className="bg-[#121010] border border-[#2e2726] p-3 rounded-lg text-white placeholder-[#9e9593] focus:outline-none focus:border-[#c45a45] transition-colors font-mono text-sm"
                   value={form.wallet_address}
                   onChange={(e) => setForm({ ...form, wallet_address: e.target.value })}
                   required
@@ -167,22 +168,22 @@ function Withdrawals() {
 
               {/* STATUS */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-[#8f9cae] uppercase tracking-wider">Payout Status</label>
+                <label className="text-xs font-semibold text-[#9e9593] uppercase tracking-wider">Payout Status</label>
                 <select
-                  className="bg-[#090d16] border border-[#1e2638] p-3 rounded-lg text-white focus:outline-none focus:border-[#0b66e4] transition-colors cursor-pointer"
+                  className="bg-[#121010] border border-[#2e2726] p-3 rounded-lg text-white focus:outline-none focus:border-[#c45a45] transition-colors cursor-pointer"
                   value={form.status}
                   onChange={(e) => setForm({ ...form, status: e.target.value })}
                 >
-                  <option value="Pending" className="bg-[#121824]">Pending</option>
-                  <option value="Approved" className="bg-[#121824]">Approved</option>
-                  <option value="Rejected" className="bg-[#121824]">Rejected</option>
+                  <option value="Pending" className="bg-[#1f1b1b]">Pending</option>
+                  <option value="Approved" className="bg-[#1f1b1b]">Approved</option>
+                  <option value="Rejected" className="bg-[#1f1b1b]">Rejected</option>
                 </select>
               </div>
 
               {/* SUBMIT BUTTON */}
               <button
                 type="submit"
-                className="bg-[#0b66e4] hover:bg-[#0055cc] text-white p-3 rounded-lg font-semibold tracking-wide shadow-2xl transition-all duration-200 col-span-1 md:col-span-2 mt-2 cursor-pointer"
+                className="bg-[#c45a45] hover:bg-[#a64633] text-white p-3 rounded-lg font-semibold tracking-wide shadow-2xl transition-all duration-200 col-span-1 md:col-span-2 mt-2 cursor-pointer"
               >
                 Create Withdrawal
               </button>
@@ -190,21 +191,21 @@ function Withdrawals() {
           </div>
 
           {/* WITHDRAWALS TABLE */}
-          <div className="bg-[#121824] p-6 rounded-xl border border-[#1e2638] shadow-2xl">
-            <h2 className="text-xl font-semibold mb-5 tracking-wide text-slate-100">
+          <div className="bg-[#1f1b1b] p-6 rounded-xl border border-[#2e2726] shadow-2xl">
+            <h2 className="text-xl font-semibold mb-5 tracking-wide text-neutral-200">
               All Withdrawals
             </h2>
 
-            <div className="overflow-x-auto rounded-lg border border-[#1e2638]">
+            <div className="overflow-x-auto rounded-lg border border-[#2e2726]">
               <table className="w-full border-collapse text-sm">
                 <thead>
-                  <tr className="bg-[#090d16] text-[#8f9cae] uppercase text-xs font-semibold tracking-wider">
-                    <th className="p-4 text-left border-b border-[#1e2638]">Investor</th>
-                    <th className="p-4 text-left border-b border-[#1e2638]">Amount</th>
-                    <th className="p-4 text-left border-b border-[#1e2638]">Wallet</th>
-                    <th className="p-4 text-center border-b border-[#1e2638]">Status</th>
-                    <th className="p-4 text-left border-b border-[#1e2638]">Date</th>
-                    <th className="p-4 text-center border-b border-[#1e2638]">Actions</th>
+                  <tr className="bg-[#121010] text-[#9e9593] uppercase text-xs font-semibold tracking-wider">
+                    <th className="p-4 text-left border-b border-[#2e2726]">Investor</th>
+                    <th className="p-4 text-left border-b border-[#2e2726]">Amount</th>
+                    <th className="p-4 text-left border-b border-[#2e2726]">Wallet</th>
+                    <th className="p-4 text-center border-b border-[#2e2726]">Status</th>
+                    <th className="p-4 text-left border-b border-[#2e2726]">Date</th>
+                    <th className="p-4 text-center border-b border-[#2e2726]">Actions</th>
                   </tr>
                 </thead>
 
@@ -213,15 +214,16 @@ function Withdrawals() {
                     withdrawals.map((withdrawal) => (
                       <tr
                         key={withdrawal.id}
-                        className="border-b border-[#1e2638] hover:bg-[#1e2638] transition-colors"
+                        className="border-b border-[#2e2726] hover:bg-[#2e2726]/40 transition-colors"
                       >
-                        <td className="p-4 font-medium text-[#0b66e4]">
+                        {/* Investor highlighted with theme color */}
+                        <td className="p-4 font-medium text-[#c45a45]">
                           {getInvestorName(withdrawal.investor)}
                         </td>
                         <td className="p-4 font-semibold text-white">
                           ${Number(withdrawal.amount).toLocaleString()}
                         </td>
-                        <td className="p-4 text-[#8f9cae] font-mono text-xs max-w-35 truncate">
+                        <td className="p-4 text-[#9e9593] font-mono text-xs max-w-35 truncate">
                           {withdrawal.wallet_address || '—'}
                         </td>
                         <td className="p-4 text-center">
@@ -239,7 +241,7 @@ function Withdrawals() {
                             </span>
                           )}
                         </td>
-                        <td className="p-4 text-[#8f9cae]">
+                        <td className="p-4 text-[#9e9593]">
                           {new Date(withdrawal.created_at).toLocaleDateString(undefined, {
                             year: 'numeric',
                             month: 'short',
@@ -278,7 +280,7 @@ function Withdrawals() {
                     <tr>
                       <td
                         colSpan="6"
-                        className="text-center p-8 text-[#8f9cae] bg-[#090d16]/50 italic"
+                        className="text-center p-8 text-[#9e9593] bg-[#121010]/50 italic"
                       >
                         No Withdrawals Found
                       </td>

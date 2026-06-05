@@ -76,7 +76,7 @@ function UserWithdrawals() {
       return;
     }
 
-    setLoading(true);
+    loading(true);
     try {
       await API.post("withdrawals/", form);
       alert("Withdrawal Submitted Successfully!");
@@ -118,9 +118,10 @@ function UserWithdrawals() {
 
   return (
     <DashboardLayout>
-      <div className="text-white space-y-8 max-w-3xl mx-auto">
+      {/* Root wrapper updated to the warm dark container color */}
+      <div className="text-white space-y-8 max-w-3xl mx-auto min-h-screen bg-[#171515] p-4 rounded-xl">
 
-        <h1 className="text-3xl font-bold">Withdrawals</h1>
+        <h1 className="text-3xl font-bold tracking-wide">Withdrawals</h1>
 
         {/* Lock Banner */}
         {isLocked && (
@@ -142,30 +143,30 @@ function UserWithdrawals() {
 
         {/* Balance Summary */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-[#121824] p-5 rounded-xl border border-[#1e2638] shadow-2xl">
-            <p className="text-[#8f9cae] text-xs uppercase tracking-wider mb-1">Wallet Balance</p>
-            <h2 className="text-2xl font-bold text-[#0b66e4]">
+          <div className="bg-[#1f1b1b] p-5 rounded-xl border border-[#2e2726] shadow-2xl">
+            <p className="text-[#9e9593] text-xs uppercase tracking-wider mb-1">Wallet Balance</p>
+            <h2 className="text-2xl font-bold text-[#c45a45]">
               ${parseFloat(profile.wallet_balance || 0).toFixed(2)}
             </h2>
-            <p className="text-xs text-[#8f9cae] mt-1">
+            <p className="text-xs text-[#9e9593] mt-1">
               {isLocked ? "Locked · Available after 120 days" : "Available to withdraw"}
             </p>
           </div>
-          <div className="bg-[#121824] p-5 rounded-xl border border-[#1e2638] shadow-2xl">
-            <p className="text-[#8f9cae] text-xs uppercase tracking-wider mb-1">Total Withdrawn</p>
+          <div className="bg-[#1f1b1b] p-5 rounded-xl border border-[#2e2726] shadow-2xl">
+            <p className="text-[#9e9593] text-xs uppercase tracking-wider mb-1">Total Withdrawn</p>
             <h2 className="text-2xl font-bold text-red-400">
               ${totalApproved.toFixed(2)}
             </h2>
-            <p className="text-xs text-[#8f9cae] mt-1">Approved withdrawals</p>
+            <p className="text-xs text-[#9e9593] mt-1">Approved withdrawals</p>
           </div>
         </div>
 
         {/* Form */}
-        <div className={`bg-[#121824] p-6 rounded-xl border shadow-2xl transition-all ${
-          isLocked ? "border-amber-500/20 opacity-60 pointer-events-none select-none" : "border-[#1e2638]"
+        <div className={`bg-[#1f1b1b] p-6 rounded-xl border shadow-2xl transition-all ${
+          isLocked ? "border-amber-500/20 opacity-50 pointer-events-none select-none" : "border-[#2e2726]"
         }`}>
           <div className="flex items-center justify-between mb-5">
-            <h2 className="text-lg font-semibold text-slate-100">New Withdrawal Request</h2>
+            <h2 className="text-lg font-semibold text-neutral-200">New Withdrawal Request</h2>
             {isLocked && (
               <span className="text-xs bg-amber-500/15 text-amber-400 border border-amber-500/30 px-3 py-1 rounded-full font-medium">
                 🔒 Locked
@@ -181,7 +182,7 @@ function UserWithdrawals() {
 
           <form onSubmit={submitWithdrawal} className="space-y-5">
             <div>
-              <label className="text-xs font-semibold text-[#8f9cae] uppercase tracking-wider mb-1.5 block">
+              <label className="text-xs font-semibold text-[#9e9593] uppercase tracking-wider mb-1.5 block">
                 Withdrawal Amount ($)
               </label>
               <input
@@ -189,25 +190,25 @@ function UserWithdrawals() {
                 placeholder="0.00"
                 min="0"
                 step="0.01"
-                className="w-full bg-[#090d16] p-3 rounded-lg border border-[#1e2638] text-white placeholder-[#8f9cae] focus:outline-none focus:border-[#0b66e4] transition-colors"
+                className="w-full bg-[#121010] p-3 rounded-lg border border-[#2e2726] text-white placeholder-[#9e9593] focus:outline-none focus:border-[#c45a45] transition-colors"
                 value={form.amount}
                 onChange={(e) => setForm({ ...form, amount: e.target.value })}
                 required
                 disabled={isLocked}
               />
-              <p className="text-xs text-[#8f9cae] mt-1">
+              <p className="text-xs text-[#9e9593] mt-1">
                 Max: ${parseFloat(profile.wallet_balance || 0).toFixed(2)}
               </p>
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-[#8f9cae] uppercase tracking-wider mb-1.5 block">
+              <label className="text-xs font-semibold text-[#9e9593] uppercase tracking-wider mb-1.5 block">
                 Your BTC Wallet Address
               </label>
               <input
                 type="text"
                 placeholder="BTC wallet address"
-                className="w-full bg-[#090d16] p-3 rounded-lg border border-[#1e2638] text-white placeholder-[#8f9cae] focus:outline-none focus:border-[#0b66e4] transition-colors font-mono text-sm"
+                className="w-full bg-[#121010] p-3 rounded-lg border border-[#2e2726] text-white placeholder-[#9e9593] focus:outline-none focus:border-[#c45a45] transition-colors font-mono text-sm"
                 value={form.wallet_address}
                 onChange={(e) => setForm({ ...form, wallet_address: e.target.value })}
                 required
@@ -217,7 +218,7 @@ function UserWithdrawals() {
 
             <button
               type="submit"
-              className="w-full bg-[#0b66e4] hover:bg-[#0055cc] px-6 py-3 rounded-lg font-semibold disabled:opacity-50 transition-colors cursor-pointer"
+              className="w-full bg-[#c45a45] hover:bg-[#a64633] text-white px-6 py-3 rounded-lg font-semibold disabled:opacity-50 transition-colors cursor-pointer shadow-xl"
               disabled={loading || isLocked}
             >
               {loading ? "Submitting..." : isLocked ? "🔒 Locked Until Day 120" : "Submit Withdrawal"}
@@ -227,10 +228,10 @@ function UserWithdrawals() {
 
         {/* History */}
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-slate-100">Withdrawal History</h2>
+          <h2 className="text-lg font-semibold text-neutral-200">Withdrawal History</h2>
 
           {withdrawals.length === 0 && (
-            <div className="bg-[#121824] border border-[#1e2638] rounded-xl p-10 text-center text-[#8f9cae] italic shadow-2xl">
+            <div className="bg-[#1f1b1b] border border-[#2e2726] rounded-xl p-10 text-center text-[#9e9593] italic shadow-2xl">
               No withdrawals yet.
             </div>
           )}
@@ -238,17 +239,17 @@ function UserWithdrawals() {
           {withdrawals.map((w) => (
             <div
               key={w.id}
-              className="bg-[#121824] p-5 rounded-xl border border-[#1e2638] hover:bg-[#1e2638] transition-colors shadow-2xl"
+              className="bg-[#1f1b1b] p-5 rounded-xl border border-[#2e2726] hover:bg-[#2e2726]/40 transition-colors shadow-2xl"
             >
               <div className="flex justify-between items-center gap-4">
                 <div className="flex-1 min-w-0">
                   <h2 className="font-bold text-xl text-white">
                     ${parseFloat(w.amount).toFixed(2)}
                   </h2>
-                  <p className="text-sm text-[#8f9cae] font-mono break-all mt-1">
+                  <p className="text-sm text-[#9e9593] font-mono break-all mt-1">
                     {w.wallet_address}
                   </p>
-                  <p className="text-xs text-[#8f9cae] mt-1">
+                  <p className="text-xs text-[#9e9593] mt-1">
                     {new Date(w.created_at).toLocaleDateString(undefined, {
                       year: "numeric", month: "short", day: "numeric",
                     })}
