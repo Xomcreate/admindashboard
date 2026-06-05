@@ -1,5 +1,3 @@
-// src/MainComponents/Sidebar.jsx
-
 import { useLocation, Link } from "react-router-dom";
 import {
   FaHome,
@@ -69,65 +67,86 @@ const Sidebar = ({ isOpen, onClose }) => {
       {/* Backdrop */}
       {isOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/70 z-40"
+          className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity duration-300"
           onClick={onClose}
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar Container */}
       <div
         className={`
-          fixed top-0 left-0 h-screen w-64 bg-[#0e0d0d] text-white
+          fixed top-0 left-0 h-screen w-64 bg-[#0B0F19] text-slate-200
           flex flex-col justify-between z-50
-          border-r border-[#242020]
-          transition-transform duration-300
+          border-r border-slate-800/60 shadow-xl shadow-black/40
+          transition-transform duration-300 ease-in-out
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
           lg:translate-x-0
         `}
       >
-        {/* TOP */}
-        <div className="p-5">
-          <div className="flex items-center justify-between mb-6 border-b border-[#242020] pb-4">
-            <div>
-              <h1 className="text-white font-bold">IPO Stock</h1>
-              <p className="text-xs text-gray-400">
-                {isAdmin ? "Admin Panel" : "User Panel"}
-              </p>
+        {/* HEADER SECTION */}
+        <div className="p-6 border-b border-slate-800/60 bg-[#0F1422]">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-xl bg-linear-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-black font-black text-lg shadow-lg shadow-emerald-500/20">
+                I
+              </div>
+              <div>
+                <h1 className="text-white font-bold tracking-wide text-sm uppercase">IPO Stock</h1>
+                <span className={`inline-block mt-0.5 px-2 py-0.5 text-[10px] font-medium rounded-full ${
+                  isAdmin ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                }`}>
+                  {isAdmin ? "Admin Console" : "Investor Hub"}
+                </span>
+              </div>
             </div>
 
-            <button onClick={onClose} className="lg:hidden">
-              <FaTimes />
+            <button 
+              onClick={onClose} 
+              className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+            >
+              <FaTimes className="w-4 h-4" />
             </button>
           </div>
+        </div>
 
-          {/* LINKS */}
-          <div className="flex flex-col gap-1">
-            {links.map((link) => (
+        {/* NAVIGATION LINKS (Scrollable container if items overflow) */}
+        <div className="flex-1 overflow-y-auto px-4 py-6 space-y-1 custom-scrollbar">
+          <p className="px-3 text-[11px] font-bold tracking-wider text-slate-500 uppercase mb-2">Navigation</p>
+          {links.map((link) => {
+            const active = isActive(link.path);
+            return (
               <Link
                 key={link.path}
                 to={link.path}
                 onClick={onClose}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm border ${
-                  isActive(link.path)
-                    ? "bg-[#c45a45] text-white"
-                    : "text-gray-400 hover:bg-[#171515] hover:text-white"
-                }`}
+                className={`
+                  group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
+                  transition-all duration-200 relative overflow-hidden
+                  ${active 
+                    ? "bg-linear-to-r from-emerald-500/10 to-transparent text-emerald-400 border-l-2 border-emerald-500 rounded-l-none pl-2.5" 
+                    : "text-slate-400 hover:bg-slate-800/40 hover:text-slate-100"
+                  }
+                `}
               >
-                {link.icon}
-                {link.name}
+                <span className={`text-base transition-transform group-hover:scale-110 duration-200 ${active ? "text-emerald-400" : "text-slate-400 group-hover:text-slate-200"}`}>
+                  {link.icon}
+                </span>
+                <span className="transition-transform group-hover:translate-x-0.5 duration-200">
+                  {link.name}
+                </span>
               </Link>
-            ))}
-          </div>
+            );
+          })}
         </div>
 
-        {/* BOTTOM */}
-        <div className="p-5 border-t border-[#242020]">
+        {/* FOOTER / USER ACTION SECTION */}
+        <div className="p-4 border-t border-slate-800/60 bg-[#0F1422]">
           <button
             onClick={logout}
-            className="flex items-center gap-3 text-red-400"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-rose-400 hover:bg-rose-500/10 transition-all duration-200 group"
           >
-            <FaSignOutAlt />
-            Logout
+            <FaSignOutAlt className="text-base group-hover:translate-x-0.5 transition-transform" />
+            <span>Sign Out</span>
           </button>
         </div>
       </div>
