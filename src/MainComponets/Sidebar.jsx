@@ -1,3 +1,5 @@
+// src/MainComponents/Sidebar.jsx
+
 import { useLocation, Link } from "react-router-dom";
 import {
   FaHome,
@@ -18,44 +20,101 @@ import {
   FaUserFriends,
 } from "react-icons/fa";
 
+const SectionLabel = ({ label }) => (
+  <p className="text-[10px] uppercase tracking-widest text-white/25 font-medium px-2 mt-4 mb-1">
+    {label}
+  </p>
+);
+
+const NavLink = ({ path, name, icon, isActive, onClick, badge }) => (
+  <Link
+    to={path}
+    onClick={onClick}
+    className={`group flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150 ${
+      isActive
+        ? "bg-[#c45a45]/15 border border-[#c45a45]/30 text-white"
+        : "text-white/50 hover:bg-white/5 hover:text-white/80 border border-transparent"
+    }`}
+  >
+    <span className={`text-base shrink-0 ${isActive ? "text-[#c45a45]" : "text-white/35 group-hover:text-white/60"}`}>
+      {icon}
+    </span>
+    <span className="flex-1 truncate">{name}</span>
+    {isActive && (
+      <span className="w-1.5 h-1.5 rounded-full bg-[#c45a45] shrink-0" />
+    )}
+    {badge && !isActive && (
+      <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#c45a45]/20 text-[#e07060] font-medium shrink-0">
+        {badge}
+      </span>
+    )}
+  </Link>
+);
+
 const Sidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
-
   const role = localStorage.getItem("role");
   const isAdmin = role === "admin";
-
   const isActive = (path) => location.pathname === path;
 
-  // ADMIN LINKS
-  const adminLinks = [
-    { path: "/dashboard", name: "Dashboard", icon: <FaHome /> },
-    { path: "/investors", name: "Investors", icon: <FaUsers /> },
-    { path: "/investments", name: "Investments", icon: <FaMoneyBill /> },
-    { path: "/fund-account", name: "Fund Account", icon: <FaWallet /> },
-    { path: "/investment-plans", name: "Plans", icon: <FaChartLine /> },
-    { path: "/copy-trading", name: "Copy Trading", icon: <FaExchangeAlt /> },
-    { path: "/ai-trading-bots", name: "AI Bots", icon: <FaRobot /> },
-    { path: "/purchase-stocks", name: "Stocks", icon: <FaShoppingCart /> },
-    { path: "/profit-history", name: "Profit History", icon: <FaHistory /> },
-    { path: "/referrals", name: "Referrals", icon: <FaUserFriends /> },
-    { path: "/bonuses", name: "Bonuses", icon: <FaGift /> },
-    { path: "/blocked", name: "Blocked Users", icon: <FaBan /> },
+  const adminSections = [
+    {
+      label: "Main",
+      links: [
+        { path: "/dashboard", name: "Dashboard", icon: <FaHome /> },
+        { path: "/investors", name: "Investors", icon: <FaUsers /> },
+        { path: "/investments", name: "Investments", icon: <FaMoneyBill /> },
+        { path: "/fund-account", name: "Fund Account", icon: <FaWallet /> },
+      ],
+    },
+    {
+      label: "Trading",
+      links: [
+        { path: "/investment-plans", name: "Plans", icon: <FaChartLine /> },
+        { path: "/copy-trading", name: "Copy Trading", icon: <FaExchangeAlt />, badge: "New" },
+        { path: "/ai-trading-bots", name: "AI Bots", icon: <FaRobot /> },
+        { path: "/purchase-stocks", name: "Stocks", icon: <FaShoppingCart /> },
+      ],
+    },
+    {
+      label: "Reports",
+      links: [
+        { path: "/profit-history", name: "Profit History", icon: <FaHistory /> },
+        { path: "/referrals", name: "Referrals", icon: <FaUserFriends /> },
+        { path: "/bonuses", name: "Bonuses", icon: <FaGift /> },
+        { path: "/blocked", name: "Blocked Users", icon: <FaBan /> },
+      ],
+    },
   ];
 
-  // USER LINKS
-  const userLinks = [
-    { path: "/dashboard", name: "Dashboard", icon: <FaHome /> },
-    { path: "/fund-account", name: "Fund Account", icon: <FaWallet /> },
-    { path: "/investment-plans", name: "Invest", icon: <FaChartLine /> },
-    { path: "/copy-trading", name: "Copy Trading", icon: <FaExchangeAlt /> },
-    { path: "/ai-trading-bots", name: "AI Bots", icon: <FaRobot /> },
-    { path: "/profit-history", name: "History", icon: <FaHistory /> },
-    { path: "/referrals", name: "Referrals", icon: <FaUserFriends /> },
-    { path: "/profile", name: "Profile", icon: <FaUserCircle /> },
-    { path: "/settings", name: "Settings", icon: <FaCog /> },
+  const userSections = [
+    {
+      label: "Overview",
+      links: [
+        { path: "/dashboard", name: "Dashboard", icon: <FaHome /> },
+        { path: "/fund-account", name: "Fund Account", icon: <FaWallet /> },
+      ],
+    },
+    {
+      label: "Trading",
+      links: [
+        { path: "/investment-plans", name: "Invest", icon: <FaChartLine /> },
+        { path: "/copy-trading", name: "Copy Trading", icon: <FaExchangeAlt /> },
+        { path: "/ai-trading-bots", name: "AI Bots", icon: <FaRobot /> },
+        { path: "/profit-history", name: "History", icon: <FaHistory /> },
+        { path: "/referrals", name: "Referrals", icon: <FaUserFriends /> },
+      ],
+    },
+    {
+      label: "Account",
+      links: [
+        { path: "/profile", name: "Profile", icon: <FaUserCircle /> },
+        { path: "/settings", name: "Settings", icon: <FaCog /> },
+      ],
+    },
   ];
 
-  const links = isAdmin ? adminLinks : userLinks;
+  const sections = isAdmin ? adminSections : userSections;
 
   const logout = () => {
     localStorage.clear();
@@ -67,87 +126,82 @@ const Sidebar = ({ isOpen, onClose }) => {
       {/* Backdrop */}
       {isOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity duration-300"
+          className="lg:hidden fixed inset-0 bg-black/70 z-40"
           onClick={onClose}
         />
       )}
 
-      {/* Sidebar Container */}
+      {/* Sidebar */}
       <div
         className={`
-          fixed top-0 left-0 h-screen w-64 bg-[#0B0F19] text-slate-200
-          flex flex-col justify-between z-50
-          border-r border-slate-800/60 shadow-xl shadow-black/40
-          transition-transform duration-300 ease-in-out
+          fixed top-0 left-0 h-screen w-60 bg-[#0A0A0B] text-white
+          flex flex-col z-50
+          border-r border-white/6
+          transition-transform duration-300
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
           lg:translate-x-0
         `}
       >
-        {/* HEADER SECTION */}
-        <div className="p-6 border-b border-slate-800/60 bg-[#0F1422]">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-xl bg-linear-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-black font-black text-lg shadow-lg shadow-emerald-500/20">
-                I
-              </div>
-              <div>
-                <h1 className="text-white font-bold tracking-wide text-sm uppercase">IPO Stock</h1>
-                <span className={`inline-block mt-0.5 px-2 py-0.5 text-[10px] font-medium rounded-full ${
-                  isAdmin ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                }`}>
-                  {isAdmin ? "Admin Console" : "Investor Hub"}
-                </span>
-              </div>
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-5 border-b border-white/6">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-linear-to-br from-[#c45a45] to-[#a03929] flex items-center justify-center shrink-0">
+              <FaChartLine className="text-white text-sm" />
             </div>
+            <div>
+              <p className="text-white text-sm font-semibold leading-none">IPO Stock</p>
+              <p className="text-white/30 text-[11px] mt-0.5">
+                {isAdmin ? "Admin Panel" : "User Panel"}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="lg:hidden text-white/40 hover:text-white/70 transition-colors"
+          >
+            <FaTimes />
+          </button>
+        </div>
 
-            <button 
-              onClick={onClose} 
-              className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+        {/* Nav Links */}
+        <nav className="flex-1 overflow-y-auto px-3 py-2 scrollbar-none">
+          {sections.map((section) => (
+            <div key={section.label}>
+              <SectionLabel label={section.label} />
+              {section.links.map((link) => (
+                <NavLink
+                  key={link.path}
+                  {...link}
+                  isActive={isActive(link.path)}
+                  onClick={onClose}
+                />
+              ))}
+            </div>
+          ))}
+        </nav>
+
+        {/* User Footer */}
+        <div className="px-3 pb-4 border-t border-white/6 pt-3">
+          <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg bg-white/6 border border-white/[0.07]">
+            <div className="w-7 h-7 rounded-full bg-[#c45a45]/20 flex items-center justify-center shrink-0">
+              <FaUserCircle className="text-[#c45a45] text-sm" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-white text-xs font-medium leading-none truncate">
+                {isAdmin ? "Admin User" : "My Account"}
+              </p>
+              <p className="text-white/30 text-[11px] mt-0.5 truncate">
+                {isAdmin ? "Administrator" : "Investor"}
+              </p>
+            </div>
+            <button
+              onClick={logout}
+              title="Logout"
+              className="text-red-400/50 hover:text-red-400 transition-colors p-1 shrink-0"
             >
-              <FaTimes className="w-4 h-4" />
+              <FaSignOutAlt className="text-sm" />
             </button>
           </div>
-        </div>
-
-        {/* NAVIGATION LINKS (Scrollable container if items overflow) */}
-        <div className="flex-1 overflow-y-auto px-4 py-6 space-y-1 custom-scrollbar">
-          <p className="px-3 text-[11px] font-bold tracking-wider text-slate-500 uppercase mb-2">Navigation</p>
-          {links.map((link) => {
-            const active = isActive(link.path);
-            return (
-              <Link
-                key={link.path}
-                to={link.path}
-                onClick={onClose}
-                className={`
-                  group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
-                  transition-all duration-200 relative overflow-hidden
-                  ${active 
-                    ? "bg-linear-to-r from-emerald-500/10 to-transparent text-emerald-400 border-l-2 border-emerald-500 rounded-l-none pl-2.5" 
-                    : "text-slate-400 hover:bg-slate-800/40 hover:text-slate-100"
-                  }
-                `}
-              >
-                <span className={`text-base transition-transform group-hover:scale-110 duration-200 ${active ? "text-emerald-400" : "text-slate-400 group-hover:text-slate-200"}`}>
-                  {link.icon}
-                </span>
-                <span className="transition-transform group-hover:translate-x-0.5 duration-200">
-                  {link.name}
-                </span>
-              </Link>
-            );
-          })}
-        </div>
-
-        {/* FOOTER / USER ACTION SECTION */}
-        <div className="p-4 border-t border-slate-800/60 bg-[#0F1422]">
-          <button
-            onClick={logout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-rose-400 hover:bg-rose-500/10 transition-all duration-200 group"
-          >
-            <FaSignOutAlt className="text-base group-hover:translate-x-0.5 transition-transform" />
-            <span>Sign Out</span>
-          </button>
         </div>
       </div>
     </>
