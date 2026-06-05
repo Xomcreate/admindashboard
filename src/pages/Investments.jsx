@@ -62,7 +62,7 @@ const getStatus = (investment) => {
 const StatusBadge = ({ investment }) => {
   const s = getStatus(investment);
   if (s === "active")
-    return <span className="bg-pink-500/15 text-pink-400 border border-pink-500/30 px-3 py-1 rounded-full text-xs font-medium">Active</span>;
+    return <span className="bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-full text-xs font-medium">Active</span>;
   if (s === "pending")
     return <span className="bg-amber-500/15 text-amber-400 border border-amber-500/30 px-3 py-1 rounded-full text-xs font-medium">Pending</span>;
   return <span className="bg-orange-400/15 text-orange-300 border border-orange-400/30 px-3 py-1 rounded-full text-xs font-medium">Expired</span>;
@@ -187,7 +187,7 @@ function Investments() {
       <div className="text-white font-sans max-w-6xl mx-auto space-y-8">
 
         <div>
-          <h1 className="text-3xl font-bold tracking-wide text-transparent bg-clip-text bg-linear-to-r from-pink-400 to-purple-400">Investments</h1>
+          <h1 className="text-3xl font-bold tracking-wide text-white">Investments</h1>
           <p className="text-[#8f9cae] text-sm mt-1">
             Manage and approve investment contracts. All stocks earn{" "}
             <span className="text-teal-400 font-semibold">25% daily ROI</span> for{" "}
@@ -232,7 +232,7 @@ function Investments() {
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-semibold text-[#8f9cae] uppercase tracking-wider">Investor</label>
               <select
-                className="bg-[#090d16] border border-[#1e2638] p-3 rounded-lg text-white focus:outline-none focus:border-pink-500 transition-colors cursor-pointer"
+                className="bg-[#090d16] border border-[#1e2638] p-3 rounded-lg text-white focus:outline-none focus:border-red-500/50 transition-colors cursor-pointer"
                 value={form.investor}
                 onChange={(e) => setForm({ ...form, investor: e.target.value })}
                 required
@@ -247,7 +247,7 @@ function Investments() {
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-semibold text-[#8f9cae] uppercase tracking-wider">Stock Company</label>
               <select
-                className="bg-[#090d16] border border-[#1e2638] p-3 rounded-lg text-white focus:outline-none focus:border-pink-500 transition-colors cursor-pointer"
+                className="bg-[#090d16] border border-[#1e2638] p-3 rounded-lg text-white focus:outline-none focus:border-red-500/50 transition-colors cursor-pointer"
                 value={form.category}
                 onChange={(e) => setForm({ ...form, category: e.target.value })}
                 required
@@ -268,7 +268,7 @@ function Investments() {
                 min="500000"
                 max="2000000"
                 step="0.01"
-                className="bg-[#090d16] border border-[#1e2638] p-3 rounded-lg text-white placeholder-[#8f9cae] focus:outline-none focus:border-pink-500 transition-colors"
+                className="bg-[#090d16] border border-[#1e2638] p-3 rounded-lg text-white placeholder-[#8f9cae] focus:outline-none focus:border-red-500/50 transition-colors"
                 value={form.amount}
                 onChange={(e) => setForm({ ...form, amount: e.target.value })}
                 required
@@ -296,7 +296,7 @@ function Investments() {
 
             <button
               type="submit"
-              className="bg-linear-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white p-3 rounded-lg font-semibold tracking-wide transition-all duration-200 col-span-1 md:col-span-2 mt-2 cursor-pointer shadow-md shadow-pink-500/10"
+              className="bg-red-600 hover:bg-red-700 text-white p-3 rounded-lg font-semibold tracking-wide transition-all duration-200 col-span-1 md:col-span-2 mt-2 cursor-pointer shadow-md shadow-red-600/10"
             >
               Create & Activate Contract
             </button>
@@ -311,8 +311,8 @@ function Investments() {
               onClick={() => setTab(t)}
               className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
                 tab === t
-                  ? "bg-pink-500 text-white shadow-md shadow-pink-500/10"
-                  : "bg-[#121824] border border-[#1e2638] text-[#8f9cae] hover:border-pink-500/40"
+                  ? "bg-red-600 text-white shadow-md shadow-red-600/10"
+                  : "bg-[#121824] border border-[#1e2638] text-[#8f9cae] hover:border-red-500/40"
               }`}
             >
               {t === "all" ? `All Investments (${investments.length})` : `Pending Approval (${pendingList.length})`}
@@ -426,7 +426,7 @@ function Investments() {
                   placeholder="0.00"
                   min="0.01"
                   step="0.01"
-                  className="bg-[#090d16] border border-[#1e2638] p-3 rounded-lg text-white placeholder-[#8f9cae] focus:outline-none focus:border-pink-500 transition-colors"
+                  className="bg-[#090d16] border border-[#1e2638] p-3 rounded-lg text-white placeholder-[#8f9cae] focus:outline-none focus:border-red-500/50 transition-colors"
                   value={profitAmount}
                   onChange={(e) => setProfitAmount(e.target.value)}
                   required
