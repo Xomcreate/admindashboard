@@ -38,6 +38,7 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 
 // COMPONENTS
 import Loader from "./MainComponets/Loader";
+import Transactions from "./pages/Transactions";
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -87,6 +88,11 @@ function App() {
         <Route
           path="/bonuses"
           element={<ProtectedRoute><Bonuses /></ProtectedRoute>}
+        />
+
+         <Route
+          path="/transactions"
+          element={<ProtectedRoute><Transactions /></ProtectedRoute>}
         />
         <Route
           path="/blocked"

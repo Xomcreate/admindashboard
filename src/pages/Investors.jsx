@@ -3,13 +3,12 @@ import DashboardLayout from "../layouts/DashboardLayout";
 import API from "../api/axios";
 import Loader from "../MainComponets/Loader";
 
-function Investors() {
+function InvestorsAndUsers() {
   const [investors, setInvestors] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   
-  // State to manage the active slide view ("users" or "investors")
   const [activeTab, setActiveTab] = useState("users");
 
   const [form, setForm] = useState({
@@ -54,7 +53,6 @@ function Investors() {
 
   const addInvestor = async (e) => {
     e.preventDefault();
-
     try {
       await API.post("investors/", {
         ...form,
@@ -64,16 +62,9 @@ function Investors() {
 
       alert("Investor Added Successfully");
       setShowModal(false);
-
       setForm({
-        name: "",
-        email: "",
-        phone: "",
-        balance: "",
-        bonus: "",
-        blocked: false,
+        name: "", email: "", phone: "", balance: "", bonus: "", blocked: false,
       });
-
       fetchInvestors();
     } catch (error) {
       console.error(error);
@@ -103,7 +94,6 @@ function Investors() {
 
   const deleteInvestor = async (id, name) => {
     if (!window.confirm(`Delete investor "${name}"? This cannot be undone.`)) return;
-
     try {
       await API.delete(`investors/${id}/`);
       fetchInvestors();
@@ -115,7 +105,6 @@ function Investors() {
 
   const deleteUser = async (id, username) => {
     if (!window.confirm(`Delete user "${username}"? This is irreversible.`)) return;
-
     try {
       await API.delete(`users/${id}/delete/`);
       fetchAll();
@@ -137,7 +126,7 @@ function Investors() {
             <button
               onClick={() => setActiveTab("users")}
               className={`flex-1 py-2 text-sm font-semibold rounded-md z-10 transition-all duration-300 ${
-                activeTab === "users" ? "text-white bg-[#0b66e4]" : "text-[#8f9cae] hover:text-white"
+                activeTab === "users" ? "text-white bg-pink-500 shadow-sm" : "text-[#8f9cae] hover:text-white"
               }`}
             >
               Registered Users
@@ -145,18 +134,17 @@ function Investors() {
             <button
               onClick={() => setActiveTab("investors")}
               className={`flex-1 py-2 text-sm font-semibold rounded-md z-10 transition-all duration-300 ${
-                activeTab === "investors" ? "text-white bg-[#0b66e4]" : "text-[#8f9cae] hover:text-white"
+                activeTab === "investors" ? "text-white bg-pink-500 shadow-sm" : "text-[#8f9cae] hover:text-white"
               }`}
             >
               Investors
             </button>
           </div>
 
-          {/* Conditional Add Button only visible on Investors Slide */}
           {activeTab === "investors" && (
             <button
               onClick={() => setShowModal(true)}
-              className="bg-[#0b66e4] hover:bg-[#0055cc] px-5 py-2.5 rounded-lg font-semibold transition-all"
+              className="bg-linear-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 px-5 py-2.5 rounded-lg font-semibold transition-all cursor-pointer shadow-md shadow-pink-500/10"
             >
               Add Investor
             </button>
@@ -168,9 +156,9 @@ function Investors() {
           
           {/* SLIDE 1: REGISTERED USERS */}
           {activeTab === "users" && (
-            <div className="bg-[#121824] p-6 rounded-xl border border-[#1e2638] animate-fade-in">
+            <div className="bg-[#121824] p-6 rounded-xl border border-[#1e2638]">
               <div className="mb-6">
-                <h2 className="text-3xl font-bold">Registered Users</h2>
+                <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-lineat-to-r from-pink-400 to-purple-400">Registered Users</h2>
                 <p className="text-[#8f9cae] text-sm mt-1">
                   Manage core platform user registrations and status updates.
                 </p>
@@ -193,12 +181,12 @@ function Investors() {
                     {users.length ? (
                       users.map((u) => (
                         <tr key={u.id} className="border-b border-[#1e2638] hover:bg-[#1e2638]/50">
-                          <td className="p-4 text-blue-400">#{u.id}</td>
+                          <td className="p-4 text-pink-400 font-medium">#{u.id}</td>
                           <td className="p-4">{u.username}</td>
                           <td className="p-4 text-[#8f9cae]">{u.email || "—"}</td>
                           <td className="p-4 text-center">
                             {u.is_active ? (
-                              <span className="bg-blue-500/15 text-blue-400 px-3 py-1 rounded-full text-xs">
+                              <span className="bg-purple-500/15 text-purple-300 px-3 py-1 rounded-full text-xs border border-purple-500/20">
                                 Active
                               </span>
                             ) : (
@@ -213,7 +201,7 @@ function Investors() {
                           <td className="p-4 text-center">
                             <button
                               onClick={() => deleteUser(u.id, u.username)}
-                              className="text-red-500 hover:underline"
+                              className="text-red-400 hover:text-red-300 hover:underline cursor-pointer"
                             >
                               Delete
                             </button>
@@ -235,9 +223,9 @@ function Investors() {
 
           {/* SLIDE 2: INVESTORS */}
           {activeTab === "investors" && (
-            <div className="bg-[#121824] p-6 rounded-xl border border-[#1e2638] animate-fade-in">
+            <div className="bg-[#121824] p-6 rounded-xl border border-[#1e2638]">
               <div className="mb-6">
-                <h1 className="text-3xl font-bold">Investors</h1>
+                <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-linear-to-r from-pink-400 to-purple-400">Investors</h1>
                 <p className="text-[#8f9cae] text-sm mt-1">
                   Manage registered investor accounts, balances, and bonuses.
                 </p>
@@ -264,10 +252,10 @@ function Investors() {
                           <td className="p-4">{inv.name}</td>
                           <td className="p-4 text-[#8f9cae]">{inv.email}</td>
                           <td className="p-4 text-[#8f9cae]">{inv.phone}</td>
-                          <td className="p-4 font-semibold">
+                          <td className="p-4 font-semibold text-white">
                             ${Number(inv.balance || 0).toLocaleString()}
                           </td>
-                          <td className="p-4 text-[#10b981] font-semibold">
+                          <td className="p-4 text-teal-400 font-semibold">
                             ${Number(inv.bonus || 0).toLocaleString()}
                           </td>
                           <td className="p-4 text-center">
@@ -276,24 +264,24 @@ function Investors() {
                                 Blocked
                               </span>
                             ) : (
-                              <span className="bg-blue-500/15 text-blue-400 px-3 py-1 rounded-full text-xs">
+                              <span className="bg-purple-500/15 text-purple-300 px-3 py-1 rounded-full text-xs border border-purple-500/20">
                                 Active
                               </span>
                             )}
                           </td>
-                          <td className="p-4 text-center flex gap-3 justify-center">
+                          <td className="p-4 text-center flex gap-4 justify-center">
                             {inv.blocked ? (
-                              <button onClick={() => unblockUser(inv.id)} className="text-blue-400 hover:underline">
+                              <button onClick={() => unblockUser(inv.id)} className="text-purple-400 hover:text-purple-300 hover:underline cursor-pointer">
                                 Unblock
                               </button>
                             ) : (
-                              <button onClick={() => blockUser(inv.id)} className="text-red-400 hover:underline">
+                              <button onClick={() => blockUser(inv.id)} className="text-red-400 hover:text-red-300 hover:underline cursor-pointer">
                                 Block
                               </button>
                             )}
                             <button
                               onClick={() => deleteInvestor(inv.id, inv.name)}
-                              className="text-red-500 hover:underline"
+                              className="text-red-500 hover:text-red-400 hover:underline cursor-pointer"
                             >
                               Delete
                             </button>
@@ -312,39 +300,11 @@ function Investors() {
               </div>
             </div>
           )}
-
         </div>
+
       </div>
-
-      {/* MODAL */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="bg-[#121824] w-full max-w-xl p-6 rounded-xl border border-[#1e2638]">
-            <h2 className="text-2xl font-bold mb-4">Add Investor</h2>
-            <form onSubmit={addInvestor} className="grid grid-cols-2 gap-4">
-              <input placeholder="Name" className="p-3 bg-[#090d16] border border-[#1e2638] rounded text-white focus:outline-none focus:border-[#0b66e4]"
-                value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
-              <input placeholder="Email" className="p-3 bg-[#090d16] border border-[#1e2638] rounded text-white focus:outline-none focus:border-[#0b66e4]"
-                value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
-              <input placeholder="Phone" className="p-3 bg-[#090d16] border border-[#1e2638] rounded text-white focus:outline-none focus:border-[#0b66e4]"
-                value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
-              <input type="number" placeholder="Balance" className="p-3 bg-[#090d16] border border-[#1e2638] rounded text-white focus:outline-none focus:border-[#0b66e4]"
-                value={form.balance} onChange={e => setForm({ ...form, balance: e.target.value })} />
-              <input type="number" placeholder="Bonus" className="p-3 bg-[#090d16] border border-[#1e2638] rounded text-white focus:outline-none focus:border-[#0b66e4]"
-                value={form.bonus} onChange={e => setForm({ ...form, bonus: e.target.value })} />
-              <div className="col-span-2 flex gap-3 mt-2">
-                <button className="bg-[#0b66e4] hover:bg-[#0055cc] flex-1 py-3 rounded font-semibold transition-all">Save</button>
-                <button type="button" onClick={() => setShowModal(false)}
-                  className="bg-red-600 hover:bg-red-700 flex-1 py-3 rounded font-semibold transition-all">
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </DashboardLayout>
   );
 }
 
-export default Investors;
+export default InvestorsAndUsers;
