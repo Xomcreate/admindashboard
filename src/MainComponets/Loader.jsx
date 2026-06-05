@@ -17,19 +17,19 @@ function Loader() {
         <p style={styles.subtext}>Fetching real-time market data...</p>
       </div>
 
-      {/* Injecting keyframes with updated blue fintech accents */}
+      {/* Injecting keyframes with matching reddish-orange dashboard accents */}
       <style>{`
         @keyframes growAndGlow {
           0%, 100% {
             height: 15px;
             opacity: 0.4;
-            background-color: #0b66e4;
+            background-color: #a64633;
           }
           50% {
             height: 45px;
             opacity: 1;
-            background-color: #0066ff; 
-            box-shadow: 0 0 14px rgba(0, 102, 255, 0.6);
+            background-color: #c45a45; 
+            box-shadow: 0 0 14px rgba(196, 90, 69, 0.5);
           }
         }
       `}</style>
@@ -44,7 +44,7 @@ const styles = {
     alignItems: 'center',
     height: '100vh',
     width: '100vw',
-    backgroundColor: '#090d16', // Deep page background from your screenshot
+    backgroundColor: '#171515', // Matches the deep, warm dark background of your dashboard
     fontFamily: 'system-ui, -apple-system, sans-serif',
   },
   wrapper: {
@@ -75,7 +75,7 @@ const styles = {
     margin: '0 0 8px 0',
   },
   subtext: {
-    color: '#8f9cae', // Muted text color from your screenshot description
+    color: '#9e9593', // Muted text tone pulled from your side-menu inactive items
     fontSize: '0.85rem',
     margin: 0,
   },

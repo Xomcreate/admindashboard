@@ -49,10 +49,10 @@ const Login = () => {
   };
 
   return (
-    <div className="h-screen flex items-center justify-center bg-[#090d16]">
+    <div className="h-screen flex items-center justify-center bg-[#171515]">
       <form
         onSubmit={submit}
-        className="bg-[#121824] border border-[#1e2638] p-8 rounded-xl w-96 shadow-2xl"
+        className="bg-[#1c1919] border border-[#2b2524] p-8 rounded-xl w-96 shadow-2xl"
       >
         <h1 className="text-white text-2xl mb-6 font-bold">
           Login
@@ -66,7 +66,7 @@ const Login = () => {
 
         <input
           placeholder="Username"
-          className="w-full p-3 mb-4 rounded-lg bg-[#090d16] text-white border border-[#1e2638] placeholder-[#8f9cae] focus:outline-none focus:border-[#0b66e4]"
+          className="w-full p-3 mb-4 rounded-lg bg-[#171515] text-white border border-[#2b2524] placeholder-[#9e9593] focus:outline-none focus:border-[#c45a45]"
           value={form.username}
           onChange={(e) =>
             setForm({
@@ -82,7 +82,7 @@ const Login = () => {
           <input
             type={showPassword ? "text" : "password"}
             placeholder="Password"
-            className="w-full p-3 rounded-lg bg-[#090d16] text-white border border-[#1e2638] placeholder-[#8f9cae] focus:outline-none focus:border-[#0b66e4]"
+            className="w-full p-3 rounded-lg bg-[#171515] text-white border border-[#2b2524] placeholder-[#9e9593] focus:outline-none focus:border-[#c45a45]"
             value={form.password}
             onChange={(e) =>
               setForm({
@@ -98,24 +98,24 @@ const Login = () => {
             onClick={() =>
               setShowPassword(!showPassword)
             }
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8f9cae] text-sm"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9e9593] text-sm"
           >
             {showPassword ? "Hide" : "Show"}
           </button>
         </div>
 
         <button
-          className="bg-[#0b66e4] hover:bg-[#0055cc] w-full p-3 text-white rounded-lg font-semibold transition-colors disabled:opacity-50"
+          className="bg-[#c45a45] hover:bg-[#a64633] w-full p-3 text-white rounded-lg font-semibold transition-colors disabled:opacity-50"
           disabled={loading}
         >
           {loading ? "Logging in..." : "Login"}
         </button>
 
-        <p className="text-[#8f9cae] mt-4 text-sm text-center">
+        <p className="text-[#9e9593] mt-4 text-sm text-center">
           Don't have an account?{" "}
           <Link
             to="/register"
-            className="text-[#0b66e4] hover:underline"
+            className="text-[#c45a45] hover:underline"
           >
             Register
           </Link>

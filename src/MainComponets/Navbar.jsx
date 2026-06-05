@@ -11,13 +11,13 @@ const Navbar = ({ onMenuClick }) => {
   const role = localStorage.getItem("role");
 
   return (
-    <div className="flex justify-between items-center px-5 py-3.5 bg-[#121824] border-b border-[#1e2638] text-white mb-5">
+    <div className="flex justify-between items-center px-5 py-3.5 bg-[#121111] border-b border-[#242020] text-white mb-5">
 
       {/* Left: hamburger + brand */}
       <div className="flex items-center gap-3">
         <button
           onClick={onMenuClick}
-          className="lg:hidden p-1.5 rounded-lg hover:bg-[#1e2638] transition-colors text-[#8f9cae] hover:text-white border border-[#1e2638]"
+          className="lg:hidden p-1.5 rounded-lg hover:bg-[#242020] transition-colors text-[#9e9593] hover:text-white border border-[#242020]"
           aria-label="Open menu"
         >
           <FaBars size={16} />
@@ -25,10 +25,11 @@ const Navbar = ({ onMenuClick }) => {
 
         <div className="flex flex-col">
           <span className="text-white font-semibold text-sm leading-tight">
-            <span className="inline-block w-2 h-2 rounded-full bg-[#0b66e4] mr-1.5 align-middle" />
+            {/* Swapped green/blue dot to the loader's deep orange accent */}
+            <span className="inline-block w-2 h-2 rounded-full bg-[#c45a45] mr-1.5 align-middle shadow-[0_0_8px_rgba(196,90,69,0.5)]" />
             IPO Stock
           </span>
-          <span className="text-[#8f9cae] text-xs leading-tight mt-0.5">
+          <span className="text-[#9e9593] text-xs leading-tight mt-0.5">
             {role === "admin" ? "Admin Panel" : "User Panel"}
           </span>
         </div>
@@ -36,9 +37,10 @@ const Navbar = ({ onMenuClick }) => {
 
       {/* Right: profile + logout */}
       <div className="flex gap-3 items-center">
-        <div className="flex items-center gap-2 text-[#8f9cae] text-sm">
-          <div className="w-7 h-7 rounded-full bg-[#0b66e4]/10 border border-[#0b66e4]/25 flex items-center justify-center">
-            <FaUserCircle className="text-[#0b66e4] text-sm" />
+        <div className="flex items-center gap-2 text-[#9e9593] text-sm">
+          {/* Changed profile icon container to match loader's color profile */}
+          <div className="w-7 h-7 rounded-full bg-[#c45a45]/10 border border-[#c45a45]/25 flex items-center justify-center">
+            <FaUserCircle className="text-[#c45a45] text-sm" />
           </div>
         </div>
 
