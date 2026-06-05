@@ -1,5 +1,3 @@
-// src/layouts/DashboardLayout.jsx
-
 import { useState } from "react";
 import Sidebar from "../MainComponets/Sidebar";
 import Navbar from "../MainComponets/Navbar";
@@ -8,7 +6,8 @@ const DashboardLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-[#0f172a]">
+    // MATCHED COLORS: Changed bg-[#0f172a] to the warm dark tint bg-[#171515]
+    <div className="flex min-h-screen bg-[#171515]">
 
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
