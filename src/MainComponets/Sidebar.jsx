@@ -27,13 +27,10 @@ const NavLink = ({ path, name, icon, isActive, onClick, badge }) => (
     }`}>
       {icon}
     </span>
-
     <span className="flex-1 truncate">{name}</span>
-
     {isActive && (
       <span className="w-1.5 h-1.5 rounded-full bg-[#c45a45] shrink-0" />
     )}
-
     {badge && !isActive && (
       <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#c45a45]/20 text-[#e07060] font-medium shrink-0">
         {badge}
@@ -45,19 +42,19 @@ const NavLink = ({ path, name, icon, isActive, onClick, badge }) => (
 const Sidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
   const role = localStorage.getItem("role");
-
   const isAdmin = role === "admin";
 
-  const isActive = (path) => location.pathname === path;
+  // ✅ Correct role-aware dashboard paths
+  const adminDashboardPath = "/dashboard";
+  const userDashboardPath = "/user/dashboard";
 
-  // 🔥 ROLE-AWARE DASHBOARD PATH
-  const dashboardPath = isAdmin ? "/dashboard" : "/dashboard";
+  const isActive = (path) => location.pathname === path;
 
   const adminSections = [
     {
       label: "Main",
       links: [
-        { path: dashboardPath, name: "Dashboard", icon: <FaHome /> },
+        { path: adminDashboardPath, name: "Dashboard", icon: <FaHome /> },
         { path: "/investors", name: "Investors", icon: <FaUsers /> },
         { path: "/investments", name: "Investments", icon: <FaMoneyBill /> },
         { path: "/fund-account", name: "Fund Account", icon: <FaWallet /> },
@@ -88,7 +85,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     {
       label: "Overview",
       links: [
-        { path: dashboardPath, name: "Dashboard", icon: <FaHome /> },
+        { path: userDashboardPath, name: "Dashboard", icon: <FaHome /> },
         { path: "/fund-account", name: "Fund Account", icon: <FaWallet /> },
       ],
     },
@@ -140,21 +137,14 @@ const Sidebar = ({ isOpen, onClose }) => {
             <div className="w-8 h-8 rounded-lg bg-linear-to-br from-[#c45a45] to-[#a03929] flex items-center justify-center">
               <FaChartLine className="text-white text-sm" />
             </div>
-
             <div>
-              <p className="text-white text-sm font-semibold leading-none">
-                IPO Stock
-              </p>
+              <p className="text-white text-sm font-semibold leading-none">IPO Stock</p>
               <p className="text-white/30 text-[11px] mt-0.5">
                 {isAdmin ? "Admin Panel" : "User Panel"}
               </p>
             </div>
           </div>
-
-          <button
-            onClick={onClose}
-            className="lg:hidden text-white/40 hover:text-white/70"
-          >
+          <button onClick={onClose} className="lg:hidden text-white/40 hover:text-white/70">
             <FaTimes />
           </button>
         </div>
@@ -182,7 +172,6 @@ const Sidebar = ({ isOpen, onClose }) => {
             <div className="w-7 h-7 rounded-full bg-[#c45a45]/20 flex items-center justify-center">
               <FaUserCircle className="text-[#c45a45] text-sm" />
             </div>
-
             <div className="flex-1 min-w-0">
               <p className="text-white text-xs font-medium truncate">
                 {isAdmin ? "Admin User" : "My Account"}
@@ -191,7 +180,6 @@ const Sidebar = ({ isOpen, onClose }) => {
                 {isAdmin ? "Administrator" : "Investor"}
               </p>
             </div>
-
             <button
               onClick={logout}
               title="Logout"

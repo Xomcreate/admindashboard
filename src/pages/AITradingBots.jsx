@@ -8,11 +8,12 @@ import {
   FaPlay,
   FaStop,
   FaCog,
-  FaClock,
   FaCheckCircle,
   FaLock,
   FaStar,
   FaTimes,
+  FaWallet,
+  FaInfoCircle,
 } from "react-icons/fa";
 
 const bots = [
@@ -142,26 +143,53 @@ const plans = [
   {
     name: "Starter",
     price: "$49",
+    deposit: "$500",
     period: "/mo",
     description: "Run entry-level algorithmic instances under basic configurations.",
-    features: ["Deploy up to 2 concurrent Starter bots", "Maximum runtime cap of 40 hours/wk", "Standard trading signals execution", "Weekly performance email log"],
+    features: [
+      "Deploy up to 2 concurrent Starter bots",
+      "Maximum runtime cap of 40 hours/wk",
+      "Standard trading signals execution",
+      "Weekly performance email log",
+      "Min. deposit: $500",
+    ],
     popular: false,
+    depositAmount: 500,
+    unlockedTiers: ["Starter"],
   },
   {
     name: "Pro",
     price: "$149",
+    deposit: "$2,000",
     period: "/mo",
     description: "Optimized for systematic algorithmic traders running continuous strategies.",
-    features: ["Deploy up to 5 Pro & Starter level bots", "True 24/7 perpetual uptime hosting", "Advanced ML trend-matching modules", "Custom balance drawdown safeguard controls"],
+    features: [
+      "Deploy up to 5 Pro & Starter level bots",
+      "True 24/7 perpetual uptime hosting",
+      "Advanced ML trend-matching modules",
+      "Custom balance drawdown safeguard controls",
+      "Min. deposit: $2,000",
+    ],
     popular: true,
+    depositAmount: 2000,
+    unlockedTiers: ["Starter", "Pro"],
   },
   {
     name: "Institutional",
     price: "$499",
+    deposit: "$10,000",
     period: "/mo",
     description: "Full cluster execution capability with sub-millisecond liquidity routing.",
-    features: ["Run unlimited active bot nodes seamlessly", "Unlock exclusive high-yield Arbitrage matrix", "Raw webhooks integration pipeline", "Assigned risk manager portfolio reviews"],
+    features: [
+      "Run unlimited active bot nodes seamlessly",
+      "Unlock exclusive high-yield Arbitrage matrix",
+      "Raw webhooks integration pipeline",
+      "Assigned risk manager portfolio reviews",
+      "Min. deposit: $10,000",
+    ],
     popular: false,
+    depositAmount: 10000,
+    unlockedTiers: ["Starter", "Pro", "Institutional"],
   },
 ];
 
@@ -171,17 +199,34 @@ const riskBg = {
   High: "bg-red-400/10 border-red-400/20 text-red-400",
 };
 
-const statusDot = { running: "bg-emerald-400 shadow-emerald-400/60", idle: "bg-white/20" };
+const statusDot = {
+  running: "bg-emerald-400 shadow-emerald-400/60",
+  idle: "bg-white/20",
+};
 
-function BotCard({ bot, onToggle }) {
+function BotCard({ bot, onToggle, hasActivePlan }) {
+  const isLocked = bot.locked || !hasActivePlan;
+
   return (
     <div
       className={`relative bg-[#0f0e0e] border rounded-2xl p-5 flex flex-col gap-4 transition-all duration-300 ${
-        bot.active ? "border-[#c45a45]/30 shadow-lg shadow-[#c45a45]/5" : "border-white/[0.07] hover:border-white/15"
+        bot.active
+          ? "border-[#c45a45]/30 shadow-lg shadow-[#c45a45]/5"
+          : "border-white/[0.07] hover:border-white/15"
       }`}
     >
+      {/* Lock overlay when no plan */}
+      {!hasActivePlan && (
+        <div className="absolute inset-0 rounded-2xl bg-black/40 backdrop-blur-[1px] z-10 flex flex-col items-center justify-center gap-2">
+          <div className="w-10 h-10 rounded-full bg-[#c45a45]/20 border border-[#c45a45]/40 flex items-center justify-center">
+            <FaLock className="text-[#c45a45] text-sm" />
+          </div>
+          <p className="text-white/60 text-xs font-medium">Subscribe to activate bots</p>
+        </div>
+      )}
+
       {bot.active && (
-        <span className="absolute top-3 right-3 flex h-2.5 w-2.5">
+        <span className="absolute top-3 right-3 flex h-2.5 w-2.5 z-20">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-50"></span>
           <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400"></span>
         </span>
@@ -204,7 +249,11 @@ function BotCard({ bot, onToggle }) {
             )}
             <span
               className="text-[10px] px-1.5 py-0.5 rounded font-medium"
-              style={{ background: `${bot.badgeColor}15`, color: bot.badgeColor, border: `1px solid ${bot.badgeColor}30` }}
+              style={{
+                background: `${bot.badgeColor}15`,
+                color: bot.badgeColor,
+                border: `1px solid ${bot.badgeColor}30`,
+              }}
             >
               {bot.badge}
             </span>
@@ -227,7 +276,11 @@ function BotCard({ bot, onToggle }) {
           { label: "Trades", value: bot.trades, green: null },
         ].map((s) => (
           <div key={s.label} className="bg-white/3 border border-white/5 rounded-xl p-2 text-center">
-            <p className={`text-xs font-bold leading-none ${s.green === true ? "text-emerald-400" : s.green === false ? "text-red-400/80" : "text-white/70"}`}>
+            <p
+              className={`text-xs font-bold leading-none ${
+                s.green === true ? "text-emerald-400" : s.green === false ? "text-red-400/80" : "text-white/70"
+              }`}
+            >
               {s.value}
             </p>
             <p className="text-white/25 text-[9px] mt-1 uppercase tracking-wide">{s.label}</p>
@@ -241,7 +294,7 @@ function BotCard({ bot, onToggle }) {
           <span>Uptime {bot.uptime}</span>
         </div>
         <div className="flex gap-2 ml-auto">
-          {!bot.locked ? (
+          {hasActivePlan && !bot.locked ? (
             <>
               <button className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-white/35 hover:text-white/60 hover:bg-white/10 transition-all flex items-center justify-center text-xs">
                 <FaCog />
@@ -254,15 +307,20 @@ function BotCard({ bot, onToggle }) {
                     : "bg-[#c45a45] hover:bg-[#d06a55] text-white shadow-md shadow-[#c45a45]/20"
                 }`}
               >
-                {bot.active ? <><FaStop className="text-[9px]" /> Stop</> : <><FaPlay className="text-[9px]" /> Start</>}
+                {bot.active ? (
+                  <><FaStop className="text-[9px]" /> Stop</>
+                ) : (
+                  <><FaPlay className="text-[9px]" /> Start</>
+                )}
               </button>
             </>
           ) : (
-            <button 
+            <button
               onClick={() => onToggle(bot)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#c45a45]/10 border border-[#c45a45]/30 text-[#c45a45] hover:bg-[#c45a45]/20 transition-colors"
             >
-              <FaLock className="text-[9px]" /> Unlock {bot.tier}
+              <FaLock className="text-[9px]" />
+              {bot.locked ? `Unlock ${bot.tier}` : "Subscribe to Start"}
             </button>
           )}
         </div>
@@ -275,19 +333,28 @@ function AITradingBots() {
   const [botList, setBotList] = useState(bots);
   const [activeTab, setActiveTab] = useState("All");
   const [showPlans, setShowPlans] = useState(false);
-  const [hasActivePlan, setHasActivePlan] = useState(false); // Simulate active membership license node
+  const [hasActivePlan, setHasActivePlan] = useState(false);
+  const [activePlanName, setActivePlanName] = useState(null);
 
   const tabs = ["All", "Running", "Idle", "My Bots"];
 
   const handleBotAction = (bot) => {
-    // If user has no premium license and bot is locked or user is trying to start an inactive bot
-    if (!hasActivePlan && (bot.locked || !bot.active)) {
+    // Always require a paid plan first
+    if (!hasActivePlan) {
       setShowPlans(true);
       return;
     }
-    
+    // If bot tier is still locked (e.g. Institutional bot on Starter plan)
+    if (bot.locked) {
+      setShowPlans(true);
+      return;
+    }
     setBotList((prev) =>
-      prev.map((b) => (b.id === bot.id ? { ...b, active: !b.active, status: !b.active ? "running" : "idle", locked: false } : b))
+      prev.map((b) =>
+        b.id === bot.id
+          ? { ...b, active: !b.active, status: !b.active ? "running" : "idle" }
+          : b
+      )
     );
   };
 
@@ -316,13 +383,40 @@ function AITradingBots() {
               Deploy autonomous bots that trade 24/7 using machine learning signals.
             </p>
           </div>
-          <button 
-            onClick={() => setShowPlans(true)}
-            className="md:ml-auto text-xs font-semibold px-4 py-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-slate-200 transition-all flex items-center gap-2 self-start md:self-center"
-          >
-            <FaStar className="text-amber-400 text-[10px]" /> Bot Licenses
-          </button>
+
+          {hasActivePlan ? (
+            <div className="md:ml-auto flex items-center gap-2 text-xs font-semibold px-4 py-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 self-start md:self-center">
+              <FaCheckCircle className="text-[10px]" /> {activePlanName} Plan Active
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowPlans(true)}
+              className="md:ml-auto text-xs font-semibold px-4 py-2 rounded-xl border border-[#c45a45]/40 bg-[#c45a45]/10 hover:bg-[#c45a45]/20 text-[#c45a45] transition-all flex items-center gap-2 self-start md:self-center"
+            >
+              <FaWallet className="text-[10px]" /> Invest & Subscribe to Start
+            </button>
+          )}
         </div>
+
+        {/* Notice Banner */}
+        {!hasActivePlan && (
+          <div className="mb-6 flex items-start gap-3 bg-amber-400/8 border border-amber-400/20 rounded-xl px-4 py-3.5">
+            <FaInfoCircle className="text-amber-400 text-sm shrink-0 mt-0.5" />
+            <div>
+              <p className="text-amber-300 text-xs font-semibold">Deposit Required to Activate AI Bots</p>
+              <p className="text-white/40 text-[11px] mt-0.5">
+                A subscription and minimum deposit are required before any bot can go live. Plans start at{" "}
+                <span className="text-white/60 font-medium">$49/mo + $500 min. deposit</span>.
+              </p>
+              <button
+                onClick={() => setShowPlans(true)}
+                className="mt-2 text-[11px] text-amber-400 underline underline-offset-2 hover:text-amber-300 transition-colors"
+              >
+                View plans & deposit requirements →
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-7">
@@ -351,7 +445,9 @@ function AITradingBots() {
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`px-4 py-2.5 text-xs font-medium transition-all border-b-2 -mb-px ${
-                activeTab === tab ? "border-[#c45a45] text-white" : "border-transparent text-white/35 hover:text-white/60"
+                activeTab === tab
+                  ? "border-[#c45a45] text-white"
+                  : "border-transparent text-white/35 hover:text-white/60"
               }`}
             >
               {tab}
@@ -367,7 +463,7 @@ function AITradingBots() {
         {/* Bots Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map((bot) => (
-            <BotCard key={bot.id} bot={bot} onToggle={handleBotAction} />
+            <BotCard key={bot.id} bot={bot} onToggle={handleBotAction} hasActivePlan={hasActivePlan} />
           ))}
         </div>
 
@@ -378,12 +474,12 @@ function AITradingBots() {
           </div>
         )}
 
-        {/* ================= PAYMENT PLANS OVERLAY MODAL ================= */}
+        {/* ================= PAYMENT PLANS MODAL ================= */}
         {showPlans && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
             <div className="bg-[#141212] border border-white/8 w-full max-w-5xl rounded-2xl max-h-[90vh] overflow-y-auto shadow-2xl p-6 md:p-8 relative space-y-6">
-              
-              <button 
+
+              <button
                 onClick={() => setShowPlans(false)}
                 className="absolute top-5 right-5 text-white/40 hover:text-white p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
               >
@@ -392,21 +488,38 @@ function AITradingBots() {
 
               <div className="text-center max-w-xl mx-auto space-y-2">
                 <span className="text-[10px] uppercase font-bold tracking-widest text-[#c45a45] bg-[#c45a45]/10 px-2.5 py-1 rounded-md">
-                  Subscription Activation Required
+                  Subscription + Deposit Required
                 </span>
-                <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight">AI Compute Core Plans</h2>
+                <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight">AI Bot Compute Plans</h2>
                 <p className="text-white/40 text-xs md:text-sm">
-                  Unlock high-performance autonomous execution servers. Choose a pipeline capacity tier tailored to your account model size.
+                  Each plan requires a <span className="text-white/70 font-semibold">monthly subscription fee</span> plus a{" "}
+                  <span className="text-white/70 font-semibold">minimum account deposit</span>. Your deposit is your live bot trading capital.
                 </p>
+              </div>
+
+              {/* Deposit summary strip */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                {plans.map((plan) => (
+                  <div key={plan.name} className="flex-1 flex items-center gap-3 bg-white/3 border border-white/8 rounded-xl px-4 py-3">
+                    <FaWallet className="text-[#c45a45] text-sm shrink-0" />
+                    <div>
+                      <p className="text-white text-xs font-bold">{plan.name} Plan</p>
+                      <p className="text-white/40 text-[11px]">
+                        <span className="text-white/60">{plan.price}/mo</span> + min.{" "}
+                        <span className="text-emerald-400 font-semibold">{plan.deposit} deposit</span>
+                      </p>
+                    </div>
+                  </div>
+                ))}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-2">
                 {plans.map((plan) => (
-                  <div 
+                  <div
                     key={plan.name}
                     className={`relative rounded-xl p-5 border flex flex-col justify-between transition-all duration-300 ${
-                      plan.popular 
-                        ? "bg-[#1c1818] border-[#c45a45]/40 shadow-xl shadow-[#c45a45]/5 scale-102" 
+                      plan.popular
+                        ? "bg-[#1c1818] border-[#c45a45]/40 shadow-xl shadow-[#c45a45]/5"
                         : "bg-[#0f0e0e] border-white/6 hover:border-white/15"
                     }`}
                   >
@@ -422,12 +535,22 @@ function AITradingBots() {
                         <p className="text-white/30 text-[11px] mt-1 leading-snug">{plan.description}</p>
                       </div>
 
-                      <div className="flex items-baseline gap-1 py-1">
-                        <span className="text-3xl font-black text-white tracking-tight">{plan.price}</span>
-                        <span className="text-white/40 text-xs font-medium">{plan.period}</span>
+                      {/* Dual pricing block */}
+                      <div className="bg-white/3 border border-white/6 rounded-xl p-3 space-y-2">
+                        <div className="flex items-baseline justify-between">
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-2xl font-black text-white tracking-tight">{plan.price}</span>
+                            <span className="text-white/40 text-xs font-medium">{plan.period}</span>
+                          </div>
+                          <span className="text-[10px] text-white/30 uppercase tracking-wide">Subscription</span>
+                        </div>
+                        <div className="border-t border-white/6 pt-2 flex items-center justify-between">
+                          <span className="text-[10px] text-white/40 uppercase tracking-wide">Min. Deposit</span>
+                          <span className="text-emerald-400 font-bold text-sm">{plan.deposit}</span>
+                        </div>
                       </div>
 
-                      <ul className="space-y-2.5 pt-2 border-t border-white/5">
+                      <ul className="space-y-2.5 pt-1">
                         {plan.features.map((feat) => (
                           <li key={feat} className="flex items-start gap-2 text-[11px] text-slate-300">
                             <FaCheckCircle className="text-emerald-400 mt-0.5 shrink-0 text-[10px]" />
@@ -437,24 +560,33 @@ function AITradingBots() {
                       </ul>
                     </div>
 
-                    <button 
+                    <button
                       onClick={() => {
                         setHasActivePlan(true);
-                        // Unlock premium bot array status items simulation
-                        setBotList(prev => prev.map(b => b.tier === plan.name || b.tier === "Starter" ? { ...b, locked: false } : b));
+                        setActivePlanName(plan.name);
+                        setBotList((prev) =>
+                          prev.map((b) =>
+                            plan.unlockedTiers.includes(b.tier) ? { ...b, locked: false } : b
+                          )
+                        );
                         setShowPlans(false);
                       }}
-                      className={`w-full mt-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-150 ${
+                      className={`w-full mt-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-150 flex items-center justify-center gap-2 ${
                         plan.popular
                           ? "bg-[#c45a45] hover:bg-[#d06a55] text-white shadow-md shadow-[#c45a45]/20"
                           : "bg-white/5 border border-white/10 text-white hover:bg-white/10"
                       }`}
                     >
-                      Deploy {plan.name} Node
+                      <FaWallet className="text-[10px]" />
+                      Pay & Deploy {plan.name} Node
                     </button>
                   </div>
                 ))}
               </div>
+
+              <p className="text-center text-white/20 text-[10px]">
+                By activating a plan, your subscription fee is charged immediately and your minimum deposit is allocated to your bot trading account. All funds are subject to our Terms of Service.
+              </p>
             </div>
           </div>
         )}

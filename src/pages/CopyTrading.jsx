@@ -17,6 +17,9 @@ import {
   FaUsers,
   FaTrophy,
   FaTimes,
+  FaCrown,
+  FaWallet,
+  FaInfoCircle,
 } from "react-icons/fa";
 
 const traders = [
@@ -128,26 +131,52 @@ const plans = [
   {
     name: "Starter",
     price: "$49",
+    deposit: "$500",
     period: "/mo",
     description: "Perfect for exploring platform-assisted manual trades.",
-    features: ["Access to 3 Starter Tier Traders", "Max $2,500 copying allocation", "Standard execution latency", "Discord Group Access"],
+    features: [
+      "Access to 3 Starter Tier Traders",
+      "Max $2,500 copying allocation",
+      "Standard execution latency",
+      "Discord Group Access",
+      "Min. deposit: $500",
+    ],
     popular: false,
+    depositAmount: 500,
   },
   {
     name: "Pro",
     price: "$149",
+    deposit: "$2,000",
     period: "/mo",
     description: "Most popular choice for steady monthly growth curves.",
-    features: ["Access to Elite & Pro Tier Traders", "Max $15,000 copying allocation", "Priority real-time execution", "Advanced risk-management metrics", "24/7 priority desk"],
+    features: [
+      "Access to Elite & Pro Tier Traders",
+      "Max $15,000 copying allocation",
+      "Priority real-time execution",
+      "Advanced risk-management metrics",
+      "24/7 priority desk",
+      "Min. deposit: $2,000",
+    ],
     popular: true,
+    depositAmount: 2000,
   },
   {
     name: "Institutional",
     price: "$499",
+    deposit: "$10,000",
     period: "/mo",
     description: "Full alpha pipeline access for heavy asset deployment.",
-    features: ["Unlock ALL Legend & Institutional Traders", "No allocation cap barriers", "Sub-millisecond execution vectors", "Direct 1-on-1 account engineer", "Custom webhooks API integration"],
+    features: [
+      "Unlock ALL Legend & Institutional Traders",
+      "No allocation cap barriers",
+      "Sub-millisecond execution vectors",
+      "Direct 1-on-1 account engineer",
+      "Custom webhooks API integration",
+      "Min. deposit: $10,000",
+    ],
     popular: false,
+    depositAmount: 10000,
   },
 ];
 
@@ -166,9 +195,19 @@ const badgeIcon = {
   Verified: <FaCheckCircle className="text-[10px]" />,
 };
 
-function TraderCard({ trader, onToggle }) {
+function TraderCard({ trader, onToggle, hasActivePlan }) {
   return (
     <div className="group relative bg-[#0f0e0e] border border-white/[0.07] rounded-2xl p-5 hover:border-[#c45a45]/25 transition-all duration-300 hover:shadow-lg hover:shadow-[#c45a45]/5 flex flex-col gap-4">
+      {/* Lock overlay when no plan */}
+      {!hasActivePlan && (
+        <div className="absolute inset-0 rounded-2xl bg-black/40 backdrop-blur-[1px] z-10 flex flex-col items-center justify-center gap-2">
+          <div className="w-10 h-10 rounded-full bg-[#c45a45]/20 border border-[#c45a45]/40 flex items-center justify-center">
+            <FaLock className="text-[#c45a45] text-sm" />
+          </div>
+          <p className="text-white/60 text-xs font-medium">Subscribe to copy this trader</p>
+        </div>
+      )}
+
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <div
@@ -233,7 +272,16 @@ function TraderCard({ trader, onToggle }) {
             : "bg-[#c45a45] hover:bg-[#d06a55] text-white shadow-md shadow-[#c45a45]/20"
         }`}
       >
-        {trader.copying ? "✓ Copying — Stop" : <>Copy Trader <span className="text-[10px] opacity-60 px-1 py-0.5 rounded bg-black/20 font-mono">Req: {trader.tier}</span></>}
+        {trader.copying
+          ? "✓ Copying — Stop"
+          : <>
+              {!hasActivePlan && <FaLock className="text-[10px] opacity-70" />}
+              Copy Trader
+              <span className="text-[10px] opacity-60 px-1 py-0.5 rounded bg-black/20 font-mono">
+                {trader.tier}
+              </span>
+            </>
+        }
       </button>
     </div>
   );
@@ -244,12 +292,14 @@ function CopyTrading() {
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
   const [showPlans, setShowPlans] = useState(false);
-  const [hasActivePlan, setHasActivePlan] = useState(false); // Simulate plan state
+  const [hasActivePlan, setHasActivePlan] = useState(false);
+  const [activePlanName, setActivePlanName] = useState(null);
 
   const filters = ["All", "Low Risk", "High ROI", "Most Followed"];
 
   const toggleCopy = (trader) => {
-    if (!hasActivePlan && !trader.copying) {
+    // Always require a paid plan before copying
+    if (!hasActivePlan) {
       setShowPlans(true);
       return;
     }
@@ -260,7 +310,9 @@ function CopyTrading() {
 
   const copyingCount = traderList.filter((t) => t.copying).length;
   const filtered = traderList.filter((t) => {
-    const matchSearch = t.name.toLowerCase().includes(search.toLowerCase()) || t.handle.toLowerCase().includes(search.toLowerCase());
+    const matchSearch =
+      t.name.toLowerCase().includes(search.toLowerCase()) ||
+      t.handle.toLowerCase().includes(search.toLowerCase());
     if (filter === "Low Risk") return t.risk === "Low" && matchSearch;
     return matchSearch;
   });
@@ -268,7 +320,7 @@ function CopyTrading() {
   return (
     <DashboardLayout>
       <div className="text-white p-5 md:p-7 max-w-7xl mx-auto relative">
-        
+
         {/* Page Header */}
         <div className="mb-7 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
@@ -282,13 +334,39 @@ function CopyTrading() {
               Mirror top traders automatically and share in their profits.
             </p>
           </div>
-          <button 
-            onClick={() => setShowPlans(true)}
-            className="md:ml-auto text-xs font-semibold px-4 py-2 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-slate-200 transition-all flex items-center gap-2 self-start md:self-center"
-          >
-            <FaStar className="text-amber-400 text-[10px]" /> View Pricing Plans
-          </button>
+
+          {hasActivePlan ? (
+            <div className="md:ml-auto flex items-center gap-2 text-xs font-semibold px-4 py-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 self-start md:self-center">
+              <FaCheckCircle className="text-[10px]" /> {activePlanName} Plan Active
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowPlans(true)}
+              className="md:ml-auto text-xs font-semibold px-4 py-2 rounded-xl border border-[#c45a45]/40 bg-[#c45a45]/10 hover:bg-[#c45a45]/20 text-[#c45a45] transition-all flex items-center gap-2 self-start md:self-center"
+            >
+              <FaWallet className="text-[10px]" /> Invest & Subscribe to Start
+            </button>
+          )}
         </div>
+
+        {/* Notice Banner — shown when no plan */}
+        {!hasActivePlan && (
+          <div className="mb-6 flex items-start gap-3 bg-amber-400/8 border border-amber-400/20 rounded-xl px-4 py-3.5">
+            <FaInfoCircle className="text-amber-400 text-sm shrink-0 mt-0.5" />
+            <div>
+              <p className="text-amber-300 text-xs font-semibold">Investment Required to Copy Traders</p>
+              <p className="text-white/40 text-[11px] mt-0.5">
+                You must subscribe to a plan and make a minimum deposit before copying any trader. Plans start from <span className="text-white/60 font-medium">$49/mo + $500 min. deposit</span>.
+              </p>
+              <button
+                onClick={() => setShowPlans(true)}
+                className="mt-2 text-[11px] text-amber-400 underline underline-offset-2 hover:text-amber-300 transition-colors"
+              >
+                View plans & deposit requirements →
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Stats bar */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-7">
@@ -342,7 +420,12 @@ function CopyTrading() {
         {/* Traders Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map((trader) => (
-            <TraderCard key={trader.id} trader={trader} onToggle={toggleCopy} />
+            <TraderCard
+              key={trader.id}
+              trader={trader}
+              onToggle={toggleCopy}
+              hasActivePlan={hasActivePlan}
+            />
           ))}
         </div>
 
@@ -355,10 +438,10 @@ function CopyTrading() {
 
         {/* ================= SUBSCRIPTION PLANS MODAL ================= */}
         {showPlans && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
             <div className="bg-[#141212] border border-white/8 w-full max-w-5xl rounded-2xl max-h-[90vh] overflow-y-auto shadow-2xl p-6 md:p-8 relative space-y-6">
-              
-              <button 
+
+              <button
                 onClick={() => setShowPlans(false)}
                 className="absolute top-5 right-5 text-white/40 hover:text-white p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
               >
@@ -367,21 +450,40 @@ function CopyTrading() {
 
               <div className="text-center max-w-xl mx-auto space-y-2">
                 <span className="text-[10px] uppercase font-bold tracking-widest text-[#c45a45] bg-[#c45a45]/10 px-2.5 py-1 rounded-md">
-                  Premium Allocation Needed
+                  Subscription + Deposit Required
                 </span>
-                <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight">Select Copy Trading License</h2>
+                <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight">
+                  Select Your Copy Trading Plan
+                </h2>
                 <p className="text-white/40 text-xs md:text-sm">
-                  To automatically replicate trades into your contract balance, activate an allocation infrastructure node subscription.
+                  Each plan requires a <span className="text-white/70 font-semibold">monthly subscription fee</span> plus a{" "}
+                  <span className="text-white/70 font-semibold">minimum account deposit</span> to activate copy trading. Your deposit is your live trading capital.
                 </p>
+              </div>
+
+              {/* Deposit info strip */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                {plans.map((plan) => (
+                  <div key={plan.name} className="flex-1 flex items-center gap-3 bg-white/3 border border-white/8 rounded-xl px-4 py-3">
+                    <FaWallet className="text-[#c45a45] text-sm shrink-0" />
+                    <div>
+                      <p className="text-white text-xs font-bold">{plan.name} Plan</p>
+                      <p className="text-white/40 text-[11px]">
+                        <span className="text-white/60">{plan.price}/mo</span> + min.{" "}
+                        <span className="text-emerald-400 font-semibold">{plan.deposit} deposit</span>
+                      </p>
+                    </div>
+                  </div>
+                ))}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-2">
                 {plans.map((plan) => (
-                  <div 
+                  <div
                     key={plan.name}
                     className={`relative rounded-xl p-5 border flex flex-col justify-between transition-all duration-300 ${
-                      plan.popular 
-                        ? "bg-[#1c1818] border-[#c45a45]/40 shadow-xl shadow-[#c45a45]/5 scale-102" 
+                      plan.popular
+                        ? "bg-[#1c1818] border-[#c45a45]/40 shadow-xl shadow-[#c45a45]/5"
                         : "bg-[#0f0e0e] border-white/6 hover:border-white/15"
                     }`}
                   >
@@ -397,12 +499,22 @@ function CopyTrading() {
                         <p className="text-white/30 text-[11px] mt-1 leading-snug">{plan.description}</p>
                       </div>
 
-                      <div className="flex items-baseline gap-1 py-1">
-                        <span className="text-3xl font-black text-white tracking-tight">{plan.price}</span>
-                        <span className="text-white/40 text-xs font-medium">{plan.period}</span>
+                      {/* Pricing block */}
+                      <div className="bg-white/3 border border-white/6 rounded-xl p-3 space-y-2">
+                        <div className="flex items-baseline justify-between">
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-2xl font-black text-white tracking-tight">{plan.price}</span>
+                            <span className="text-white/40 text-xs font-medium">{plan.period}</span>
+                          </div>
+                          <span className="text-[10px] text-white/30 uppercase tracking-wide">Subscription</span>
+                        </div>
+                        <div className="border-t border-white/6 pt-2 flex items-center justify-between">
+                          <span className="text-[10px] text-white/40 uppercase tracking-wide">Min. Deposit</span>
+                          <span className="text-emerald-400 font-bold text-sm">{plan.deposit}</span>
+                        </div>
                       </div>
 
-                      <ul className="space-y-2.5 pt-2 border-t border-white/5">
+                      <ul className="space-y-2.5 pt-1">
                         {plan.features.map((feat) => (
                           <li key={feat} className="flex items-start gap-2 text-[11px] text-slate-300">
                             <FaCheckCircle className="text-emerald-400 mt-0.5 shrink-0 text-[10px]" />
@@ -412,26 +524,31 @@ function CopyTrading() {
                       </ul>
                     </div>
 
-                    <button 
+                    <button
                       onClick={() => {
                         setHasActivePlan(true);
+                        setActivePlanName(plan.name);
                         setShowPlans(false);
                       }}
-                      className={`w-full mt-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-150 ${
+                      className={`w-full mt-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-150 flex items-center justify-center gap-2 ${
                         plan.popular
                           ? "bg-[#c45a45] hover:bg-[#d06a55] text-white shadow-md shadow-[#c45a45]/20"
                           : "bg-white/5 border border-white/10 text-white hover:bg-white/10"
                       }`}
                     >
-                      Activate {plan.name}
+                      <FaWallet className="text-[10px]" />
+                      Pay & Activate {plan.name}
                     </button>
                   </div>
                 ))}
               </div>
+
+              <p className="text-center text-white/20 text-[10px]">
+                By activating a plan, your subscription fee is charged immediately and your minimum deposit is allocated to your trading account. All deposits are subject to our Terms of Service.
+              </p>
             </div>
           </div>
         )}
-
       </div>
     </DashboardLayout>
   );
