@@ -5,7 +5,7 @@ import {
   FaShoppingCart, FaCheckCircle, FaTimesCircle, FaTrash,
   FaPlus, FaSearch, FaFilter, FaChartLine, FaUsers,
   FaMoneyBillWave, FaClock, FaTimes, FaExclamationTriangle,
-  FaDollarSign, FaPercent, FaSyncAlt,
+  FaDollarSign, FaPercent, FaSyncAlt, FaCog,
 } from "react-icons/fa";
 
 /* ─────────────────────────────────────────
@@ -32,6 +32,42 @@ export const STOCKS_LIST = [
 ───────────────────────────────────────── */
 const fmt = (n) =>
   Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+/**
+ * Resolves investor display name from various API response shapes:
+ *   - { investor_name: "John Doe" }
+ *   - { user: { first_name, last_name } }
+ *   - { user: { username } }
+ *   - { investor: { name } }
+ */
+const resolveInvestorName = (inv) => {
+  if (inv.investor_name && inv.investor_name.trim()) return inv.investor_name.trim();
+  if (inv.user) {
+    const u = inv.user;
+    if (u.first_name || u.last_name) return `${u.first_name || ""} ${u.last_name || ""}`.trim();
+    if (u.full_name && u.full_name.trim()) return u.full_name.trim();
+    if (u.username && u.username.trim()) return u.username.trim();
+    if (u.email && u.email.trim()) return u.email.trim();
+  }
+  if (inv.investor) {
+    const i = inv.investor;
+    if (i.name && i.name.trim()) return i.name.trim();
+    if (i.first_name || i.last_name) return `${i.first_name || ""} ${i.last_name || ""}`.trim();
+    if (i.email && i.email.trim()) return i.email.trim();
+  }
+  if (inv.investor_email && inv.investor_email.trim()) return inv.investor_email.trim();
+  return "Unknown Investor";
+};
+
+/**
+ * Resolves investor email from various API shapes.
+ */
+const resolveInvestorEmail = (inv) => {
+  if (inv.investor_email && inv.investor_email.trim()) return inv.investor_email.trim();
+  if (inv.user?.email) return inv.user.email.trim();
+  if (inv.investor?.email) return inv.investor.email.trim();
+  return "";
+};
 
 const statusStyle = {
   Pending:  "bg-amber-400/10 text-amber-400 border-amber-400/25",
@@ -88,8 +124,8 @@ function ConfirmModal({ open, title, message, confirmLabel, confirmClass, onConf
    ADD PROFIT MODAL
 ───────────────────────────────────────── */
 function ProfitModal({ open, investment, onClose, onSuccess }) {
-  const [mode,   setMode]   = useState("fixed");   // "fixed" | "percent"
-  const [value,  setValue]  = useState("");
+  const [mode,    setMode]    = useState("fixed");
+  const [value,   setValue]   = useState("");
   const [loading, setLoading] = useState(false);
 
   if (!open || !investment) return null;
@@ -105,7 +141,7 @@ function ProfitModal({ open, investment, onClose, onSuccess }) {
     setLoading(true);
     try {
       await API.post(`investments/${investment.id}/add_profit/`, { profit });
-      onSuccess(`Profit of $${fmt(profit)} added to ${investment.investor_name || "investor"}.`);
+      onSuccess(`Profit of $${fmt(profit)} added to ${resolveInvestorName(investment)}.`);
       setValue("");
     } catch (err) {
       alert(err.response?.data?.detail || "Failed to add profit.");
@@ -136,9 +172,9 @@ function ProfitModal({ open, investment, onClose, onSuccess }) {
         {/* Investor info */}
         <div className="bg-white/3 border border-white/6 rounded-xl p-3.5 space-y-2 text-xs">
           {[
-            { label: "Investor",    value: investment.investor_name || "—" },
-            { label: "Investment",  value: `$${fmt(investment.amount)}` },
-            { label: "Status",      value: <StatusBadge status={investment.status || "Pending"} /> },
+            { label: "Investor",       value: resolveInvestorName(investment) },
+            { label: "Investment",     value: `$${fmt(investment.amount)}` },
+            { label: "Status",         value: <StatusBadge status={investment.status || "Pending"} /> },
             { label: "Current Profit", value: <span className="text-emerald-400 font-bold">${fmt(investment.current_profit || 0)}</span> },
           ].map(({ label, value }) => (
             <div key={label} className="flex items-center justify-between">
@@ -151,8 +187,8 @@ function ProfitModal({ open, investment, onClose, onSuccess }) {
         {/* Mode toggle */}
         <div className="flex gap-2">
           {[
-            { key: "fixed",   label: "Fixed ($)",   icon: <FaDollarSign className="text-[10px]" /> },
-            { key: "percent", label: "Percentage (%)", icon: <FaPercent className="text-[10px]" /> },
+            { key: "fixed",   label: "Fixed ($)",      icon: <FaDollarSign className="text-[10px]" /> },
+            { key: "percent", label: "Percentage (%)", icon: <FaPercent    className="text-[10px]" /> },
           ].map(({ key, label, icon }) => (
             <button
               key={key}
@@ -217,17 +253,16 @@ function ProfitModal({ open, investment, onClose, onSuccess }) {
 }
 
 /* ─────────────────────────────────────────
-   ADMIN VIEW
+   ADMIN — MANAGE TAB
 ───────────────────────────────────────── */
-function AdminStocksView() {
-  const [investments,  setInvestments]  = useState([]);
-  const [loading,      setLoading]      = useState(true);
-  const [search,       setSearch]       = useState("");
-  const [filterStatus, setFilterStatus] = useState("All");
+function AdminManageView() {
+  const [investments,   setInvestments]   = useState([]);
+  const [loading,       setLoading]       = useState(true);
+  const [search,        setSearch]        = useState("");
+  const [filterStatus,  setFilterStatus]  = useState("All");
   const [actionLoading, setActionLoading] = useState(null);
-  const [toast,        setToast]        = useState(null);
+  const [toast,         setToast]         = useState(null);
 
-  // Modals
   const [profitModal,  setProfitModal]  = useState({ open: false, investment: null });
   const [confirmModal, setConfirmModal] = useState({ open: false, type: null, investment: null });
 
@@ -250,7 +285,6 @@ function AdminStocksView() {
     setTimeout(() => setToast(null), 4000);
   };
 
-  /* ── Approve ── */
   const handleApprove = async (inv) => {
     setActionLoading(`approve-${inv.id}`);
     try {
@@ -258,7 +292,7 @@ function AdminStocksView() {
       setInvestments((prev) =>
         prev.map((i) => i.id === inv.id ? { ...i, approved: true, active: true, status: "Approved" } : i)
       );
-      showToast(`Investment by ${inv.investor_name || "investor"} approved.`);
+      showToast(`Investment by ${resolveInvestorName(inv)} approved.`);
     } catch (err) {
       showToast(err.response?.data?.detail || "Approval failed.", "error");
     } finally {
@@ -267,7 +301,6 @@ function AdminStocksView() {
     }
   };
 
-  /* ── Decline ── */
   const handleDecline = async (inv) => {
     setActionLoading(`decline-${inv.id}`);
     try {
@@ -284,7 +317,6 @@ function AdminStocksView() {
     }
   };
 
-  /* ── Delete ── */
   const handleDelete = async (inv) => {
     setActionLoading(`delete-${inv.id}`);
     try {
@@ -299,22 +331,21 @@ function AdminStocksView() {
     }
   };
 
-  const openConfirm = (type, investment) =>
-    setConfirmModal({ open: true, type, investment });
-
+  const openConfirm   = (type, investment) => setConfirmModal({ open: true, type, investment });
   const handleConfirm = () => {
     const { type, investment } = confirmModal;
     if (type === "approve") handleApprove(investment);
     else if (type === "decline") handleDecline(investment);
-    else if (type === "delete") handleDelete(investment);
+    else if (type === "delete")  handleDelete(investment);
   };
 
-  /* ── Filter / Search ── */
   const filtered = investments.filter((inv) => {
+    const name  = resolveInvestorName(inv).toLowerCase();
+    const email = resolveInvestorEmail(inv).toLowerCase();
     const matchSearch =
-      (inv.investor_name || "").toLowerCase().includes(search.toLowerCase()) ||
-      (inv.category      || "").toLowerCase().includes(search.toLowerCase()) ||
-      (inv.investor_email|| "").toLowerCase().includes(search.toLowerCase());
+      name.includes(search.toLowerCase()) ||
+      (inv.category || "").toLowerCase().includes(search.toLowerCase()) ||
+      email.includes(search.toLowerCase());
     const matchStatus =
       filterStatus === "All" ||
       (filterStatus === "Pending"  && !inv.approved && inv.status !== "Declined") ||
@@ -354,7 +385,6 @@ function AdminStocksView() {
 
   return (
     <div className="space-y-6">
-
       {/* Toast */}
       {toast && (
         <div className={`fixed top-5 right-5 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl border text-xs font-semibold shadow-2xl transition-all ${
@@ -367,35 +397,14 @@ function AdminStocksView() {
         </div>
       )}
 
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3 mb-1">
-            <div className="w-9 h-9 rounded-xl bg-[#c45a45]/15 border border-[#c45a45]/30 flex items-center justify-center">
-              <FaShoppingCart className="text-[#c45a45] text-sm" />
-            </div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">Stock Investments</h1>
-          </div>
-          <p className="text-white/30 text-sm ml-12">
-            Review, approve, and manage all investor stock positions.
-          </p>
-        </div>
-        <button
-          onClick={fetchInvestments}
-          className="md:ml-auto flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white/50 hover:text-white hover:bg-white/8 text-xs font-medium transition-colors self-start md:self-center"
-        >
-          <FaSyncAlt className={`text-[10px] ${loading ? "animate-spin" : ""}`} /> Refresh
-        </button>
-      </div>
-
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
-          { label: "Total",    value: totals.all,                         icon: <FaChartLine />,      accent: false },
-          { label: "Pending",  value: totals.pending,                     icon: <FaClock />,          accent: false, highlight: "text-amber-400" },
-          { label: "Approved", value: totals.approved,                    icon: <FaCheckCircle />,    accent: false, highlight: "text-emerald-400" },
-          { label: "Declined", value: totals.declined,                    icon: <FaTimesCircle />,    accent: false, highlight: "text-red-400" },
-          { label: "Volume",   value: `$${fmt(totals.volume)}`,           icon: <FaMoneyBillWave />,  accent: true  },
+          { label: "Total",    value: totals.all,            icon: <FaChartLine />,     accent: false },
+          { label: "Pending",  value: totals.pending,        icon: <FaClock />,         accent: false, highlight: "text-amber-400" },
+          { label: "Approved", value: totals.approved,       icon: <FaCheckCircle />,   accent: false, highlight: "text-emerald-400" },
+          { label: "Declined", value: totals.declined,       icon: <FaTimesCircle />,   accent: false, highlight: "text-red-400" },
+          { label: "Volume",   value: `$${fmt(totals.volume)}`, icon: <FaMoneyBillWave />, accent: true },
         ].map((s) => (
           <div key={s.label} className={`bg-[#0f0e0e] border rounded-xl px-4 py-3.5 flex items-center gap-3 ${
             s.accent ? "border-[#c45a45]/20 shadow-[#c45a45]/5 shadow-lg" : "border-white/[0.07]"
@@ -425,7 +434,7 @@ function AdminStocksView() {
             className="w-full bg-[#0f0e0e] border border-white/10 rounded-xl pl-8 pr-3 py-2.5 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#c45a45]/40 transition-colors"
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {["All", "Pending", "Approved", "Declined"].map((f) => (
             <button
               key={f}
@@ -445,6 +454,12 @@ function AdminStocksView() {
             </button>
           ))}
         </div>
+        <button
+          onClick={fetchInvestments}
+          className="md:ml-auto flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white/50 hover:text-white hover:bg-white/8 text-xs font-medium transition-colors self-start"
+        >
+          <FaSyncAlt className={`text-[10px] ${loading ? "animate-spin" : ""}`} /> Refresh
+        </button>
       </div>
 
       {/* Table */}
@@ -477,18 +492,22 @@ function AdminStocksView() {
               </thead>
               <tbody>
                 {filtered.map((inv) => {
-                  const isLoading = (k) => actionLoading === `${k}-${inv.id}`;
-                  const status = inv.approved ? "Approved" : inv.status === "Declined" ? "Declined" : "Pending";
-                  // Match a stock icon from the category string
+                  const isLoading  = (k) => actionLoading === `${k}-${inv.id}`;
+                  const status     = inv.approved ? "Approved" : inv.status === "Declined" ? "Declined" : "Pending";
                   const matchStock = STOCKS_LIST.find((s) =>
                     (inv.category || "").includes(s.ticker) || (inv.category || "").includes(s.name.split(",")[0])
                   );
+                  const investorName  = resolveInvestorName(inv);
+                  const investorEmail = resolveInvestorEmail(inv);
+
                   return (
                     <tr key={inv.id} className="border-b border-white/4 hover:bg-white/2 transition-colors">
                       {/* Investor */}
                       <td className="px-5 py-4">
-                        <p className="text-white text-xs font-semibold">{inv.investor_name || "—"}</p>
-                        <p className="text-white/25 text-[10px] mt-0.5">{inv.investor_email || ""}</p>
+                        <p className="text-white text-xs font-semibold">{investorName}</p>
+                        {investorEmail && (
+                          <p className="text-white/25 text-[10px] mt-0.5">{investorEmail}</p>
+                        )}
                       </td>
                       {/* Stock */}
                       <td className="px-5 py-4">
@@ -521,12 +540,13 @@ function AdminStocksView() {
                       </td>
                       {/* Date */}
                       <td className="px-5 py-4 text-center text-white/30 text-[11px]">
-                        {inv.created_at ? new Date(inv.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "—"}
+                        {inv.created_at
+                          ? new Date(inv.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
+                          : "—"}
                       </td>
                       {/* Actions */}
                       <td className="px-5 py-4">
                         <div className="flex items-center justify-center gap-1.5 flex-wrap">
-                          {/* Approve */}
                           {status !== "Approved" && (
                             <button
                               onClick={() => openConfirm("approve", inv)}
@@ -538,7 +558,6 @@ function AdminStocksView() {
                               Approve
                             </button>
                           )}
-                          {/* Decline */}
                           {status !== "Declined" && (
                             <button
                               onClick={() => openConfirm("decline", inv)}
@@ -550,7 +569,6 @@ function AdminStocksView() {
                               Decline
                             </button>
                           )}
-                          {/* Add Profit */}
                           <button
                             onClick={() => setProfitModal({ open: true, investment: inv })}
                             disabled={!!actionLoading}
@@ -559,7 +577,6 @@ function AdminStocksView() {
                           >
                             <FaPlus className="text-[9px]" /> Profit
                           </button>
-                          {/* Delete */}
                           <button
                             onClick={() => openConfirm("delete", inv)}
                             disabled={!!actionLoading}
@@ -590,7 +607,6 @@ function AdminStocksView() {
           showToast(msg);
         }}
       />
-
       <ConfirmModal
         open={confirmModal.open}
         {...(confirmModal.type ? confirmConfig[confirmModal.type] : {})}
@@ -602,9 +618,11 @@ function AdminStocksView() {
 }
 
 /* ─────────────────────────────────────────
-   USER VIEW  (unchanged from original)
+   SHARED PURCHASE STOCKS GRID
+   (used by both UserStocksView and admin
+    Purchase tab)
 ───────────────────────────────────────── */
-function UserStocksView() {
+function StockPurchaseGrid({ isAdmin = false }) {
   const [amounts,   setAmounts]   = useState({});
   const [loadingId, setLoadingId] = useState(null);
   const [toast,     setToast]     = useState(null);
@@ -627,11 +645,15 @@ function UserStocksView() {
     setLoadingId(stock.id);
     try {
       await API.post("investments/", {
-        amount: val,
+        amount:   val,
         category: `${stock.name.split(",")[0]} (${stock.ticker})`,
-        type: "stock",
+        type:     "stock",
       });
-      showToast(`$${val.toLocaleString()} invested in ${stock.name}. Pending approval.`);
+      showToast(
+        isAdmin
+          ? `$${val.toLocaleString()} invested in ${stock.name} (auto-approved as admin).`
+          : `$${val.toLocaleString()} invested in ${stock.name}. Pending approval.`
+      );
       setAmounts((p) => ({ ...p, [stock.id]: "" }));
     } catch (err) {
       showToast(err.response?.data?.detail || "Failed to submit investment.", "error");
@@ -641,8 +663,7 @@ function UserStocksView() {
   };
 
   return (
-    <div className="space-y-6">
-
+    <>
       {/* Toast */}
       {toast && (
         <div className={`fixed top-5 right-5 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl border text-xs font-semibold shadow-2xl ${
@@ -655,25 +676,11 @@ function UserStocksView() {
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex items-start gap-3">
-        <div className="w-9 h-9 rounded-xl bg-[#c45a45]/15 border border-[#c45a45]/30 flex items-center justify-center shrink-0">
-          <FaShoppingCart className="text-[#c45a45] text-sm" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Purchase Stocks</h1>
-          <p className="text-white/30 text-sm mt-0.5">
-            Deploy capital into top-tier global equities. Contracts accumulate{" "}
-            <span className="text-emerald-400 font-medium">25% daily yields</span> for a 120-day cycle.
-          </p>
-        </div>
-      </div>
-
       {/* Stock Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {STOCKS_LIST.map((stock) => {
-          const amt    = parseFloat(amounts[stock.id] || 0);
-          const shares = amt > 0 ? (amt / stock.price).toFixed(4) : "—";
+          const amt       = parseFloat(amounts[stock.id] || 0);
+          const shares    = amt > 0 ? (amt / stock.price).toFixed(4) : "—";
           const isLoading = loadingId === stock.id;
           return (
             <div
@@ -700,10 +707,10 @@ function UserStocksView() {
                 {/* Stats */}
                 <div className="space-y-2 bg-white/2 border border-white/5 rounded-xl p-3 text-xs mb-4">
                   {[
-                    { label: "Price / Share",   value: `$${stock.price.toFixed(2)}`, cls: "text-emerald-400 font-bold" },
-                    { label: "Min. Investment", value: `$${stock.min.toLocaleString()}`, cls: "text-white/60 font-semibold" },
-                    { label: "Max. Investment", value: `$${stock.max.toLocaleString()}`, cls: "text-white/60 font-semibold" },
-                    { label: "Est. Shares",     value: shares, cls: "text-white font-bold" },
+                    { label: "Price / Share",   value: `$${stock.price.toFixed(2)}`,      cls: "text-emerald-400 font-bold" },
+                    { label: "Min. Investment", value: `$${stock.min.toLocaleString()}`,   cls: "text-white/60 font-semibold" },
+                    { label: "Max. Investment", value: `$${stock.max.toLocaleString()}`,   cls: "text-white/60 font-semibold" },
+                    { label: "Est. Shares",     value: shares,                             cls: "text-white font-bold" },
                   ].map(({ label, value, cls }) => (
                     <div key={label} className="flex items-center justify-between">
                       <span className="text-white/25">{label}</span>
@@ -749,6 +756,97 @@ function UserStocksView() {
           );
         })}
       </div>
+    </>
+  );
+}
+
+/* ─────────────────────────────────────────
+   ADMIN VIEW — tab-aware wrapper
+───────────────────────────────────────── */
+function AdminStocksView() {
+  const [activeTab, setActiveTab] = useState("manage"); // "manage" | "purchase"
+
+  const tabs = [
+    { key: "manage",   label: "Manage Investments", icon: <FaCog className="text-[11px]" /> },
+    { key: "purchase", label: "Purchase Stocks",    icon: <FaShoppingCart className="text-[11px]" /> },
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-3 mb-1">
+            <div className="w-9 h-9 rounded-xl bg-[#c45a45]/15 border border-[#c45a45]/30 flex items-center justify-center">
+              <FaShoppingCart className="text-[#c45a45] text-sm" />
+            </div>
+            <h1 className="text-2xl font-bold text-white tracking-tight">Stock Investments</h1>
+          </div>
+          <p className="text-white/30 text-sm ml-12">
+            {activeTab === "manage"
+              ? "Review, approve, and manage all investor stock positions."
+              : "Deploy capital into top-tier global equities on behalf of investors."}
+          </p>
+        </div>
+
+        {/* Tab Toggle */}
+        <div className="flex gap-1.5 bg-[#0f0e0e] border border-white/8 rounded-xl p-1 self-start md:self-center">
+          {tabs.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+                activeTab === tab.key
+                  ? "bg-[#c45a45]/15 border border-[#c45a45]/30 text-white"
+                  : "text-white/35 hover:text-white/60 border border-transparent"
+              }`}
+            >
+              {tab.icon}
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === "manage" ? (
+        <AdminManageView />
+      ) : (
+        <div className="space-y-5">
+          {/* Purchase sub-header */}
+          <div className="bg-[#c45a45]/5 border border-[#c45a45]/15 rounded-xl px-4 py-3 text-xs text-white/50 flex items-start gap-2.5">
+            <FaExclamationTriangle className="text-[#c45a45]/60 shrink-0 mt-0.5" />
+            <span>
+              You are investing as <span className="text-white font-semibold">Admin</span>. Investments submitted here will be posted under your account and may be auto-approved depending on your backend policy.
+            </span>
+          </div>
+          <StockPurchaseGrid isAdmin={true} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────
+   USER VIEW
+───────────────────────────────────────── */
+function UserStocksView() {
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-start gap-3">
+        <div className="w-9 h-9 rounded-xl bg-[#c45a45]/15 border border-[#c45a45]/30 flex items-center justify-center shrink-0">
+          <FaShoppingCart className="text-[#c45a45] text-sm" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Purchase Stocks</h1>
+          <p className="text-white/30 text-sm mt-0.5">
+            Deploy capital into top-tier global equities. Contracts accumulate{" "}
+            <span className="text-emerald-400 font-medium">25% daily yields</span> for a 120-day cycle.
+          </p>
+        </div>
+      </div>
+      <StockPurchaseGrid isAdmin={false} />
     </div>
   );
 }

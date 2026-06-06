@@ -55,7 +55,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       links: [
         { path: adminDashboardPath, name: "Dashboard",    icon: <FaHome />      },
         { path: "/investors",       name: "Investors",    icon: <FaUsers />     },
-        { path: "/investments",     name: "Investments",  icon: <FaMoneyBill /> },
+        // { path: "/investments",     name: "Investments",  icon: <FaMoneyBill /> },
         { path: "/withdrawals",     name: "Withdrawals",  icon: <FaArrowDown /> },
         { path: "/fund-account",    name: "Fund Account", icon: <FaWallet />    },
       ],
