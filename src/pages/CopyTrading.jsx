@@ -1,138 +1,55 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../layouts/DashboardLayout";
 import {
-  FaExchangeAlt,
-  FaChartLine,
-  FaUserCircle,
-  FaStar,
-  FaCheckCircle,
-  FaFire,
-  FaLock,
-  FaArrowUp,
-  FaArrowDown,
-  FaSearch,
-  FaFilter,
-  FaBolt,
-  FaShieldAlt,
-  FaUsers,
-  FaTrophy,
-  FaTimes,
-  FaCrown,
-  FaWallet,
-  FaInfoCircle,
+  FaExchangeAlt, FaChartLine, FaUserCircle, FaStar, FaCheckCircle,
+  FaFire, FaLock, FaArrowUp, FaArrowDown, FaSearch, FaFilter,
+  FaBolt, FaShieldAlt, FaUsers, FaTrophy, FaTimes, FaCrown,
+  FaWallet, FaInfoCircle,
 } from "react-icons/fa";
 
 const traders = [
   {
-    id: 1,
-    name: "Alex Mercer",
-    handle: "@alexm_trades",
-    avatar: "AM",
-    roi: "+184.3%",
-    roiPositive: true,
-    winRate: "78%",
-    followers: "12.4K",
-    risk: "Medium",
-    tags: ["Forex", "Gold"],
-    monthlyReturn: "+18.2%",
-    badge: "Top Performer",
-    color: "#c45a45",
-    copying: false,
-    tier: "Starter",
+    id: 1, name: "Alex Mercer", handle: "@alexm_trades", avatar: "AM",
+    roi: "+184.3%", roiPositive: true, winRate: "78%", followers: "12.4K",
+    risk: "Medium", tags: ["Forex", "Gold"], monthlyReturn: "+18.2%",
+    badge: "Top Performer", color: "#c45a45", copying: false, tier: "Starter",
   },
   {
-    id: 2,
-    name: "Sofia Chen",
-    handle: "@sofia_quant",
-    avatar: "SC",
-    roi: "+231.7%",
-    roiPositive: true,
-    winRate: "83%",
-    followers: "28.1K",
-    risk: "Low",
-    tags: ["Stocks", "ETFs"],
-    monthlyReturn: "+22.5%",
-    badge: "Elite",
-    color: "#d4875a",
-    copying: false,
-    tier: "Pro",
+    id: 2, name: "Sofia Chen", handle: "@sofia_quant", avatar: "SC",
+    roi: "+231.7%", roiPositive: true, winRate: "83%", followers: "28.1K",
+    risk: "Low", tags: ["Stocks", "ETFs"], monthlyReturn: "+22.5%",
+    badge: "Elite", color: "#d4875a", copying: false, tier: "Pro",
   },
   {
-    id: 3,
-    name: "Raj Patel",
-    handle: "@raj_algo",
-    avatar: "RP",
-    roi: "+97.6%",
-    roiPositive: true,
-    winRate: "71%",
-    followers: "7.8K",
-    risk: "High",
-    tags: ["Crypto", "Futures"],
-    monthlyReturn: "+9.8%",
-    badge: "Rising Star",
-    color: "#9b6ab5",
-    copying: false,
-    tier: "Starter",
+    id: 3, name: "Raj Patel", handle: "@raj_algo", avatar: "RP",
+    roi: "+97.6%", roiPositive: true, winRate: "71%", followers: "7.8K",
+    risk: "High", tags: ["Crypto", "Futures"], monthlyReturn: "+9.8%",
+    badge: "Rising Star", color: "#9b6ab5", copying: false, tier: "Starter",
   },
   {
-    id: 4,
-    name: "Elena Kovacs",
-    handle: "@elena_macro",
-    avatar: "EK",
-    roi: "+312.0%",
-    roiPositive: true,
-    winRate: "88%",
-    followers: "41.3K",
-    risk: "Low",
-    tags: ["Indices", "Forex"],
-    monthlyReturn: "+28.1%",
-    badge: "Legend",
-    color: "#c45a45",
-    copying: false,
-    tier: "Institutional",
+    id: 4, name: "Elena Kovacs", handle: "@elena_macro", avatar: "EK",
+    roi: "+312.0%", roiPositive: true, winRate: "88%", followers: "41.3K",
+    risk: "Low", tags: ["Indices", "Forex"], monthlyReturn: "+28.1%",
+    badge: "Legend", color: "#c45a45", copying: false, tier: "Institutional",
   },
   {
-    id: 5,
-    name: "Marcus Webb",
-    handle: "@mwebb_scalp",
-    avatar: "MW",
-    roi: "+143.8%",
-    roiPositive: true,
-    winRate: "69%",
-    followers: "9.2K",
-    risk: "High",
-    tags: ["Crypto", "Stocks"],
-    monthlyReturn: "+14.6%",
-    badge: "Top Performer",
-    color: "#5a8fc4",
-    copying: false,
-    tier: "Pro",
+    id: 5, name: "Marcus Webb", handle: "@mwebb_scalp", avatar: "MW",
+    roi: "+143.8%", roiPositive: true, winRate: "69%", followers: "9.2K",
+    risk: "High", tags: ["Crypto", "Stocks"], monthlyReturn: "+14.6%",
+    badge: "Top Performer", color: "#5a8fc4", copying: false, tier: "Pro",
   },
   {
-    id: 6,
-    name: "Nadia Osei",
-    handle: "@nadia_swing",
-    avatar: "NO",
-    roi: "+189.2%",
-    roiPositive: true,
-    winRate: "76%",
-    followers: "15.6K",
-    risk: "Medium",
-    tags: ["Forex", "Commodities"],
-    monthlyReturn: "+17.9%",
-    badge: "Verified",
-    color: "#4db89b",
-    copying: false,
-    tier: "Starter",
+    id: 6, name: "Nadia Osei", handle: "@nadia_swing", avatar: "NO",
+    roi: "+189.2%", roiPositive: true, winRate: "76%", followers: "15.6K",
+    risk: "Medium", tags: ["Forex", "Commodities"], monthlyReturn: "+17.9%",
+    badge: "Verified", color: "#4db89b", copying: false, tier: "Starter",
   },
 ];
 
 const plans = [
   {
-    name: "Starter",
-    price: "$49",
-    deposit: "$500",
-    period: "/mo",
+    name: "Starter", price: "$49", deposit: "$500", period: "/mo",
     description: "Perfect for exploring platform-assisted manual trades.",
     features: [
       "Access to 3 Starter Tier Traders",
@@ -141,14 +58,10 @@ const plans = [
       "Discord Group Access",
       "Min. deposit: $500",
     ],
-    popular: false,
-    depositAmount: 500,
+    popular: false, depositAmount: 500,
   },
   {
-    name: "Pro",
-    price: "$149",
-    deposit: "$2,000",
-    period: "/mo",
+    name: "Pro", price: "$149", deposit: "$2,000", period: "/mo",
     description: "Most popular choice for steady monthly growth curves.",
     features: [
       "Access to Elite & Pro Tier Traders",
@@ -158,14 +71,10 @@ const plans = [
       "24/7 priority desk",
       "Min. deposit: $2,000",
     ],
-    popular: true,
-    depositAmount: 2000,
+    popular: true, depositAmount: 2000,
   },
   {
-    name: "Institutional",
-    price: "$499",
-    deposit: "$10,000",
-    period: "/mo",
+    name: "Institutional", price: "$499", deposit: "$10,000", period: "/mo",
     description: "Full alpha pipeline access for heavy asset deployment.",
     features: [
       "Unlock ALL Legend & Institutional Traders",
@@ -175,30 +84,27 @@ const plans = [
       "Custom webhooks API integration",
       "Min. deposit: $10,000",
     ],
-    popular: false,
-    depositAmount: 10000,
+    popular: false, depositAmount: 10000,
   },
 ];
 
-const riskColor = { Low: "text-emerald-400", Medium: "text-amber-400", High: "text-red-400" };
 const riskBg = {
-  Low: "bg-emerald-400/10 border-emerald-400/20",
-  Medium: "bg-amber-400/10 border-amber-400/20",
-  High: "bg-red-400/10 border-red-400/20",
+  Low:    "bg-emerald-400/10 border-emerald-400/20",
+  Medium: "bg-amber-400/10  border-amber-400/20",
+  High:   "bg-red-400/10    border-red-400/20",
 };
-
+const riskColor = { Low: "text-emerald-400", Medium: "text-amber-400", High: "text-red-400" };
 const badgeIcon = {
-  Elite: <FaTrophy className="text-[10px]" />,
-  Legend: <FaStar className="text-[10px]" />,
-  "Top Performer": <FaFire className="text-[10px]" />,
-  "Rising Star": <FaBolt className="text-[10px]" />,
-  Verified: <FaCheckCircle className="text-[10px]" />,
+  Elite:          <FaTrophy    className="text-[10px]" />,
+  Legend:         <FaStar      className="text-[10px]" />,
+  "Top Performer":<FaFire      className="text-[10px]" />,
+  "Rising Star":  <FaBolt      className="text-[10px]" />,
+  Verified:       <FaCheckCircle className="text-[10px]" />,
 };
 
 function TraderCard({ trader, onToggle, hasActivePlan }) {
   return (
     <div className="group relative bg-[#0f0e0e] border border-white/[0.07] rounded-2xl p-5 hover:border-[#c45a45]/25 transition-all duration-300 hover:shadow-lg hover:shadow-[#c45a45]/5 flex flex-col gap-4">
-      {/* Lock overlay when no plan */}
       {!hasActivePlan && (
         <div className="absolute inset-0 rounded-2xl bg-black/40 backdrop-blur-[1px] z-10 flex flex-col items-center justify-center gap-2">
           <div className="w-10 h-10 rounded-full bg-[#c45a45]/20 border border-[#c45a45]/40 flex items-center justify-center">
@@ -236,18 +142,16 @@ function TraderCard({ trader, onToggle, hasActivePlan }) {
       </div>
 
       <div className="grid grid-cols-3 gap-2">
-        <div className="bg-white/3 rounded-xl p-3 text-center border border-white/3">
-          <p className="text-emerald-400 text-base font-bold leading-none">{trader.roi}</p>
-          <p className="text-white/30 text-[10px] mt-1 uppercase tracking-wide">Total ROI</p>
-        </div>
-        <div className="bg-white/3 rounded-xl p-3 text-center border border-white/3">
-          <p className="text-white text-base font-bold leading-none">{trader.winRate}</p>
-          <p className="text-white/30 text-[10px] mt-1 uppercase tracking-wide">Win Rate</p>
-        </div>
-        <div className="bg-white/3 rounded-xl p-3 text-center border border-white/3">
-          <p className="text-white/70 text-base font-bold leading-none">{trader.followers}</p>
-          <p className="text-white/30 text-[10px] mt-1 uppercase tracking-wide">Followers</p>
-        </div>
+        {[
+          { val: trader.roi,          label: "Total ROI",  cls: "text-emerald-400" },
+          { val: trader.winRate,      label: "Win Rate",   cls: "text-white"       },
+          { val: trader.followers,    label: "Followers",  cls: "text-white/70"    },
+        ].map(({ val, label, cls }) => (
+          <div key={label} className="bg-white/3 rounded-xl p-3 text-center border border-white/3">
+            <p className={`text-base font-bold leading-none ${cls}`}>{val}</p>
+            <p className="text-white/30 text-[10px] mt-1 uppercase tracking-wide">{label}</p>
+          </div>
+        ))}
       </div>
 
       <div className="flex items-center justify-between gap-2">
@@ -288,24 +192,38 @@ function TraderCard({ trader, onToggle, hasActivePlan }) {
 }
 
 function CopyTrading() {
+  const navigate = useNavigate();
   const [traderList, setTraderList] = useState(traders);
-  const [filter, setFilter] = useState("All");
-  const [search, setSearch] = useState("");
-  const [showPlans, setShowPlans] = useState(false);
+  const [filter,       setFilter]   = useState("All");
+  const [search,       setSearch]   = useState("");
+  const [showPlans,   setShowPlans] = useState(false);
   const [hasActivePlan, setHasActivePlan] = useState(false);
   const [activePlanName, setActivePlanName] = useState(null);
+  const [selectedPlan, setSelectedPlan] = useState(null); // plan chosen, awaiting payment
 
   const filters = ["All", "Low Risk", "High ROI", "Most Followed"];
 
   const toggleCopy = (trader) => {
-    // Always require a paid plan before copying
-    if (!hasActivePlan) {
-      setShowPlans(true);
-      return;
-    }
+    if (!hasActivePlan) { setShowPlans(true); return; }
     setTraderList((prev) =>
       prev.map((t) => (t.id === trader.id ? { ...t, copying: !t.copying } : t))
     );
+  };
+
+  // Called when user clicks "Pay & Activate" on a plan card
+  const handleSelectPlan = (plan) => {
+    setSelectedPlan(plan);
+    setShowPlans(false);
+    // Redirect to FundAccount with plan info in state so the page can pre-fill context
+    navigate("/dashboard/fund-account", {
+      state: {
+        fromPlan: true,
+        planName: plan.name,
+        planPrice: plan.price,
+        minDeposit: plan.depositAmount,
+        returnTo: "/dashboard/copy-trading",
+      },
+    });
   };
 
   const copyingCount = traderList.filter((t) => t.copying).length;
@@ -321,7 +239,7 @@ function CopyTrading() {
     <DashboardLayout>
       <div className="text-white p-5 md:p-7 max-w-7xl mx-auto relative">
 
-        {/* Page Header */}
+        {/* Header */}
         <div className="mb-7 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 mb-1">
@@ -349,14 +267,15 @@ function CopyTrading() {
           )}
         </div>
 
-        {/* Notice Banner — shown when no plan */}
+        {/* Notice Banner */}
         {!hasActivePlan && (
           <div className="mb-6 flex items-start gap-3 bg-amber-400/8 border border-amber-400/20 rounded-xl px-4 py-3.5">
             <FaInfoCircle className="text-amber-400 text-sm shrink-0 mt-0.5" />
             <div>
               <p className="text-amber-300 text-xs font-semibold">Investment Required to Copy Traders</p>
               <p className="text-white/40 text-[11px] mt-0.5">
-                You must subscribe to a plan and make a minimum deposit before copying any trader. Plans start from <span className="text-white/60 font-medium">$49/mo + $500 min. deposit</span>.
+                You must subscribe to a plan and make a minimum deposit before copying any trader.
+                Plans start from <span className="text-white/60 font-medium">$49/mo + $500 min. deposit</span>.
               </p>
               <button
                 onClick={() => setShowPlans(true)}
@@ -368,13 +287,13 @@ function CopyTrading() {
           </div>
         )}
 
-        {/* Stats bar */}
+        {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-7">
           {[
-            { label: "Active Copies", value: copyingCount, icon: <FaUsers /> },
-            { label: "Avg. ROI", value: "+18.4%", icon: <FaChartLine /> },
-            { label: "Top Trader", value: "Elena K.", icon: <FaTrophy /> },
-            { label: "Protected", value: "Insured", icon: <FaShieldAlt /> },
+            { label: "Active Copies", value: copyingCount,  icon: <FaUsers />    },
+            { label: "Avg. ROI",      value: "+18.4%",      icon: <FaChartLine /> },
+            { label: "Top Trader",    value: "Elena K.",    icon: <FaTrophy />   },
+            { label: "Protected",     value: "Insured",     icon: <FaShieldAlt />},
           ].map((s) => (
             <div key={s.label} className="bg-[#0f0e0e] border border-white/[0.07] rounded-2xl px-4 py-3.5 flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-[#c45a45]/12 border border-[#c45a45]/20 flex items-center justify-center text-[#c45a45] text-xs shrink-0">
@@ -420,12 +339,7 @@ function CopyTrading() {
         {/* Traders Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           {filtered.map((trader) => (
-            <TraderCard
-              key={trader.id}
-              trader={trader}
-              onToggle={toggleCopy}
-              hasActivePlan={hasActivePlan}
-            />
+            <TraderCard key={trader.id} trader={trader} onToggle={toggleCopy} hasActivePlan={hasActivePlan} />
           ))}
         </div>
 
@@ -436,7 +350,7 @@ function CopyTrading() {
           </div>
         )}
 
-        {/* ================= SUBSCRIPTION PLANS MODAL ================= */}
+        {/* ── Plans Modal ── */}
         {showPlans && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
             <div className="bg-[#141212] border border-white/8 w-full max-w-5xl rounded-2xl max-h-[90vh] overflow-y-auto shadow-2xl p-6 md:p-8 relative space-y-6">
@@ -456,12 +370,10 @@ function CopyTrading() {
                   Select Your Copy Trading Plan
                 </h2>
                 <p className="text-white/40 text-xs md:text-sm">
-                  Each plan requires a <span className="text-white/70 font-semibold">monthly subscription fee</span> plus a{" "}
-                  <span className="text-white/70 font-semibold">minimum account deposit</span> to activate copy trading. Your deposit is your live trading capital.
+                  Choose a plan below. You'll be taken to the deposit page to complete your minimum deposit and activate your subscription.
                 </p>
               </div>
 
-              {/* Deposit info strip */}
               <div className="flex flex-col sm:flex-row gap-3">
                 {plans.map((plan) => (
                   <div key={plan.name} className="flex-1 flex items-center gap-3 bg-white/3 border border-white/8 rounded-xl px-4 py-3">
@@ -499,7 +411,6 @@ function CopyTrading() {
                         <p className="text-white/30 text-[11px] mt-1 leading-snug">{plan.description}</p>
                       </div>
 
-                      {/* Pricing block */}
                       <div className="bg-white/3 border border-white/6 rounded-xl p-3 space-y-2">
                         <div className="flex items-baseline justify-between">
                           <div className="flex items-baseline gap-1">
@@ -524,12 +435,9 @@ function CopyTrading() {
                       </ul>
                     </div>
 
+                    {/* ── THIS is the key fix: navigate to Fund Account ── */}
                     <button
-                      onClick={() => {
-                        setHasActivePlan(true);
-                        setActivePlanName(plan.name);
-                        setShowPlans(false);
-                      }}
+                      onClick={() => handleSelectPlan(plan)}
                       className={`w-full mt-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-150 flex items-center justify-center gap-2 ${
                         plan.popular
                           ? "bg-[#c45a45] hover:bg-[#d06a55] text-white shadow-md shadow-[#c45a45]/20"
@@ -537,18 +445,19 @@ function CopyTrading() {
                       }`}
                     >
                       <FaWallet className="text-[10px]" />
-                      Pay & Activate {plan.name}
+                      Deposit & Activate {plan.name}
                     </button>
                   </div>
                 ))}
               </div>
 
               <p className="text-center text-white/20 text-[10px]">
-                By activating a plan, your subscription fee is charged immediately and your minimum deposit is allocated to your trading account. All deposits are subject to our Terms of Service.
+                After completing your deposit, your plan will be activated by admin within 30 minutes.
               </p>
             </div>
           </div>
         )}
+
       </div>
     </DashboardLayout>
   );

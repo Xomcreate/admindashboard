@@ -1,150 +1,65 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../layouts/DashboardLayout";
 import {
-  FaRobot,
-  FaBolt,
-  FaChartLine,
-  FaShieldAlt,
-  FaPlay,
-  FaStop,
-  FaCog,
-  FaCheckCircle,
-  FaLock,
-  FaStar,
-  FaTimes,
-  FaWallet,
-  FaInfoCircle,
+  FaRobot, FaBolt, FaChartLine, FaShieldAlt, FaPlay, FaStop,
+  FaCog, FaCheckCircle, FaLock, FaStar, FaTimes, FaWallet, FaInfoCircle,
 } from "react-icons/fa";
 
 const bots = [
   {
-    id: 1,
-    name: "Apex Scalper",
+    id: 1, name: "Apex Scalper",
     description: "High-frequency micro-trades on volatile pairs. Sub-second execution.",
-    type: "Scalping",
-    market: "Forex",
-    roi: "+94.2%",
-    monthly: "+8.4%",
-    drawdown: "3.2%",
-    trades: "1,840",
-    risk: "High",
-    active: false,
-    uptime: "99.7%",
-    badge: "Hot",
-    badgeColor: "#c45a45",
-    color: "#c45a45",
-    status: "idle",
-    locked: false,
-    tier: "Starter",
+    type: "Scalping", market: "Forex", roi: "+94.2%", monthly: "+8.4%",
+    drawdown: "3.2%", trades: "1,840", risk: "High", active: false,
+    uptime: "99.7%", badge: "Hot", badgeColor: "#c45a45", color: "#c45a45",
+    status: "idle", locked: false, tier: "Starter",
   },
   {
-    id: 2,
-    name: "GridMaster Pro",
+    id: 2, name: "GridMaster Pro",
     description: "Grid strategy across major indices. Profits from range-bound markets.",
-    type: "Grid",
-    market: "Indices",
-    roi: "+63.1%",
-    monthly: "+5.8%",
-    drawdown: "1.8%",
-    trades: "940",
-    risk: "Low",
-    active: false,
-    uptime: "99.9%",
-    badge: "Stable",
-    badgeColor: "#4db89b",
-    color: "#4db89b",
-    status: "idle",
-    locked: false,
-    tier: "Starter",
+    type: "Grid", market: "Indices", roi: "+63.1%", monthly: "+5.8%",
+    drawdown: "1.8%", trades: "940", risk: "Low", active: false,
+    uptime: "99.9%", badge: "Stable", badgeColor: "#4db89b", color: "#4db89b",
+    status: "idle", locked: false, tier: "Starter",
   },
   {
-    id: 3,
-    name: "CryptoSurge AI",
+    id: 3, name: "CryptoSurge AI",
     description: "Momentum-based crypto bot using ML signals for BTC & ETH entries.",
-    type: "Momentum",
-    market: "Crypto",
-    roi: "+218.6%",
-    monthly: "+19.7%",
-    drawdown: "12.4%",
-    trades: "2,310",
-    risk: "High",
-    active: false,
-    uptime: "98.2%",
-    badge: "Top Pick",
-    badgeColor: "#d4875a",
-    color: "#d4875a",
-    status: "idle",
-    locked: false,
-    tier: "Pro",
+    type: "Momentum", market: "Crypto", roi: "+218.6%", monthly: "+19.7%",
+    drawdown: "12.4%", trades: "2,310", risk: "High", active: false,
+    uptime: "98.2%", badge: "Top Pick", badgeColor: "#d4875a", color: "#d4875a",
+    status: "idle", locked: false, tier: "Pro",
   },
   {
-    id: 4,
-    name: "Sentinel Swing",
+    id: 4, name: "Sentinel Swing",
     description: "Multi-day swing trades on high-cap stocks using technical confluence.",
-    type: "Swing",
-    market: "Stocks",
-    roi: "+81.5%",
-    monthly: "+7.2%",
-    drawdown: "4.1%",
-    trades: "380",
-    risk: "Medium",
-    active: false,
-    uptime: "99.5%",
-    badge: "Reliable",
-    badgeColor: "#5a8fc4",
-    color: "#5a8fc4",
-    status: "idle",
-    locked: false,
-    tier: "Pro",
+    type: "Swing", market: "Stocks", roi: "+81.5%", monthly: "+7.2%",
+    drawdown: "4.1%", trades: "380", risk: "Medium", active: false,
+    uptime: "99.5%", badge: "Reliable", badgeColor: "#5a8fc4", color: "#5a8fc4",
+    status: "idle", locked: false, tier: "Pro",
   },
   {
-    id: 5,
-    name: "Nexus Arbitrage",
+    id: 5, name: "Nexus Arbitrage",
     description: "Cross-exchange arbitrage capturing micro-spreads 24/7 automatically.",
-    type: "Arbitrage",
-    market: "Multi",
-    roi: "+142.3%",
-    monthly: "+11.9%",
-    drawdown: "0.9%",
-    trades: "5,620",
-    risk: "Low",
-    active: false,
-    uptime: "99.99%",
-    badge: "Premium",
-    badgeColor: "#9b6ab5",
-    color: "#9b6ab5",
-    status: "idle",
-    locked: true,
-    tier: "Institutional",
+    type: "Arbitrage", market: "Multi", roi: "+142.3%", monthly: "+11.9%",
+    drawdown: "0.9%", trades: "5,620", risk: "Low", active: false,
+    uptime: "99.99%", badge: "Premium", badgeColor: "#9b6ab5", color: "#9b6ab5",
+    status: "idle", locked: true, tier: "Institutional",
   },
   {
-    id: 6,
-    name: "QuantEdge DCA",
+    id: 6, name: "QuantEdge DCA",
     description: "Dollar-cost averaging bot for long-term portfolio accumulation.",
-    type: "DCA",
-    market: "Stocks",
-    roi: "+57.8%",
-    monthly: "+4.6%",
-    drawdown: "2.3%",
-    trades: "260",
-    risk: "Low",
-    active: false,
-    uptime: "100%",
-    badge: "Steady",
-    badgeColor: "#4db89b",
-    color: "#4db89b",
-    status: "idle",
-    locked: false,
-    tier: "Starter",
+    type: "DCA", market: "Stocks", roi: "+57.8%", monthly: "+4.6%",
+    drawdown: "2.3%", trades: "260", risk: "Low", active: false,
+    uptime: "100%", badge: "Steady", badgeColor: "#4db89b", color: "#4db89b",
+    status: "idle", locked: false, tier: "Starter",
   },
 ];
 
 const plans = [
   {
-    name: "Starter",
-    price: "$49",
-    deposit: "$500",
-    period: "/mo",
+    name: "Starter", price: "$49", deposit: "$500", period: "/mo",
     description: "Run entry-level algorithmic instances under basic configurations.",
     features: [
       "Deploy up to 2 concurrent Starter bots",
@@ -153,15 +68,11 @@ const plans = [
       "Weekly performance email log",
       "Min. deposit: $500",
     ],
-    popular: false,
-    depositAmount: 500,
+    popular: false, depositAmount: 500,
     unlockedTiers: ["Starter"],
   },
   {
-    name: "Pro",
-    price: "$149",
-    deposit: "$2,000",
-    period: "/mo",
+    name: "Pro", price: "$149", deposit: "$2,000", period: "/mo",
     description: "Optimized for systematic algorithmic traders running continuous strategies.",
     features: [
       "Deploy up to 5 Pro & Starter level bots",
@@ -170,15 +81,11 @@ const plans = [
       "Custom balance drawdown safeguard controls",
       "Min. deposit: $2,000",
     ],
-    popular: true,
-    depositAmount: 2000,
+    popular: true, depositAmount: 2000,
     unlockedTiers: ["Starter", "Pro"],
   },
   {
-    name: "Institutional",
-    price: "$499",
-    deposit: "$10,000",
-    period: "/mo",
+    name: "Institutional", price: "$499", deposit: "$10,000", period: "/mo",
     description: "Full cluster execution capability with sub-millisecond liquidity routing.",
     features: [
       "Run unlimited active bot nodes seamlessly",
@@ -187,26 +94,22 @@ const plans = [
       "Assigned risk manager portfolio reviews",
       "Min. deposit: $10,000",
     ],
-    popular: false,
-    depositAmount: 10000,
+    popular: false, depositAmount: 10000,
     unlockedTiers: ["Starter", "Pro", "Institutional"],
   },
 ];
 
 const riskBg = {
-  Low: "bg-emerald-400/10 border-emerald-400/20 text-emerald-400",
-  Medium: "bg-amber-400/10 border-amber-400/20 text-amber-400",
-  High: "bg-red-400/10 border-red-400/20 text-red-400",
+  Low:    "bg-emerald-400/10 border-emerald-400/20 text-emerald-400",
+  Medium: "bg-amber-400/10  border-amber-400/20  text-amber-400",
+  High:   "bg-red-400/10    border-red-400/20    text-red-400",
 };
-
 const statusDot = {
   running: "bg-emerald-400 shadow-emerald-400/60",
-  idle: "bg-white/20",
+  idle:    "bg-white/20",
 };
 
 function BotCard({ bot, onToggle, hasActivePlan }) {
-  const isLocked = bot.locked || !hasActivePlan;
-
   return (
     <div
       className={`relative bg-[#0f0e0e] border rounded-2xl p-5 flex flex-col gap-4 transition-all duration-300 ${
@@ -215,7 +118,6 @@ function BotCard({ bot, onToggle, hasActivePlan }) {
           : "border-white/[0.07] hover:border-white/15"
       }`}
     >
-      {/* Lock overlay when no plan */}
       {!hasActivePlan && (
         <div className="absolute inset-0 rounded-2xl bg-black/40 backdrop-blur-[1px] z-10 flex flex-col items-center justify-center gap-2">
           <div className="w-10 h-10 rounded-full bg-[#c45a45]/20 border border-[#c45a45]/40 flex items-center justify-center">
@@ -227,8 +129,8 @@ function BotCard({ bot, onToggle, hasActivePlan }) {
 
       {bot.active && (
         <span className="absolute top-3 right-3 flex h-2.5 w-2.5 z-20">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-50"></span>
-          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400"></span>
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-50" />
+          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400" />
         </span>
       )}
 
@@ -249,11 +151,7 @@ function BotCard({ bot, onToggle, hasActivePlan }) {
             )}
             <span
               className="text-[10px] px-1.5 py-0.5 rounded font-medium"
-              style={{
-                background: `${bot.badgeColor}15`,
-                color: bot.badgeColor,
-                border: `1px solid ${bot.badgeColor}30`,
-              }}
+              style={{ background: `${bot.badgeColor}15`, color: bot.badgeColor, border: `1px solid ${bot.badgeColor}30` }}
             >
               {bot.badge}
             </span>
@@ -270,17 +168,15 @@ function BotCard({ bot, onToggle, hasActivePlan }) {
 
       <div className="grid grid-cols-4 gap-1.5">
         {[
-          { label: "ROI", value: bot.roi, green: true },
-          { label: "Monthly", value: bot.monthly, green: true },
+          { label: "ROI",      value: bot.roi,      green: true  },
+          { label: "Monthly",  value: bot.monthly,  green: true  },
           { label: "Drawdown", value: bot.drawdown, green: false },
-          { label: "Trades", value: bot.trades, green: null },
+          { label: "Trades",   value: bot.trades,   green: null  },
         ].map((s) => (
           <div key={s.label} className="bg-white/3 border border-white/5 rounded-xl p-2 text-center">
-            <p
-              className={`text-xs font-bold leading-none ${
-                s.green === true ? "text-emerald-400" : s.green === false ? "text-red-400/80" : "text-white/70"
-              }`}
-            >
+            <p className={`text-xs font-bold leading-none ${
+              s.green === true ? "text-emerald-400" : s.green === false ? "text-red-400/80" : "text-white/70"
+            }`}>
               {s.value}
             </p>
             <p className="text-white/25 text-[9px] mt-1 uppercase tracking-wide">{s.label}</p>
@@ -307,11 +203,7 @@ function BotCard({ bot, onToggle, hasActivePlan }) {
                     : "bg-[#c45a45] hover:bg-[#d06a55] text-white shadow-md shadow-[#c45a45]/20"
                 }`}
               >
-                {bot.active ? (
-                  <><FaStop className="text-[9px]" /> Stop</>
-                ) : (
-                  <><FaPlay className="text-[9px]" /> Start</>
-                )}
+                {bot.active ? <><FaStop className="text-[9px]" /> Stop</> : <><FaPlay className="text-[9px]" /> Start</>}
               </button>
             </>
           ) : (
@@ -330,38 +222,43 @@ function BotCard({ bot, onToggle, hasActivePlan }) {
 }
 
 function AITradingBots() {
-  const [botList, setBotList] = useState(bots);
-  const [activeTab, setActiveTab] = useState("All");
-  const [showPlans, setShowPlans] = useState(false);
+  const navigate = useNavigate();
+  const [botList,       setBotList]       = useState(bots);
+  const [activeTab,     setActiveTab]     = useState("All");
+  const [showPlans,     setShowPlans]     = useState(false);
   const [hasActivePlan, setHasActivePlan] = useState(false);
   const [activePlanName, setActivePlanName] = useState(null);
 
   const tabs = ["All", "Running", "Idle", "My Bots"];
 
   const handleBotAction = (bot) => {
-    // Always require a paid plan first
-    if (!hasActivePlan) {
-      setShowPlans(true);
-      return;
-    }
-    // If bot tier is still locked (e.g. Institutional bot on Starter plan)
-    if (bot.locked) {
-      setShowPlans(true);
-      return;
-    }
+    if (!hasActivePlan) { setShowPlans(true); return; }
+    if (bot.locked)     { setShowPlans(true); return; }
     setBotList((prev) =>
       prev.map((b) =>
-        b.id === bot.id
-          ? { ...b, active: !b.active, status: !b.active ? "running" : "idle" }
-          : b
+        b.id === bot.id ? { ...b, active: !b.active, status: !b.active ? "running" : "idle" } : b
       )
     );
+  };
+
+  // Called when user picks a plan — redirect to Fund Account with context
+  const handleSelectPlan = (plan) => {
+    setShowPlans(false);
+    navigate("/dashboard/fund-account", {
+      state: {
+        fromPlan:   true,
+        planName:   plan.name,
+        planPrice:  plan.price,
+        minDeposit: plan.depositAmount,
+        returnTo:   "/dashboard/ai-trading-bots",
+      },
+    });
   };
 
   const activeCount = botList.filter((b) => b.active).length;
   const filtered = botList.filter((b) => {
     if (activeTab === "Running") return b.active;
-    if (activeTab === "Idle") return !b.active && !b.locked;
+    if (activeTab === "Idle")    return !b.active && !b.locked;
     if (activeTab === "My Bots") return !b.locked;
     return true;
   });
@@ -421,10 +318,10 @@ function AITradingBots() {
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-7">
           {[
-            { label: "Active Bots", value: `${activeCount} / ${bots.length}`, icon: <FaRobot /> },
-            { label: "Est. Monthly PnL", value: "+$4,821.00", icon: <FaChartLine /> },
-            { label: "Avg. Win Rate", value: "76.4%", icon: <FaBolt /> },
-            { label: "Lowest Drawdown", value: "0.9%", icon: <FaShieldAlt /> },
+            { label: "Active Bots",      value: `${activeCount} / ${bots.length}`, icon: <FaRobot />    },
+            { label: "Est. Monthly PnL", value: "+$4,821.00",                       icon: <FaChartLine />},
+            { label: "Avg. Win Rate",    value: "76.4%",                            icon: <FaBolt />     },
+            { label: "Lowest Drawdown",  value: "0.9%",                             icon: <FaShieldAlt />},
           ].map((s) => (
             <div key={s.label} className="bg-[#0f0e0e] border border-white/[0.07] rounded-2xl px-4 py-3.5 flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-[#c45a45]/12 border border-[#c45a45]/20 flex items-center justify-center text-[#c45a45] text-xs shrink-0">
@@ -474,7 +371,7 @@ function AITradingBots() {
           </div>
         )}
 
-        {/* ================= PAYMENT PLANS MODAL ================= */}
+        {/* ── Plans Modal ── */}
         {showPlans && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
             <div className="bg-[#141212] border border-white/8 w-full max-w-5xl rounded-2xl max-h-[90vh] overflow-y-auto shadow-2xl p-6 md:p-8 relative space-y-6">
@@ -492,12 +389,10 @@ function AITradingBots() {
                 </span>
                 <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight">AI Bot Compute Plans</h2>
                 <p className="text-white/40 text-xs md:text-sm">
-                  Each plan requires a <span className="text-white/70 font-semibold">monthly subscription fee</span> plus a{" "}
-                  <span className="text-white/70 font-semibold">minimum account deposit</span>. Your deposit is your live bot trading capital.
+                  Choose a plan below. You'll be taken to the deposit page to complete your minimum deposit and activate your bots.
                 </p>
               </div>
 
-              {/* Deposit summary strip */}
               <div className="flex flex-col sm:flex-row gap-3">
                 {plans.map((plan) => (
                   <div key={plan.name} className="flex-1 flex items-center gap-3 bg-white/3 border border-white/8 rounded-xl px-4 py-3">
@@ -535,7 +430,6 @@ function AITradingBots() {
                         <p className="text-white/30 text-[11px] mt-1 leading-snug">{plan.description}</p>
                       </div>
 
-                      {/* Dual pricing block */}
                       <div className="bg-white/3 border border-white/6 rounded-xl p-3 space-y-2">
                         <div className="flex items-baseline justify-between">
                           <div className="flex items-baseline gap-1">
@@ -560,17 +454,9 @@ function AITradingBots() {
                       </ul>
                     </div>
 
+                    {/* ── THIS is the key fix: navigate to Fund Account ── */}
                     <button
-                      onClick={() => {
-                        setHasActivePlan(true);
-                        setActivePlanName(plan.name);
-                        setBotList((prev) =>
-                          prev.map((b) =>
-                            plan.unlockedTiers.includes(b.tier) ? { ...b, locked: false } : b
-                          )
-                        );
-                        setShowPlans(false);
-                      }}
+                      onClick={() => handleSelectPlan(plan)}
                       className={`w-full mt-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-150 flex items-center justify-center gap-2 ${
                         plan.popular
                           ? "bg-[#c45a45] hover:bg-[#d06a55] text-white shadow-md shadow-[#c45a45]/20"
@@ -578,14 +464,14 @@ function AITradingBots() {
                       }`}
                     >
                       <FaWallet className="text-[10px]" />
-                      Pay & Deploy {plan.name} Node
+                      Deposit & Deploy {plan.name} Node
                     </button>
                   </div>
                 ))}
               </div>
 
               <p className="text-center text-white/20 text-[10px]">
-                By activating a plan, your subscription fee is charged immediately and your minimum deposit is allocated to your bot trading account. All funds are subject to our Terms of Service.
+                After completing your deposit, your plan will be activated by admin within 30 minutes.
               </p>
             </div>
           </div>
