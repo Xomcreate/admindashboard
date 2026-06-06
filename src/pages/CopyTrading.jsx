@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../layouts/DashboardLayout";
+import API from "../api/axios";
 import {
   FaExchangeAlt, FaChartLine, FaUserCircle, FaStar, FaCheckCircle,
-  FaFire, FaLock, FaArrowUp, FaArrowDown, FaSearch, FaFilter,
-  FaBolt, FaShieldAlt, FaUsers, FaTrophy, FaTimes, FaCrown,
+  FaFire, FaLock, FaSearch,
+  FaBolt, FaShieldAlt, FaUsers, FaTrophy, FaTimes,
   FaWallet, FaInfoCircle,
 } from "react-icons/fa";
 
@@ -95,11 +96,11 @@ const riskBg = {
 };
 const riskColor = { Low: "text-emerald-400", Medium: "text-amber-400", High: "text-red-400" };
 const badgeIcon = {
-  Elite:          <FaTrophy    className="text-[10px]" />,
-  Legend:         <FaStar      className="text-[10px]" />,
-  "Top Performer":<FaFire      className="text-[10px]" />,
-  "Rising Star":  <FaBolt      className="text-[10px]" />,
-  Verified:       <FaCheckCircle className="text-[10px]" />,
+  Elite:           <FaTrophy      className="text-[10px]" />,
+  Legend:          <FaStar        className="text-[10px]" />,
+  "Top Performer": <FaFire        className="text-[10px]" />,
+  "Rising Star":   <FaBolt        className="text-[10px]" />,
+  Verified:        <FaCheckCircle className="text-[10px]" />,
 };
 
 function TraderCard({ trader, onToggle, hasActivePlan }) {
@@ -143,9 +144,9 @@ function TraderCard({ trader, onToggle, hasActivePlan }) {
 
       <div className="grid grid-cols-3 gap-2">
         {[
-          { val: trader.roi,          label: "Total ROI",  cls: "text-emerald-400" },
-          { val: trader.winRate,      label: "Win Rate",   cls: "text-white"       },
-          { val: trader.followers,    label: "Followers",  cls: "text-white/70"    },
+          { val: trader.roi,       label: "Total ROI",  cls: "text-emerald-400" },
+          { val: trader.winRate,   label: "Win Rate",   cls: "text-white"       },
+          { val: trader.followers, label: "Followers",  cls: "text-white/70"    },
         ].map(({ val, label, cls }) => (
           <div key={label} className="bg-white/3 rounded-xl p-3 text-center border border-white/3">
             <p className={`text-base font-bold leading-none ${cls}`}>{val}</p>
@@ -193,13 +194,14 @@ function TraderCard({ trader, onToggle, hasActivePlan }) {
 
 function CopyTrading() {
   const navigate = useNavigate();
-  const [traderList, setTraderList] = useState(traders);
-  const [filter,       setFilter]   = useState("All");
-  const [search,       setSearch]   = useState("");
-  const [showPlans,   setShowPlans] = useState(false);
+  const [traderList,    setTraderList]    = useState(traders);
+  const [filter,        setFilter]        = useState("All");
+  const [search,        setSearch]        = useState("");
+  const [showPlans,     setShowPlans]     = useState(false);
   const [hasActivePlan, setHasActivePlan] = useState(false);
-  const [activePlanName, setActivePlanName] = useState(null);
-  const [selectedPlan, setSelectedPlan] = useState(null); // plan chosen, awaiting payment
+  const [activePlanName]                  = useState(null);
+  const [checkingBalance, setCheckingBalance] = useState(false);
+  const [pendingPlan,   setPendingPlan]   = useState(null); // plan awaiting balance check
 
   const filters = ["All", "Low Risk", "High ROI", "Most Followed"];
 
@@ -210,20 +212,59 @@ function CopyTrading() {
     );
   };
 
-  // Called when user clicks "Pay & Activate" on a plan card
-  const handleSelectPlan = (plan) => {
-    setSelectedPlan(plan);
-    setShowPlans(false);
-    // Redirect to FundAccount with plan info in state so the page can pre-fill context
-    navigate("/dashboard/fund-account", {
-      state: {
-        fromPlan: true,
-        planName: plan.name,
-        planPrice: plan.price,
-        minDeposit: plan.depositAmount,
-        returnTo: "/dashboard/copy-trading",
-      },
-    });
+  /**
+   * Called when user clicks a plan card.
+   * 1. Fetch the user's current wallet balance from the API.
+   * 2. If balance >= plan.depositAmount  → activate immediately (no need to fund).
+   * 3. If balance < plan.depositAmount   → redirect to Fund Account to top up.
+   */
+  const handleSelectPlan = async (plan) => {
+    setCheckingBalance(true);
+    setPendingPlan(plan);
+    try {
+      const res = await API.get("user-dashboard/");
+      const walletBalance = parseFloat(res.data?.profile?.wallet_balance || 0);
+
+      setShowPlans(false);
+
+      if (walletBalance >= plan.depositAmount) {
+        // ✅ Sufficient balance — activate the plan directly
+        setHasActivePlan(true);
+        // Optionally call an API endpoint here to create the subscription
+        // e.g. await API.post("activate-plan/", { plan: plan.name });
+        alert(`✅ "${plan.name}" plan activated using your existing balance ($${walletBalance.toFixed(2)})!`);
+      } else {
+        // ❌ Insufficient balance — redirect to fund account
+        const shortfall = plan.depositAmount - walletBalance;
+        navigate("/fund-account", {
+          state: {
+            fromPlan:   true,
+            planName:   plan.name,
+            planPrice:  plan.price,
+            minDeposit: plan.depositAmount,
+            shortfall,
+            currentBalance: walletBalance,
+            returnTo:   "/copy-trading",
+          },
+        });
+      }
+    } catch (err) {
+      console.error("Balance check failed:", err);
+      // Fallback: if API fails, route to fund account to be safe
+      setShowPlans(false);
+      navigate("/fund-account", {
+        state: {
+          fromPlan:   true,
+          planName:   plan.name,
+          planPrice:  plan.price,
+          minDeposit: plan.depositAmount,
+          returnTo:   "/copy-trading",
+        },
+      });
+    } finally {
+      setCheckingBalance(false);
+      setPendingPlan(null);
+    }
   };
 
   const copyingCount = traderList.filter((t) => t.copying).length;
@@ -276,6 +317,7 @@ function CopyTrading() {
               <p className="text-white/40 text-[11px] mt-0.5">
                 You must subscribe to a plan and make a minimum deposit before copying any trader.
                 Plans start from <span className="text-white/60 font-medium">$49/mo + $500 min. deposit</span>.
+                If your wallet already has sufficient funds, activation is instant.
               </p>
               <button
                 onClick={() => setShowPlans(true)}
@@ -290,10 +332,10 @@ function CopyTrading() {
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-7">
           {[
-            { label: "Active Copies", value: copyingCount,  icon: <FaUsers />    },
+            { label: "Active Copies", value: copyingCount,  icon: <FaUsers />     },
             { label: "Avg. ROI",      value: "+18.4%",      icon: <FaChartLine /> },
-            { label: "Top Trader",    value: "Elena K.",    icon: <FaTrophy />   },
-            { label: "Protected",     value: "Insured",     icon: <FaShieldAlt />},
+            { label: "Top Trader",    value: "Elena K.",    icon: <FaTrophy />    },
+            { label: "Protected",     value: "Insured",     icon: <FaShieldAlt /> },
           ].map((s) => (
             <div key={s.label} className="bg-[#0f0e0e] border border-white/[0.07] rounded-2xl px-4 py-3.5 flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-[#c45a45]/12 border border-[#c45a45]/20 flex items-center justify-center text-[#c45a45] text-xs shrink-0">
@@ -370,7 +412,8 @@ function CopyTrading() {
                   Select Your Copy Trading Plan
                 </h2>
                 <p className="text-white/40 text-xs md:text-sm">
-                  Choose a plan below. You'll be taken to the deposit page to complete your minimum deposit and activate your subscription.
+                  Choose a plan. If your wallet balance covers the minimum deposit, activation is instant.
+                  Otherwise, you'll be taken to the deposit page to top up.
                 </p>
               </div>
 
@@ -435,24 +478,26 @@ function CopyTrading() {
                       </ul>
                     </div>
 
-                    {/* ── THIS is the key fix: navigate to Fund Account ── */}
                     <button
                       onClick={() => handleSelectPlan(plan)}
-                      className={`w-full mt-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-150 flex items-center justify-center gap-2 ${
+                      disabled={checkingBalance && pendingPlan?.name === plan.name}
+                      className={`w-full mt-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-150 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-wait ${
                         plan.popular
                           ? "bg-[#c45a45] hover:bg-[#d06a55] text-white shadow-md shadow-[#c45a45]/20"
                           : "bg-white/5 border border-white/10 text-white hover:bg-white/10"
                       }`}
                     >
                       <FaWallet className="text-[10px]" />
-                      Deposit & Activate {plan.name}
+                      {checkingBalance && pendingPlan?.name === plan.name
+                        ? "Checking balance…"
+                        : `Activate ${plan.name} Plan`}
                     </button>
                   </div>
                 ))}
               </div>
 
               <p className="text-center text-white/20 text-[10px]">
-                After completing your deposit, your plan will be activated by admin within 30 minutes.
+                If your wallet balance is sufficient, the plan activates instantly. Otherwise you'll be redirected to deposit.
               </p>
             </div>
           </div>

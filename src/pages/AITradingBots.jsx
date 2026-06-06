@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../layouts/DashboardLayout";
+import API from "../api/axios";
 import {
   FaRobot, FaBolt, FaChartLine, FaShieldAlt, FaPlay, FaStop,
-  FaCog, FaCheckCircle, FaLock, FaStar, FaTimes, FaWallet, FaInfoCircle,
+  FaCog, FaCheckCircle, FaLock, FaTimes, FaWallet, FaInfoCircle,
 } from "react-icons/fa";
 
 const bots = [
@@ -223,11 +224,13 @@ function BotCard({ bot, onToggle, hasActivePlan }) {
 
 function AITradingBots() {
   const navigate = useNavigate();
-  const [botList,       setBotList]       = useState(bots);
-  const [activeTab,     setActiveTab]     = useState("All");
-  const [showPlans,     setShowPlans]     = useState(false);
-  const [hasActivePlan, setHasActivePlan] = useState(false);
-  const [activePlanName, setActivePlanName] = useState(null);
+  const [botList,         setBotList]         = useState(bots);
+  const [activeTab,       setActiveTab]       = useState("All");
+  const [showPlans,       setShowPlans]       = useState(false);
+  const [hasActivePlan,   setHasActivePlan]   = useState(false);
+  const [activePlanName]                      = useState(null);
+  const [checkingBalance, setCheckingBalance] = useState(false);
+  const [pendingPlan,     setPendingPlan]     = useState(null);
 
   const tabs = ["All", "Running", "Idle", "My Bots"];
 
@@ -241,18 +244,59 @@ function AITradingBots() {
     );
   };
 
-  // Called when user picks a plan — redirect to Fund Account with context
-  const handleSelectPlan = (plan) => {
-    setShowPlans(false);
-    navigate("/dashboard/fund-account", {
-      state: {
-        fromPlan:   true,
-        planName:   plan.name,
-        planPrice:  plan.price,
-        minDeposit: plan.depositAmount,
-        returnTo:   "/dashboard/ai-trading-bots",
-      },
-    });
+  /**
+   * Called when user clicks a plan card.
+   * 1. Fetch the user's current wallet balance from the API.
+   * 2. If balance >= plan.depositAmount  → activate plan immediately.
+   * 3. If balance < plan.depositAmount   → redirect to Fund Account to top up.
+   */
+  const handleSelectPlan = async (plan) => {
+    setCheckingBalance(true);
+    setPendingPlan(plan);
+    try {
+      const res = await API.get("user-dashboard/");
+      const walletBalance = parseFloat(res.data?.profile?.wallet_balance || 0);
+
+      setShowPlans(false);
+
+      if (walletBalance >= plan.depositAmount) {
+        // ✅ Sufficient balance — activate the plan immediately
+        setHasActivePlan(true);
+        // Optionally POST to backend to record subscription:
+        // await API.post("activate-plan/", { plan: plan.name });
+        alert(`✅ "${plan.name}" plan activated using your existing balance ($${walletBalance.toFixed(2)})!`);
+      } else {
+        // ❌ Insufficient balance — redirect to fund account
+        const shortfall = plan.depositAmount - walletBalance;
+        navigate("/fund-account", {
+          state: {
+            fromPlan:       true,
+            planName:       plan.name,
+            planPrice:      plan.price,
+            minDeposit:     plan.depositAmount,
+            shortfall,
+            currentBalance: walletBalance,
+            returnTo:       "/ai-trading-bots",
+          },
+        });
+      }
+    } catch (err) {
+      console.error("Balance check failed:", err);
+      // Fallback: route to fund account safely
+      setShowPlans(false);
+      navigate("/fund-account", {
+        state: {
+          fromPlan:   true,
+          planName:   plan.name,
+          planPrice:  plan.price,
+          minDeposit: plan.depositAmount,
+          returnTo:   "/ai-trading-bots",
+        },
+      });
+    } finally {
+      setCheckingBalance(false);
+      setPendingPlan(null);
+    }
   };
 
   const activeCount = botList.filter((b) => b.active).length;
@@ -304,6 +348,7 @@ function AITradingBots() {
               <p className="text-white/40 text-[11px] mt-0.5">
                 A subscription and minimum deposit are required before any bot can go live. Plans start at{" "}
                 <span className="text-white/60 font-medium">$49/mo + $500 min. deposit</span>.
+                If your wallet already covers the minimum, activation is instant.
               </p>
               <button
                 onClick={() => setShowPlans(true)}
@@ -389,7 +434,8 @@ function AITradingBots() {
                 </span>
                 <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight">AI Bot Compute Plans</h2>
                 <p className="text-white/40 text-xs md:text-sm">
-                  Choose a plan below. You'll be taken to the deposit page to complete your minimum deposit and activate your bots.
+                  If your wallet balance already meets the minimum deposit, activation is instant.
+                  Otherwise you'll be redirected to fund your account.
                 </p>
               </div>
 
@@ -454,24 +500,26 @@ function AITradingBots() {
                       </ul>
                     </div>
 
-                    {/* ── THIS is the key fix: navigate to Fund Account ── */}
                     <button
                       onClick={() => handleSelectPlan(plan)}
-                      className={`w-full mt-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-150 flex items-center justify-center gap-2 ${
+                      disabled={checkingBalance && pendingPlan?.name === plan.name}
+                      className={`w-full mt-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-150 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-wait ${
                         plan.popular
                           ? "bg-[#c45a45] hover:bg-[#d06a55] text-white shadow-md shadow-[#c45a45]/20"
                           : "bg-white/5 border border-white/10 text-white hover:bg-white/10"
                       }`}
                     >
                       <FaWallet className="text-[10px]" />
-                      Deposit & Deploy {plan.name} Node
+                      {checkingBalance && pendingPlan?.name === plan.name
+                        ? "Checking balance…"
+                        : `Deploy ${plan.name} Node`}
                     </button>
                   </div>
                 ))}
               </div>
 
               <p className="text-center text-white/20 text-[10px]">
-                After completing your deposit, your plan will be activated by admin within 30 minutes.
+                Sufficient wallet balance = instant activation. Insufficient = redirected to deposit page.
               </p>
             </div>
           </div>

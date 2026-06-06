@@ -3,7 +3,7 @@ import {
   FaHome, FaUsers, FaMoneyBill, FaWallet, FaGift, FaBan,
   FaUserCircle, FaSignOutAlt, FaTimes, FaCog, FaChartLine,
   FaExchangeAlt, FaRobot, FaHistory, FaShoppingCart, FaUserFriends,
-  FaReceipt,
+  FaReceipt, FaArrowDown,
 } from "react-icons/fa";
 
 const SectionLabel = ({ label }) => (
@@ -44,7 +44,6 @@ const Sidebar = ({ isOpen, onClose }) => {
   const role = localStorage.getItem("role");
   const isAdmin = role === "admin";
 
-  // ✅ Correct role-aware dashboard paths
   const adminDashboardPath = "/dashboard";
   const userDashboardPath = "/user/dashboard";
 
@@ -54,29 +53,30 @@ const Sidebar = ({ isOpen, onClose }) => {
     {
       label: "Main",
       links: [
-        { path: adminDashboardPath, name: "Dashboard", icon: <FaHome /> },
-        { path: "/investors", name: "Investors", icon: <FaUsers /> },
-        { path: "/investments", name: "Investments", icon: <FaMoneyBill /> },
-        { path: "/fund-account", name: "Fund Account", icon: <FaWallet /> },
+        { path: adminDashboardPath, name: "Dashboard",    icon: <FaHome />      },
+        { path: "/investors",       name: "Investors",    icon: <FaUsers />     },
+        { path: "/investments",     name: "Investments",  icon: <FaMoneyBill /> },
+        { path: "/withdrawals",     name: "Withdrawals",  icon: <FaArrowDown /> },
+        { path: "/fund-account",    name: "Fund Account", icon: <FaWallet />    },
       ],
     },
     {
       label: "Trading",
       links: [
-        { path: "/investment-plans", name: "Plans", icon: <FaChartLine /> },
-        { path: "/copy-trading", name: "Copy Trading", icon: <FaExchangeAlt />, badge: "New" },
-        { path: "/ai-trading-bots", name: "AI Bots", icon: <FaRobot /> },
-        { path: "/purchase-stocks", name: "Stocks", icon: <FaShoppingCart /> },
+        { path: "/investment-plans", name: "Plans",        icon: <FaChartLine />  },
+        { path: "/copy-trading",     name: "Copy Trading", icon: <FaExchangeAlt />, badge: "New" },
+        { path: "/ai-trading-bots",  name: "AI Bots",      icon: <FaRobot />      },
+        { path: "/purchase-stocks",  name: "Stocks",       icon: <FaShoppingCart /> },
       ],
     },
     {
       label: "Reports",
       links: [
-        { path: "/transactions", name: "Transactions", icon: <FaReceipt /> },
-        { path: "/profit-history", name: "Profit History", icon: <FaHistory /> },
-        { path: "/referrals", name: "Referrals", icon: <FaUserFriends /> },
-        { path: "/bonuses", name: "Bonuses", icon: <FaGift /> },
-        { path: "/blocked", name: "Blocked Users", icon: <FaBan /> },
+        { path: "/transactions",   name: "Transactions",  icon: <FaReceipt />     },
+        { path: "/profit-history", name: "Profit History",icon: <FaHistory />     },
+        { path: "/referrals",      name: "Referrals",     icon: <FaUserFriends /> },
+        { path: "/bonuses",        name: "Bonuses",       icon: <FaGift />        },
+        { path: "/blocked",        name: "Blocked Users", icon: <FaBan />         },
       ],
     },
   ];
@@ -85,27 +85,28 @@ const Sidebar = ({ isOpen, onClose }) => {
     {
       label: "Overview",
       links: [
-        { path: userDashboardPath, name: "Dashboard", icon: <FaHome /> },
-        { path: "/fund-account", name: "Fund Account", icon: <FaWallet /> },
+        { path: userDashboardPath,      name: "Dashboard",   icon: <FaHome />      },
+        { path: "/fund-account",        name: "Fund Account",icon: <FaWallet />    },
+        { path: "/user/withdrawals",    name: "Withdrawals", icon: <FaArrowDown /> },
       ],
     },
     {
       label: "Trading",
       links: [
-        { path: "/investment-plans", name: "Invest", icon: <FaChartLine /> },
-        { path: "/purchase-stocks", name: "Stocks", icon: <FaShoppingCart /> },
-        { path: "/copy-trading", name: "Copy Trading", icon: <FaExchangeAlt /> },
-        { path: "/ai-trading-bots", name: "AI Bots", icon: <FaRobot /> },
-        { path: "/profit-history", name: "History", icon: <FaHistory /> },
-        { path: "/transactions", name: "Transactions", icon: <FaReceipt /> },
-        { path: "/referrals", name: "Referrals", icon: <FaUserFriends /> },
+        { path: "/investment-plans", name: "Invest",       icon: <FaChartLine />    },
+        { path: "/purchase-stocks",  name: "Stocks",       icon: <FaShoppingCart /> },
+        { path: "/copy-trading",     name: "Copy Trading", icon: <FaExchangeAlt />  },
+        { path: "/ai-trading-bots",  name: "AI Bots",      icon: <FaRobot />        },
+        { path: "/profit-history",   name: "History",      icon: <FaHistory />      },
+        { path: "/transactions",     name: "Transactions", icon: <FaReceipt />      },
+        { path: "/referrals",        name: "Referrals",    icon: <FaUserFriends />  },
       ],
     },
     {
       label: "Account",
       links: [
-        { path: "/profile", name: "Profile", icon: <FaUserCircle /> },
-        { path: "/settings", name: "Settings", icon: <FaCog /> },
+        { path: "/profile",  name: "Profile",  icon: <FaUserCircle /> },
+        { path: "/settings", name: "Settings", icon: <FaCog />        },
       ],
     },
   ];
