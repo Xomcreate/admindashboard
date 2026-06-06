@@ -2,8 +2,6 @@ import React, { useEffect, useState } from 'react'
 import DashboardLayout from '../layouts/DashboardLayout'
 import API from '../api/axios'
 import Loader from '../MainComponets/Loader'
-// Note: Install lucide-react if you haven't already: npm i lucide-react
-import { ShieldCheck, Trash2, Users, Search, Ban } from 'lucide-react'
 
 function BlockedAccounts() {
   const [blockedUsers, setBlockedUsers] = useState([])
@@ -81,7 +79,10 @@ function BlockedAccounts() {
           {/* Quick Stat Card */}
           <div className="flex items-center gap-4 bg-[#121824] border border-[#1e2638] px-5 py-3 rounded-xl self-start md:self-auto">
             <div className="p-2 bg-red-500/10 rounded-lg text-red-400">
-              <Ban className="w-5 h-5" />
+              {/* Ban Icon SVG */}
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 14.14 14.14"/>
+              </svg>
             </div>
             <div>
               <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Total Blocked</p>
@@ -96,13 +97,20 @@ function BlockedAccounts() {
           {/* Table Control/Search Header */}
           <div className="p-5 border-b border-[#1e2638] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-[#161d2d]/40">
             <h2 className="text-lg font-semibold tracking-wide text-slate-200 flex items-center gap-2">
-              <Users className="w-4 h-4 text-slate-400" /> All Restricted Profiles
+              {/* Users Icon SVG */}
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+              All Restricted Profiles
             </h2>
             
             {/* Search Input */}
             <div className="relative max-w-xs w-full">
               <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
-                <Search className="w-4 h-4" />
+                {/* Search Icon SVG */}
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+                </svg>
               </span>
               <input
                 type="text"
@@ -139,7 +147,7 @@ function BlockedAccounts() {
                         {user.name}
                       </td>
                       
-                      {/* Contact details grouped together */}
+                      {/* Contact Details */}
                       <td className="p-4 whitespace-nowrap">
                         <div className="text-slate-300">{user.email}</div>
                         <div className="text-xs text-slate-500 mt-0.5">{user.phone || 'No phone linked'}</div>
@@ -169,17 +177,25 @@ function BlockedAccounts() {
                           <button
                             onClick={() => unblockAccount(user)}
                             title="Unblock User"
-                            className="bg-emerald-500/10 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/20 p-2 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1"
+                            className="bg-emerald-500/10 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/20 p-2 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5"
                           >
-                            <ShieldCheck className="w-4 h-4" />
+                            {/* ShieldCheck Icon SVG */}
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M20 13c0 5-3.5 7.5-7.66 9.7a1 1 0 0 1-.68 0C7.5 20.5 4 18 4 13V6a1 1 0 0 1 .76-.97l8-2a1 1 0 0 1 .48 0l8 2A1 1 0 0 1 20 6z"/>
+                              <path d="m9 12 2 2 4-4"/>
+                            </svg>
                             <span className="hidden sm:inline px-0.5">Unblock</span>
                           </button>
+                          
                           <button
                             onClick={() => deleteAccount(user.id)}
                             title="Delete User Permanently"
-                            className="bg-red-600/10 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/20 p-2 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1"
+                            className="bg-red-600/10 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/20 p-2 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            {/* Trash2 Icon SVG */}
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/>
+                            </svg>
                             <span className="hidden sm:inline px-0.5">Delete</span>
                           </button>
                         </div>
