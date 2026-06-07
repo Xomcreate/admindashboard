@@ -1,16 +1,17 @@
 // src/pages/UserDashboard.jsx
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import API from "../api/axios";
 import DashboardLayout from "../layouts/DashboardLayout";
 import {
   FaChartLine, FaBolt, FaArrowDown,
   FaCoins, FaArrowUp, FaRobot,
   FaExchangeAlt, FaShoppingCart, FaSignal,
-  FaCheckCircle, FaClock, FaGlobe, FaBitcoin,
+  FaCheckCircle, FaClock, FaGlobe, FaTimes,
   FaUsers, FaLink, FaCopy, FaGift, FaNetworkWired,
 } from "react-icons/fa";
 import {
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  AreaChart, Area, XAxis, YAxis, Tooltip,
+  ResponsiveContainer, CartesianGrid,
 } from "recharts";
 
 /* ─── Tier config ─── */
@@ -49,12 +50,90 @@ const tradingModules = [
 
 /* ─── Market Overview Data ─── */
 const marketAssets = [
-  { symbol: "BTC",  name: "Bitcoin",        price: 67842.50, change: +2.34, color: "#f59e0b", sparkline: [61000,63200,62100,65000,64500,66800,67200,67842] },
-  { symbol: "ETH",  name: "Ethereum",       price: 3541.20,  change: +1.87, color: "#6366f1", sparkline: [3200,3310,3280,3400,3380,3450,3510,3541] },
-  { symbol: "AAPL", name: "Apple Inc.",     price: 189.45,   change: -0.52, color: "#10b981", sparkline: [191,190,192,191,190,189,190,189] },
-  { symbol: "TSLA", name: "Tesla",          price: 248.30,   change: +3.21, color: "#c45a45", sparkline: [232,235,238,241,244,245,247,248] },
-  { symbol: "GOLD", name: "Gold (XAU/USD)", price: 2341.80,  change: +0.45, color: "#d97706", sparkline: [2310,2318,2325,2320,2330,2335,2338,2341] },
-  { symbol: "SPX",  name: "S&P 500",        price: 5248.90,  change: +0.78, color: "#8b5cf6", sparkline: [5180,5195,5200,5210,5220,5230,5240,5248] },
+  {
+    symbol: "BTC",  name: "Bitcoin",
+    price: 67842.50, change: +2.34, color: "#f59e0b",
+    sparkline: [61000,63200,62100,65000,64500,66800,67200,67842],
+    history: [
+      { time: "Nov", price: 58000 },{ time: "Dec", price: 60200 },
+      { time: "Jan", price: 62100 },{ time: "Feb", price: 61500 },
+      { time: "Mar", price: 63000 },{ time: "Apr", price: 64200 },
+      { time: "May", price: 65800 },{ time: "Jun", price: 65000 },
+      { time: "Jul", price: 66100 },{ time: "Aug", price: 67200 },
+      { time: "Now", price: 67842 },
+    ],
+    high: 68500, low: 57200, vol: "$38.2B", mktcap: "$1.33T",
+  },
+  {
+    symbol: "ETH",  name: "Ethereum",
+    price: 3541.20, change: +1.87, color: "#6366f1",
+    sparkline: [3200,3310,3280,3400,3380,3450,3510,3541],
+    history: [
+      { time: "Nov", price: 2800 },{ time: "Dec", price: 2950 },
+      { time: "Jan", price: 3100 },{ time: "Feb", price: 3050 },
+      { time: "Mar", price: 3200 },{ time: "Apr", price: 3300 },
+      { time: "May", price: 3420 },{ time: "Jun", price: 3380 },
+      { time: "Jul", price: 3450 },{ time: "Aug", price: 3510 },
+      { time: "Now", price: 3541 },
+    ],
+    high: 3600, low: 2720, vol: "$18.5B", mktcap: "$425B",
+  },
+  {
+    symbol: "AAPL", name: "Apple Inc.",
+    price: 189.45, change: -0.52, color: "#10b981",
+    sparkline: [191,190,192,191,190,189,190,189],
+    history: [
+      { time: "Nov", price: 175 },{ time: "Dec", price: 180 },
+      { time: "Jan", price: 185 },{ time: "Feb", price: 182 },
+      { time: "Mar", price: 188 },{ time: "Apr", price: 192 },
+      { time: "May", price: 191 },{ time: "Jun", price: 189 },
+      { time: "Jul", price: 190 },{ time: "Aug", price: 188 },
+      { time: "Now", price: 189 },
+    ],
+    high: 198, low: 164, vol: "$62.1B", mktcap: "$2.91T",
+  },
+  {
+    symbol: "TSLA", name: "Tesla",
+    price: 248.30, change: +3.21, color: "#c45a45",
+    sparkline: [232,235,238,241,244,245,247,248],
+    history: [
+      { time: "Nov", price: 210 },{ time: "Dec", price: 218 },
+      { time: "Jan", price: 225 },{ time: "Feb", price: 222 },
+      { time: "Mar", price: 230 },{ time: "Apr", price: 238 },
+      { time: "May", price: 244 },{ time: "Jun", price: 240 },
+      { time: "Jul", price: 245 },{ time: "Aug", price: 246 },
+      { time: "Now", price: 248 },
+    ],
+    high: 255, low: 196, vol: "$22.4B", mktcap: "$791B",
+  },
+  {
+    symbol: "GOLD", name: "Gold (XAU/USD)",
+    price: 2341.80, change: +0.45, color: "#d97706",
+    sparkline: [2310,2318,2325,2320,2330,2335,2338,2341],
+    history: [
+      { time: "Nov", price: 2180 },{ time: "Dec", price: 2210 },
+      { time: "Jan", price: 2240 },{ time: "Feb", price: 2230 },
+      { time: "Mar", price: 2270 },{ time: "Apr", price: 2300 },
+      { time: "May", price: 2320 },{ time: "Jun", price: 2310 },
+      { time: "Jul", price: 2330 },{ time: "Aug", price: 2338 },
+      { time: "Now", price: 2341 },
+    ],
+    high: 2360, low: 2140, vol: "$184B", mktcap: "—",
+  },
+  {
+    symbol: "SPX",  name: "S&P 500",
+    price: 5248.90, change: +0.78, color: "#8b5cf6",
+    sparkline: [5180,5195,5200,5210,5220,5230,5240,5248],
+    history: [
+      { time: "Nov", price: 4900 },{ time: "Dec", price: 4960 },
+      { time: "Jan", price: 5020 },{ time: "Feb", price: 5000 },
+      { time: "Mar", price: 5080 },{ time: "Apr", price: 5140 },
+      { time: "May", price: 5190 },{ time: "Jun", price: 5180 },
+      { time: "Jul", price: 5210 },{ time: "Aug", price: 5240 },
+      { time: "Now", price: 5248 },
+    ],
+    high: 5265, low: 4820, vol: "—", mktcap: "$46.8T",
+  },
 ];
 
 /* ─── Investment Plans ─── */
@@ -140,15 +219,37 @@ const SignalTooltip = ({ active, payload, label }) => {
   return null;
 };
 
-const AssetCard = ({ asset }) => {
+/* ─── Asset Chart Tooltip ─── */
+const AssetChartTooltip = ({ active, payload, label, color }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white dark:bg-[#141212] border border-gray-200 dark:border-white/10 rounded-xl p-2.5 text-xs shadow-xl">
+        <p className="text-gray-400 dark:text-white/40 mb-1">{label}</p>
+        <p className="font-bold" style={{ color }}>
+          ${Number(payload[0].value).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
+/* ─── Asset Card (clickable) ─── */
+const AssetCard = ({ asset, onClick }) => {
   const isPositive = asset.change >= 0;
   const { label: signalLabel, style: signalStyle } = getSignal(asset.change);
   return (
-    <div className="bg-white dark:bg-[#0f0e0e] border border-gray-200 dark:border-white/[0.07] rounded-xl p-3.5 flex flex-col gap-2.5 hover:border-gray-300 dark:hover:border-white/12 transition-colors">
+    <button
+      onClick={() => onClick(asset)}
+      className="bg-gray-50 dark:bg-white/3 border border-gray-200 dark:border-white/[0.07] rounded-xl p-3.5 flex flex-col gap-2.5 hover:border-[#c45a45]/40 dark:hover:border-[#c45a45]/30 hover:shadow-md hover:shadow-[#c45a45]/5 transition-all duration-200 cursor-pointer text-left w-full group"
+      aria-label={`View ${asset.name} chart`}
+    >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-bold shrink-0"
-            style={{ backgroundColor: `${asset.color}18`, color: asset.color }}>
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-bold shrink-0"
+            style={{ backgroundColor: `${asset.color}18`, color: asset.color }}
+          >
             {asset.symbol.slice(0, 2)}
           </div>
           <div>
@@ -161,7 +262,9 @@ const AssetCard = ({ asset }) => {
           {Math.abs(asset.change).toFixed(2)}%
         </span>
       </div>
+
       <SparklineSVG data={asset.sparkline} color={asset.color} />
+
       <div className="flex items-center justify-between">
         <p className="text-sm font-bold text-gray-900 dark:text-white">
           ${asset.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}
@@ -169,6 +272,149 @@ const AssetCard = ({ asset }) => {
         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${signalStyle}`}>
           {signalLabel}
         </span>
+      </div>
+
+      {/* Tap hint */}
+      <p className="text-[9px] text-gray-300 dark:text-white/15 group-hover:text-[#c45a45]/60 transition-colors text-center uppercase tracking-widest">
+        Tap to expand
+      </p>
+    </button>
+  );
+};
+
+/* ─── Asset Chart Modal ─── */
+const AssetChartModal = ({ asset, onClose }) => {
+  const overlayRef = useRef(null);
+
+  // Close on Escape
+  useEffect(() => {
+    const handler = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  // Prevent body scroll while open
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
+  if (!asset) return null;
+
+  const isPositive = asset.change >= 0;
+  const { label: signalLabel, style: signalStyle } = getSignal(asset.change);
+
+  const statsRow = [
+    { label: "Current Price", value: `$${asset.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}` },
+    { label: "24h High",      value: `$${asset.high.toLocaleString()}` },
+    { label: "24h Low",       value: `$${asset.low.toLocaleString()}` },
+    { label: "Volume",        value: asset.vol },
+    { label: "Market Cap",    value: asset.mktcap },
+  ];
+
+  return (
+    <div
+      ref={overlayRef}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backgroundColor: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
+      onClick={(e) => { if (e.target === overlayRef.current) onClose(); }}
+    >
+      <div className="bg-white dark:bg-[#0f0e0e] border border-gray-200 dark:border-white/[0.07] rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden">
+
+        {/* Modal Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-white/[0.07]">
+          <div className="flex items-center gap-3">
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold shrink-0"
+              style={{ backgroundColor: `${asset.color}18`, color: asset.color }}
+            >
+              {asset.symbol.slice(0, 2)}
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-gray-900 dark:text-white leading-none">{asset.name}</h2>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-lg font-black text-gray-900 dark:text-white">
+                  ${asset.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                </span>
+                <span className={`text-xs font-bold flex items-center gap-0.5 ${isPositive ? "text-emerald-400" : "text-red-400"}`}>
+                  {isPositive ? <FaArrowUp className="text-[10px]" /> : <FaArrowDown className="text-[10px]" />}
+                  {Math.abs(asset.change).toFixed(2)}%
+                </span>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${signalStyle}`}>
+                  {signalLabel}
+                </span>
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 dark:text-white/30 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 transition-all"
+            aria-label="Close chart"
+          >
+            <FaTimes className="text-sm" />
+          </button>
+        </div>
+
+        {/* Stats Row */}
+        <div className="grid grid-cols-5 gap-px border-b border-gray-100 dark:border-white/[0.07] bg-gray-100 dark:bg-white/4">
+          {statsRow.map((s) => (
+            <div key={s.label} className="bg-white dark:bg-[#0f0e0e] px-4 py-3">
+              <p className="text-gray-400 dark:text-white/30 text-[9px] uppercase tracking-widest mb-0.5">{s.label}</p>
+              <p className="text-gray-900 dark:text-white text-xs font-bold truncate">{s.value}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Chart */}
+        <div className="px-4 pt-4 pb-5">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[10px] text-gray-400 dark:text-white/30 uppercase tracking-widest">Price History (12 months)</p>
+            <div className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: asset.color }} />
+              <span className="text-[10px] font-bold" style={{ color: asset.color }}>Live</span>
+            </div>
+          </div>
+          <div className="h-56 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={asset.history} margin={{ top: 5, right: 5, left: -10, bottom: 0 }}>
+                <defs>
+                  <linearGradient id={`grad-${asset.symbol}`} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor={asset.color} stopOpacity={0.25} />
+                    <stop offset="95%" stopColor={asset.color} stopOpacity={0}    />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(128,128,128,0.08)" vertical={false} />
+                <XAxis
+                  dataKey="time"
+                  tick={{ fill: "rgba(150,150,150,0.5)", fontSize: 10 }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  domain={["auto", "auto"]}
+                  tick={{ fill: "rgba(150,150,150,0.5)", fontSize: 10 }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(v) => `$${v.toLocaleString()}`}
+                />
+                <Tooltip content={<AssetChartTooltip color={asset.color} />} />
+                <Area
+                  type="monotone"
+                  dataKey="price"
+                  stroke={asset.color}
+                  strokeWidth={2}
+                  fillOpacity={1}
+                  fill={`url(#grad-${asset.symbol})`}
+                  dot={{ fill: asset.color, r: 3, strokeWidth: 0 }}
+                  activeDot={{ fill: asset.color, r: 5, strokeWidth: 2, stroke: "#fff" }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+          <p className="text-[9px] text-gray-300 dark:text-white/15 text-center mt-2">
+            Prices are indicative only · not financial advice
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -229,9 +475,9 @@ const ReferralCard = ({ profile }) => {
         {/* Stats row */}
         <div className="grid grid-cols-3 gap-3">
           {[
-            { label: "Total Referred",   value: refLoading ? "—" : refStats.referred, icon: <FaUsers />,     color: "text-gray-900 dark:text-white"    },
-            { label: "Active Contracts", value: refLoading ? "—" : refStats.active,   icon: <FaChartLine />, color: "text-emerald-400"                  },
-            { label: "Commissions",      value: refLoading ? "—" : `$${refStats.earnings}`, icon: <FaGift />, color: "text-[#c45a45]"                   },
+            { label: "Total Referred",   value: refLoading ? "—" : refStats.referred,           icon: <FaUsers />,     color: "text-gray-900 dark:text-white"    },
+            { label: "Active Contracts", value: refLoading ? "—" : refStats.active,             icon: <FaChartLine />, color: "text-emerald-400"                  },
+            { label: "Commissions",      value: refLoading ? "—" : `$${refStats.earnings}`,     icon: <FaGift />,      color: "text-[#c45a45]"                    },
           ].map((s) => (
             <div key={s.label} className="bg-gray-50 dark:bg-white/3 border border-gray-100 dark:border-white/5 rounded-xl px-4 py-3 flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-[#c45a45]/10 border border-[#c45a45]/20 flex items-center justify-center text-[#c45a45] text-xs shrink-0">
@@ -266,7 +512,7 @@ const ReferralCard = ({ profile }) => {
           </button>
         </div>
 
-        {/* How it works — compact 3-step */}
+        {/* How it works */}
         <div className="grid grid-cols-3 gap-3 pt-1 border-t border-gray-100 dark:border-white/5">
           {[
             { step: "01", title: "Share Link",      desc: "Send your link to new investors." },
@@ -287,12 +533,13 @@ const ReferralCard = ({ profile }) => {
 
 /* ─── Main Component ─── */
 const UserDashboard = () => {
-  const [profile,     setProfile]     = useState({});
-  const [investments, setInvestments] = useState([]);
-  const [withdrawals, setWithdrawals] = useState([]);
-  const [topList,     setTopList]     = useState([]);
-  const [loading,     setLoading]     = useState(true);
-  const [topLoading,  setTopLoading]  = useState(true);
+  const [profile,       setProfile]       = useState({});
+  const [investments,   setInvestments]   = useState([]);
+  const [withdrawals,   setWithdrawals]   = useState([]);
+  const [topList,       setTopList]       = useState([]);
+  const [loading,       setLoading]       = useState(true);
+  const [topLoading,    setTopLoading]    = useState(true);
+  const [selectedAsset, setSelectedAsset] = useState(null); // ← modal state
 
   useEffect(() => { load(); fetchTopInvestors(); }, []);
 
@@ -344,6 +591,14 @@ const UserDashboard = () => {
   return (
     <DashboardLayout>
       <div className="text-gray-900 dark:text-white space-y-5 pb-8">
+
+        {/* ── ASSET CHART MODAL ── */}
+        {selectedAsset && (
+          <AssetChartModal
+            asset={selectedAsset}
+            onClose={() => setSelectedAsset(null)}
+          />
+        )}
 
         {/* ── WELCOME BANNER ── */}
         <div className="relative bg-white dark:bg-[#0f0e0e] border border-gray-200 dark:border-white/[0.07] rounded-2xl px-6 py-5 overflow-hidden">
@@ -481,18 +736,27 @@ const UserDashboard = () => {
               <h2 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
                 <FaGlobe className="text-[#c45a45]" /> Market Overview
               </h2>
-              <p className="text-[11px] text-gray-400 dark:text-white/30 mt-0.5">Live prices across key assets</p>
+              <p className="text-[11px] text-gray-400 dark:text-white/30 mt-0.5">
+                Live prices · tap any asset to view full chart
+              </p>
             </div>
             <span className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-2.5 py-0.5 rounded-full">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               Markets Open
             </span>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+
+          {/* ── FIX: use minmax(0,1fr) to prevent overflow on desktop ── */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 *:min-w-0">
             {marketAssets.map((asset) => (
-              <AssetCard key={asset.symbol} asset={asset} />
+              <AssetCard
+                key={asset.symbol}
+                asset={asset}
+                onClick={setSelectedAsset}
+              />
             ))}
           </div>
+
           <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100 dark:border-white/4 text-[10px] text-gray-400 dark:text-white/25">
             <span>Data updates every 30 seconds</span>
             <span>Prices indicative only · not financial advice</span>
