@@ -13,24 +13,46 @@ const Navbar = ({ onMenuClick }) => {
   const role = localStorage.getItem("role");
 
   return (
-    <div className="flex justify-between items-center px-5 py-3.5 bg-[#121111] dark:bg-[#121111] light:bg-white border-b border-[#242020] dark:border-[#242020] light:border-gray-200 text-white dark:text-white light:text-gray-900 mb-5 transition-colors duration-200">
+    <div
+      className="
+        navbar-root
+        flex justify-between items-center
+        px-5 py-3.5 mb-5
+        border-b transition-colors duration-200
 
+        /* Dark (default) */
+        bg-[#121111] border-[#242020] text-white
+
+        /* Light override */
+        dark:bg-[#121111] dark:border-[#242020] dark:text-white
+      "
+      style={{
+        /* Fallback inline for light mode since Tailwind dark: = dark class present */
+        /* The CSS in index.css handles html:not(.dark) overrides */
+      }}
+    >
       {/* Left: hamburger + brand */}
       <div className="flex items-center gap-3">
         <button
           onClick={onMenuClick}
-          className="lg:hidden p-1.5 rounded-lg hover:bg-[#242020] dark:hover:bg-[#242020] light:hover:bg-gray-100 transition-colors text-[#9e9593] hover:text-white dark:hover:text-white light:hover:text-gray-900 border border-[#242020] dark:border-[#242020] light:border-gray-200"
+          className="
+            lg:hidden p-1.5 rounded-lg transition-colors
+            text-[#9e9593]
+            border border-[#242020]
+            hover:bg-[#242020] hover:text-white
+            dark:border-[#242020] dark:hover:bg-[#242020] dark:hover:text-white
+          "
           aria-label="Open menu"
         >
           <FaBars size={16} />
         </button>
 
         <div className="flex flex-col">
-          <span className="font-semibold text-sm leading-tight dark:text-white light:text-gray-900">
+          <span className="font-semibold text-sm leading-tight text-white dark:text-white">
             <span className="inline-block w-2 h-2 rounded-full bg-[#c45a45] mr-1.5 align-middle shadow-[0_0_8px_rgba(196,90,69,0.5)]" />
             IPO Stock
           </span>
-          <span className="text-[#9e9593] dark:text-[#9e9593] light:text-gray-500 text-xs leading-tight mt-0.5">
+          <span className="text-[#9e9593] text-xs leading-tight mt-0.5">
             {role === "admin" ? "Admin Panel" : "User Panel"}
           </span>
         </div>
@@ -43,9 +65,13 @@ const Navbar = ({ onMenuClick }) => {
         <button
           onClick={toggleTheme}
           aria-label="Toggle theme"
-          className="relative w-14 h-7 rounded-full border transition-all duration-300 flex items-center px-1
+          className="
+            relative w-14 h-7 rounded-full border
+            transition-all duration-300
+            flex items-center px-1
+            bg-[#1e1c1c] border-[#332d2c]
             dark:bg-[#1e1c1c] dark:border-[#332d2c]
-            light:bg-gray-100 light:border-gray-300"
+          "
         >
           {/* Track fill */}
           <span
@@ -79,7 +105,6 @@ const Navbar = ({ onMenuClick }) => {
           <span className="hidden sm:inline">Logout</span>
         </button>
       </div>
-
     </div>
   );
 };
