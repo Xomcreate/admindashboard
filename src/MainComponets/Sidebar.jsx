@@ -115,7 +115,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       label: "Account",
       links: [
         { path: "/profile",  name: "Profile",  icon: <FaUserCircle /> },
-        { path: "/settings", name: "Settings", icon: <FaCog />        },
+        // { path: "/settings", name: "Settings", icon: <FaCog />        },
       ],
     },
   ];

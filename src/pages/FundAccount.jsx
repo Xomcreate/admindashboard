@@ -2,6 +2,17 @@ import { useState, useEffect } from "react";
 import DashboardLayout from "../layouts/DashboardLayout";
 import API from "../api/axios";
 
+// ─── Media URL fix ─────────────────────────────────────────────────────────────
+// axios baseURL is https://adminback-1.onrender.com/api/
+// Django ImageField returns paths like /media/deposit_proofs/file.jpg
+// We need the root (no /api/) prepended
+const BACKEND_ROOT = "https://adminback-1.onrender.com";
+const mediaUrl = (path) => {
+  if (!path) return null;
+  if (path.startsWith("http")) return path;
+  return `${BACKEND_ROOT}${path.startsWith("/") ? "" : "/"}${path}`;
+};
+
 const CRYPTO_OPTIONS = [
   {
     id: "BTC", name: "Bitcoin", symbol: "BTC", icon: "₿", color: "#f7931a",
@@ -41,17 +52,15 @@ const STEPS = [
   { n: 3, label: "Upload Proof" },
 ];
 
-// ─── Shared styles ─────────────────────────────────────────────────────────────
 const S = {
-  pageBg:    "bg-[#171515]",
-  cardBg:    "bg-[#211e1e]",
-  border:    "border-[#332d2c]",
-  muted:     "text-[#9e9593]",
-  inputBg:   "bg-[#171515]",
-  orange:    "text-[#c45a45]",
+  pageBg:  "bg-[#171515]",
+  cardBg:  "bg-[#211e1e]",
+  border:  "border-[#332d2c]",
+  muted:   "text-[#9e9593]",
+  inputBg: "bg-[#171515]",
+  orange:  "text-[#c45a45]",
 };
 
-// ─── Copy Button ───────────────────────────────────────────────────────────────
 function CopyBtn({ text }) {
   const [copied, setCopied] = useState(false);
   const copy = () => {
@@ -60,16 +69,13 @@ function CopyBtn({ text }) {
     setTimeout(() => setCopied(false), 2000);
   };
   return (
-    <button
-      onClick={copy}
-      className="shrink-0 bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold px-3 py-1.5 rounded-md transition-all text-white/60 hover:text-white"
-    >
+    <button onClick={copy}
+      className="shrink-0 bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold px-3 py-1.5 rounded-md transition-all text-white/60 hover:text-white">
       {copied ? "✓ Copied" : "Copy"}
     </button>
   );
 }
 
-// ─── Deposit Flow (reused by both User and Admin "Fund My Account" tab) ────────
 function DepositFlow({ isAdmin = false }) {
   const [step, setStep]           = useState(1);
   const [selected, setSelected]   = useState(null);
@@ -99,7 +105,6 @@ function DepositFlow({ isAdmin = false }) {
       data.append("payment_method", selected);
       data.append("amount", amount);
       if (proof) data.append("payment_proof", proof);
-      // admin deposits go to same endpoint — backend auto-approves or marks is_admin=true
       await API.post("deposits/", data, {
         headers: { "Content-Type": "multipart/form-data" },
       });
@@ -119,20 +124,14 @@ function DepositFlow({ isAdmin = false }) {
   if (success) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[40vh] text-center px-4 py-12">
-        <div className="w-20 h-20 rounded-full bg-[#10b981]/15 border border-[#10b981]/30 flex items-center justify-center text-4xl mb-6 text-[#10b981]">
-          ✓
-        </div>
+        <div className="w-20 h-20 rounded-full bg-[#10b981]/15 border border-[#10b981]/30 flex items-center justify-center text-4xl mb-6 text-[#10b981]">✓</div>
         <h2 className="text-2xl font-bold text-[#10b981] mb-2">Deposit Submitted</h2>
         <p className={`${S.muted} text-sm mb-6 max-w-sm`}>
-          Your deposit of{" "}
-          <span className="text-white font-semibold">${parseFloat(amount).toLocaleString()}</span> via{" "}
+          Your deposit of <span className="text-white font-semibold">${parseFloat(amount).toLocaleString()}</span> via{" "}
           <span className="text-white font-semibold">{selected}</span> has been received
           {isAdmin ? " and will be credited to your admin account." : " and is pending confirmation."}
         </p>
-        <button
-          onClick={reset}
-          className="bg-[#a64633] hover:bg-[#c45a45] text-white px-8 py-3 rounded-lg font-semibold transition-all duration-200"
-        >
+        <button onClick={reset} className="bg-[#a64633] hover:bg-[#c45a45] text-white px-8 py-3 rounded-lg font-semibold transition-all duration-200">
           Make Another Deposit
         </button>
       </div>
@@ -147,17 +146,13 @@ function DepositFlow({ isAdmin = false }) {
           <div key={s.n} className="flex items-center flex-1 last:flex-none">
             <div className="flex items-center gap-2">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border transition-all ${
-                step > s.n
-                  ? "bg-emerald-500 border-emerald-500 text-white"
-                  : step === s.n
-                  ? "bg-[#c45a45] border-[#c45a45] text-white"
-                  : `bg-transparent ${S.border} ${S.muted}`
+                step > s.n ? "bg-emerald-500 border-emerald-500 text-white"
+                : step === s.n ? "bg-[#c45a45] border-[#c45a45] text-white"
+                : `bg-transparent ${S.border} ${S.muted}`
               }`}>
                 {step > s.n ? "✓" : s.n}
               </div>
-              <span className={`text-xs font-medium hidden sm:block ${step >= s.n ? "text-white" : S.muted}`}>
-                {s.label}
-              </span>
+              <span className={`text-xs font-medium hidden sm:block ${step >= s.n ? "text-white" : S.muted}`}>{s.label}</span>
             </div>
             {i < STEPS.length - 1 && (
               <div className={`flex-1 h-px mx-3 transition-all ${step > s.n ? "bg-emerald-500" : S.border}`} />
@@ -166,17 +161,13 @@ function DepositFlow({ isAdmin = false }) {
         ))}
       </div>
 
-      {/* STEP 1 */}
       {step === 1 && (
         <div className="space-y-4">
           <h2 className="text-lg font-semibold text-white">Select a cryptocurrency</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {CRYPTO_OPTIONS.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => { setSelected(c.id); setStep(2); }}
-                className={`flex flex-col gap-2 p-4 rounded-xl border text-left transition-all hover:scale-[1.02] active:scale-[0.99] ${c.bg} ${c.border}`}
-              >
+              <button key={c.id} onClick={() => { setSelected(c.id); setStep(2); }}
+                className={`flex flex-col gap-2 p-4 rounded-xl border text-left transition-all hover:scale-[1.02] active:scale-[0.99] ${c.bg} ${c.border}`}>
                 <div className="flex items-center justify-between">
                   <span className="text-2xl font-bold" style={{ color: c.color }}>{c.icon}</span>
                   <span className={`text-xs font-bold ${c.text}`}>{c.symbol}</span>
@@ -191,13 +182,9 @@ function DepositFlow({ isAdmin = false }) {
         </div>
       )}
 
-      {/* STEP 2 */}
       {step === 2 && coin && (
         <div className="space-y-5">
-          <button onClick={() => setStep(1)} className={`text-xs ${S.muted} hover:text-white flex items-center gap-1 transition-colors`}>
-            ← Back
-          </button>
-
+          <button onClick={() => setStep(1)} className={`text-xs ${S.muted} hover:text-white flex items-center gap-1 transition-colors`}>← Back</button>
           <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${coin.bg} ${coin.border}`}>
             <span className="text-2xl font-bold" style={{ color: coin.color }}>{coin.icon}</span>
             <div>
@@ -205,11 +192,8 @@ function DepositFlow({ isAdmin = false }) {
               <p className={`text-xs ${S.muted}`}>{coin.network}</p>
             </div>
           </div>
-
           <div className={`${S.cardBg} border ${S.border} rounded-xl p-5 space-y-3`}>
-            <p className={`text-xs font-semibold ${S.muted} uppercase tracking-wider`}>
-              Send {coin.symbol} to this address
-            </p>
+            <p className={`text-xs font-semibold ${S.muted} uppercase tracking-wider`}>Send {coin.symbol} to this address</p>
             <div className={`flex items-center gap-3 ${S.inputBg} border ${S.border} rounded-lg px-4 py-3`}>
               <p className="font-mono text-sm text-white break-all flex-1">{coin.address}</p>
               <CopyBtn text={coin.address} />
@@ -222,16 +206,11 @@ function DepositFlow({ isAdmin = false }) {
               </p>
             </div>
           </div>
-
           <div className={`${S.cardBg} border ${S.border} rounded-xl p-5 space-y-4`}>
             <p className={`text-xs font-semibold ${S.muted} uppercase tracking-wider`}>Enter deposit amount (USD)</p>
             <div className="relative">
               <span className={`absolute left-4 top-1/2 -translate-y-1/2 ${S.muted} font-semibold`}>$</span>
-              <input
-                type="number"
-                placeholder="0.00"
-                min="500"
-                step="0.01"
+              <input type="number" placeholder="0.00" min="500" step="0.01"
                 className={`w-full ${S.inputBg} border pl-8 pr-4 py-3 rounded-lg text-white placeholder-[#9e9593] focus:outline-none transition-colors ${
                   amountErr ? "border-red-500" : `${S.border} focus:border-[#c45a45]`
                 }`}
@@ -242,38 +221,23 @@ function DepositFlow({ isAdmin = false }) {
             {amountErr && <p className="text-red-400 text-xs">{amountErr}</p>}
             <p className={`text-xs ${S.muted}`}>Minimum deposit: <span className="text-white font-semibold">$500</span></p>
           </div>
-
           <button
             onClick={() => { const err = validateAmount(amount); if (err) { setAmountErr(err); return; } setStep(3); }}
             disabled={!amount}
-            className="w-full bg-[#a64633] hover:bg-[#c45a45] disabled:opacity-40 disabled:cursor-not-allowed text-white py-3 rounded-lg font-semibold transition-colors"
-          >
+            className="w-full bg-[#a64633] hover:bg-[#c45a45] disabled:opacity-40 disabled:cursor-not-allowed text-white py-3 rounded-lg font-semibold transition-colors">
             Continue →
           </button>
         </div>
       )}
 
-      {/* STEP 3 */}
       {step === 3 && coin && (
         <form onSubmit={handleSubmit} className="space-y-5">
-          <button type="button" onClick={() => setStep(2)} className={`text-xs ${S.muted} hover:text-white flex items-center gap-1 transition-colors`}>
-            ← Back
-          </button>
-
+          <button type="button" onClick={() => setStep(2)} className={`text-xs ${S.muted} hover:text-white flex items-center gap-1 transition-colors`}>← Back</button>
           <div className={`${S.cardBg} border ${S.border} rounded-xl p-5 space-y-3`}>
             <p className={`text-xs font-semibold ${S.muted} uppercase tracking-wider`}>Deposit Summary</p>
-            <div className="flex justify-between text-sm">
-              <span className={S.muted}>Method</span>
-              <span className="text-white font-semibold">{coin.name} ({coin.symbol})</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className={S.muted}>Amount</span>
-              <span className={`${S.orange} font-bold`}>${parseFloat(amount).toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className={S.muted}>Network</span>
-              <span className="text-white">{coin.network}</span>
-            </div>
+            <div className="flex justify-between text-sm"><span className={S.muted}>Method</span><span className="text-white font-semibold">{coin.name} ({coin.symbol})</span></div>
+            <div className="flex justify-between text-sm"><span className={S.muted}>Amount</span><span className={`${S.orange} font-bold`}>${parseFloat(amount).toLocaleString()}</span></div>
+            <div className="flex justify-between text-sm"><span className={S.muted}>Network</span><span className="text-white">{coin.network}</span></div>
             <div className={`h-px ${S.border}`} />
             <div className={`flex items-center gap-2 ${S.inputBg} rounded-lg px-3 py-2`}>
               <span className={`text-xs ${S.muted}`}>To:</span>
@@ -281,7 +245,6 @@ function DepositFlow({ isAdmin = false }) {
               <CopyBtn text={coin.address} />
             </div>
           </div>
-
           <div className={`${S.cardBg} border ${S.border} rounded-xl p-5 space-y-3`}>
             <p className={`text-xs font-semibold ${S.muted} uppercase tracking-wider`}>Upload Payment Proof</p>
             <p className={`text-xs ${S.muted}`}>Attach a screenshot or photo of your transaction confirmation.</p>
@@ -292,7 +255,6 @@ function DepositFlow({ isAdmin = false }) {
               <input type="file" accept="image/*" className="hidden" onChange={(e) => setProof(e.target.files[0])} />
             </label>
           </div>
-
           {isAdmin ? (
             <div className="flex items-start gap-2 bg-[#c45a45]/10 border border-[#c45a45]/20 rounded-lg px-4 py-3">
               <span className="text-[#c45a45] mt-0.5">🔐</span>
@@ -309,12 +271,8 @@ function DepositFlow({ isAdmin = false }) {
               </p>
             </div>
           )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 rounded-lg font-semibold transition-colors"
-          >
+          <button type="submit" disabled={loading}
+            className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 rounded-lg font-semibold transition-colors">
             {loading ? "Submitting…" : "Confirm Deposit"}
           </button>
         </form>
@@ -340,25 +298,18 @@ function UserFundAccount() {
 
 // ─── ADMIN VIEW ────────────────────────────────────────────────────────────────
 function AdminFundAccount() {
-  // "deposits" = manage deposits tab | "fund" = fund my account tab
   const [activeTab, setActiveTab]         = useState("deposits");
   const [filter, setFilter]               = useState("all");
   const [deposits, setDeposits]           = useState([]);
   const [loadingList, setLoadingList]     = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
+  const [imgErrors, setImgErrors]         = useState({});
 
   useEffect(() => {
-    const fetchDeposits = async () => {
-      try {
-        const res = await API.get("deposits/");
-        setDeposits(res.data);
-      } catch (err) {
-        console.error("Failed to load deposits", err);
-      } finally {
-        setLoadingList(false);
-      }
-    };
-    fetchDeposits();
+    API.get("deposits/")
+      .then((res) => setDeposits(res.data))
+      .catch((err) => console.error("Failed to load deposits", err))
+      .finally(() => setLoadingList(false));
   }, []);
 
   const handleAction = async (id, status) => {
@@ -381,53 +332,32 @@ function AdminFundAccount() {
 
   const filtered = filter === "all" ? deposits : deposits.filter((d) => d.status === filter);
 
-  const statusBadge = (status) => {
-    if (status === "pending")
-      return <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-400">Pending</span>;
-    if (status === "approved")
-      return <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-400">Approved</span>;
+  const statusBadge = (s) => {
+    if (s === "pending")  return <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-400">Pending</span>;
+    if (s === "approved") return <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-400">Approved</span>;
     return <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-500/15 text-red-400">Declined</span>;
   };
 
-  const FILTER_TABS = ["all", "pending", "approved", "declined"];
-
   return (
     <div className={`text-white max-w-4xl mx-auto px-4 py-4 space-y-6 min-h-screen ${S.pageBg}`}>
-
-      {/* Page Header */}
       <div>
         <h1 className="text-3xl font-bold tracking-wide">Fund Account</h1>
         <p className={`${S.muted} text-sm mt-1`}>Manage user deposits or fund your own admin account.</p>
       </div>
 
-      {/* Main Tab Switch */}
       <div className={`flex gap-1 p-1 rounded-xl border ${S.border} ${S.cardBg} w-fit`}>
-        <button
-          onClick={() => setActiveTab("deposits")}
-          className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${
-            activeTab === "deposits"
-              ? "bg-[#c45a45] text-white shadow"
-              : `${S.muted} hover:text-white`
-          }`}
-        >
-          🗂 Manage Deposits
-        </button>
-        <button
-          onClick={() => setActiveTab("fund")}
-          className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${
-            activeTab === "fund"
-              ? "bg-[#c45a45] text-white shadow"
-              : `${S.muted} hover:text-white`
-          }`}
-        >
-          💳 Fund My Account
-        </button>
+        {[["deposits", "🗂 Manage Deposits"], ["fund", "💳 Fund My Account"]].map(([id, label]) => (
+          <button key={id} onClick={() => setActiveTab(id)}
+            className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${
+              activeTab === id ? "bg-[#c45a45] text-white shadow" : `${S.muted} hover:text-white`
+            }`}>
+            {label}
+          </button>
+        ))}
       </div>
 
-      {/* ── TAB: MANAGE DEPOSITS ── */}
       {activeTab === "deposits" && (
         <div className="space-y-5">
-          {/* Stats */}
           <div className="grid grid-cols-3 gap-4">
             {[
               { label: "Pending",  value: counts.pending,  color: "text-amber-400"   },
@@ -441,138 +371,132 @@ function AdminFundAccount() {
             ))}
           </div>
 
-          {/* Filter Tabs */}
           <div className={`flex border-b ${S.border}`}>
-            {FILTER_TABS.map((t) => (
-              <button
-                key={t}
-                onClick={() => setFilter(t)}
+            {["all", "pending", "approved", "declined"].map((t) => (
+              <button key={t} onClick={() => setFilter(t)}
                 className={`px-4 py-2 text-sm font-medium capitalize transition-colors border-b-2 -mb-px ${
-                  filter === t
-                    ? "text-[#c45a45] border-[#c45a45]"
-                    : `${S.muted} border-transparent hover:text-white`
-                }`}
-              >
+                  filter === t ? "text-[#c45a45] border-[#c45a45]" : `${S.muted} border-transparent hover:text-white`
+                }`}>
                 {t}{t !== "all" && ` (${counts[t]})`}
               </button>
             ))}
           </div>
 
-          {/* Deposit List */}
           {loadingList ? (
             <div className={`${S.muted} text-sm text-center py-16`}>Loading deposits…</div>
           ) : filtered.length === 0 ? (
             <div className={`${S.muted} text-sm text-center py-16`}>No deposits found.</div>
           ) : (
             <div className="space-y-4">
-              {filtered.map((dep) => (
-                <div
-                  key={dep.id}
-                  className={`${S.cardBg} border ${S.border} rounded-xl overflow-hidden ${
-                    dep.status === "pending"  ? "border-l-4 border-l-amber-500"   :
-                    dep.status === "approved" ? "border-l-4 border-l-emerald-500" :
-                                               "border-l-4 border-l-red-500"
-                  }`}
-                >
-                  {/* Header */}
-                  <div className="flex items-center justify-between px-5 pt-4 pb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-[#c45a45]/20 flex items-center justify-center text-[#c45a45] font-bold text-sm shrink-0">
-                        {dep.user?.charAt(0)?.toUpperCase() ?? "U"}
+              {filtered.map((dep) => {
+                const proofSrc = mediaUrl(dep.payment_proof);
+                return (
+                  <div key={dep.id}
+                    className={`${S.cardBg} border ${S.border} rounded-xl overflow-hidden ${
+                      dep.status === "pending"  ? "border-l-4 border-l-amber-500"
+                      : dep.status === "approved" ? "border-l-4 border-l-emerald-500"
+                      : "border-l-4 border-l-red-500"
+                    }`}>
+
+                    <div className="flex items-center justify-between px-5 pt-4 pb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-[#c45a45]/20 flex items-center justify-center text-[#c45a45] font-bold text-sm shrink-0">
+                          {dep.user?.charAt(0)?.toUpperCase() ?? "U"}
+                        </div>
+                        <div>
+                          <p className="text-white font-semibold text-sm">{dep.user ?? "User"}</p>
+                          <p className={`${S.muted} text-xs`}>{dep.email ?? "—"}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-white font-semibold text-sm">{dep.user ?? dep.username ?? "User"}</p>
-                        <p className={`${S.muted} text-xs`}>{dep.email ?? "—"}</p>
-                      </div>
+                      {statusBadge(dep.status)}
                     </div>
-                    {statusBadge(dep.status)}
-                  </div>
 
-                  {/* Meta */}
-                  <div className={`grid grid-cols-2 sm:grid-cols-4 gap-3 px-5 pb-4 border-b ${S.border}`}>
-                    {[
-                      { label: "Amount",    value: `$${parseFloat(dep.amount).toLocaleString()}`, accent: true },
-                      { label: "Method",    value: dep.payment_method ?? dep.method },
-                      { label: "Network",   value: dep.network ?? "—" },
-                      { label: "Submitted", value: dep.created_at ? new Date(dep.created_at).toLocaleString() : dep.time ?? "—" },
-                    ].map((m) => (
-                      <div key={m.label}>
-                        <p className={`${S.muted} text-xs mb-0.5`}>{m.label}</p>
-                        <p className={`text-sm font-semibold ${m.accent ? "text-[#c45a45]" : "text-white"}`}>{m.value}</p>
+                    <div className={`grid grid-cols-2 sm:grid-cols-4 gap-3 px-5 pb-4 border-b ${S.border}`}>
+                      {[
+                        { label: "Amount",    value: `$${parseFloat(dep.amount).toLocaleString()}`, accent: true },
+                        { label: "Method",    value: dep.payment_method },
+                        { label: "Network",   value: dep.network ?? "—" },
+                        { label: "Submitted", value: dep.created_at ? new Date(dep.created_at).toLocaleString() : "—" },
+                      ].map((m) => (
+                        <div key={m.label}>
+                          <p className={`${S.muted} text-xs mb-0.5`}>{m.label}</p>
+                          <p className={`text-sm font-semibold ${m.accent ? "text-[#c45a45]" : "text-white"}`}>{m.value}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Payment Proof */}
+                    <div className="px-5 py-4">
+                      <p className={`${S.muted} text-xs font-semibold uppercase tracking-wider mb-3`}>Payment proof</p>
+                      {proofSrc && !imgErrors[dep.id] ? (
+                        <div className="space-y-2">
+                          <a href={proofSrc} target="_blank" rel="noreferrer">
+                            <img
+                              src={proofSrc}
+                              alt="Payment proof"
+                              className="w-full max-h-52 object-cover rounded-lg border border-white/10 hover:opacity-90 transition-opacity cursor-pointer"
+                              onError={() => setImgErrors((prev) => ({ ...prev, [dep.id]: true }))}
+                            />
+                          </a>
+                          <a href={proofSrc} target="_blank" rel="noreferrer"
+                            className={`text-xs ${S.muted} hover:text-white flex items-center gap-1 transition-colors w-fit`}>
+                            🔗 Open full image ↗
+                          </a>
+                        </div>
+                      ) : proofSrc && imgErrors[dep.id] ? (
+                        <div className={`${S.inputBg} border ${S.border} rounded-lg px-4 py-5 flex flex-col items-center gap-2 text-center`}>
+                          <p className={`${S.muted} text-xs`}>Could not preview image</p>
+                          <a href={proofSrc} target="_blank" rel="noreferrer"
+                            className="text-[#c45a45] text-xs font-semibold underline hover:text-white transition-colors">
+                            Open file directly ↗
+                          </a>
+                          <p className={`${S.muted} text-xs font-mono break-all mt-1`}>{proofSrc}</p>
+                        </div>
+                      ) : (
+                        <div className={`${S.inputBg} border ${S.border} rounded-lg px-4 py-6 text-center`}>
+                          <p className={`${S.muted} text-xs`}>No proof uploaded</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {dep.status === "pending" && (
+                      <div className="flex gap-3 px-5 pb-5">
+                        <button onClick={() => handleAction(dep.id, "approved")} disabled={actionLoading === dep.id}
+                          className="flex-1 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white py-2.5 rounded-lg text-sm font-semibold transition-colors">
+                          {actionLoading === dep.id ? "Processing…" : "✓ Approve"}
+                        </button>
+                        <button onClick={() => handleAction(dep.id, "declined")} disabled={actionLoading === dep.id}
+                          className="flex-1 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed text-red-400 py-2.5 rounded-lg text-sm font-semibold transition-colors">
+                          {actionLoading === dep.id ? "Processing…" : "✕ Decline"}
+                        </button>
                       </div>
-                    ))}
-                  </div>
-
-                  {/* Proof */}
-                  <div className="px-5 py-4">
-                    <p className={`${S.muted} text-xs font-semibold uppercase tracking-wider mb-3`}>Payment proof</p>
-                    {dep.payment_proof ? (
-                      <a href={dep.payment_proof} target="_blank" rel="noreferrer">
-                        <img
-                          src={dep.payment_proof}
-                          alt="Payment proof"
-                          className="w-full max-h-52 object-cover rounded-lg border border-white/10 hover:opacity-90 transition-opacity cursor-pointer"
-                        />
-                      </a>
-                    ) : (
-                      <div className={`${S.inputBg} border ${S.border} rounded-lg px-4 py-6 text-center`}>
-                        <p className={`${S.muted} text-xs`}>No proof uploaded</p>
+                    )}
+                    {dep.status !== "pending" && (
+                      <div className="px-5 pb-4">
+                        <p className={`text-xs text-center ${dep.status === "approved" ? "text-emerald-400" : "text-red-400"}`}>
+                          {dep.status === "approved"
+                            ? "✓ Deposit approved — funds credited to user account"
+                            : "✕ Deposit declined — user has been notified"}
+                        </p>
                       </div>
                     )}
                   </div>
-
-                  {/* Actions */}
-                  {dep.status === "pending" && (
-                    <div className="flex gap-3 px-5 pb-5">
-                      <button
-                        onClick={() => handleAction(dep.id, "approved")}
-                        disabled={actionLoading === dep.id}
-                        className="flex-1 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white py-2.5 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-2"
-                      >
-                        {actionLoading === dep.id ? "Processing…" : "✓ Approve"}
-                      </button>
-                      <button
-                        onClick={() => handleAction(dep.id, "declined")}
-                        disabled={actionLoading === dep.id}
-                        className="flex-1 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed text-red-400 py-2.5 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-2"
-                      >
-                        {actionLoading === dep.id ? "Processing…" : "✕ Decline"}
-                      </button>
-                    </div>
-                  )}
-
-                  {dep.status !== "pending" && (
-                    <div className="px-5 pb-4">
-                      <p className={`text-xs text-center ${dep.status === "approved" ? "text-emerald-400" : "text-red-400"}`}>
-                        {dep.status === "approved"
-                          ? "✓ Deposit approved — funds credited to user account"
-                          : "✕ Deposit declined — user has been notified"}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
       )}
 
-      {/* ── TAB: FUND MY ACCOUNT ── */}
       {activeTab === "fund" && (
         <div className="space-y-4">
-          {/* Admin-specific notice */}
           <div className={`${S.cardBg} border ${S.border} rounded-xl p-4 flex items-start gap-3`}>
-            <div className="w-8 h-8 rounded-lg bg-[#c45a45]/20 flex items-center justify-center shrink-0 text-[#c45a45] text-sm font-bold">
-              A
-            </div>
+            <div className="w-8 h-8 rounded-lg bg-[#c45a45]/20 flex items-center justify-center shrink-0 text-[#c45a45] text-sm font-bold">A</div>
             <div>
               <p className="text-white font-semibold text-sm">Admin self-deposit</p>
-              <p className={`${S.muted} text-xs mt-0.5`}>
-                Deposits made here are linked to your admin account and auto-approved once the on-chain transaction is confirmed.
-              </p>
+              <p className={`${S.muted} text-xs mt-0.5`}>Deposits made here are linked to your admin account and auto-approved once confirmed on-chain.</p>
             </div>
           </div>
-
           <DepositFlow isAdmin={true} />
         </div>
       )}
@@ -580,11 +504,8 @@ function AdminFundAccount() {
   );
 }
 
-// ─── ROOT COMPONENT ────────────────────────────────────────────────────────────
 function FundAccount() {
-  const role    = localStorage.getItem("role");
-  const isAdmin = role === "admin";
-
+  const isAdmin = localStorage.getItem("role") === "admin";
   return (
     <DashboardLayout>
       {isAdmin ? <AdminFundAccount /> : <UserFundAccount />}
