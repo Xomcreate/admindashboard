@@ -5,21 +5,17 @@ import API from "../api/axios";
 const Login = () => {
   const navigate = useNavigate();
 
-  const [form, setForm] = useState({
-    username: "",
-    password: "",
-  });
-
-  const [error, setError] = useState("");
+  const [form, setForm] = useState({ username: "", password: "" });
+  const [error, setError]     = useState("");
   const [loading, setLoading] = useState(false);
-
   const [showPassword, setShowPassword] = useState(false);
 
-  // Forgot Password States
-  const [forgotMode, setForgotMode] = useState(false);
-  const [email, setEmail] = useState("");
+  // Forgot Password
+  const [forgotMode, setForgotMode]       = useState(false);
+  const [email, setEmail]                 = useState("");
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotMessage, setForgotMessage] = useState("");
+  const [forgotError, setForgotError]     = useState("");  // ✅ Added separate error state
 
   const submit = async (e) => {
     e.preventDefault();
@@ -33,7 +29,7 @@ const Login = () => {
       localStorage.setItem("refresh_token", res.data.refresh);
 
       const profile = await API.get("user-dashboard/");
-      const role = profile.data.profile.role;
+      const role    = profile.data.profile.role;
 
       localStorage.setItem("role", role);
 
@@ -52,23 +48,19 @@ const Login = () => {
 
   const handleForgotPassword = async (e) => {
     e.preventDefault();
-
     setForgotLoading(true);
     setForgotMessage("");
+    setForgotError("");
 
     try {
-      // Replace this later with your backend API
-      await new Promise((resolve) =>
-        setTimeout(resolve, 1000)
-      );
-
+      // ✅ Now hits the real backend endpoint
+      await API.post("forgot-password/", { email });
       setForgotMessage(
-        "If this email exists, a password reset link will be sent."
+        "If this email is registered, a password reset link will be sent."
       );
     } catch (err) {
-      setForgotMessage(
-        "Unable to process request. Please try again."
-      );
+      console.error(err.response?.data || err.message);
+      setForgotError("Unable to process request. Please try again.");
     } finally {
       setForgotLoading(false);
     }
@@ -84,16 +76,17 @@ const Login = () => {
           {forgotMode ? "Forgot Password" : "Login"}
         </h1>
 
+        {/* Login error */}
         {error && !forgotMode && (
-          <p className="text-red-400 text-sm mb-4">
-            {error}
-          </p>
+          <p className="text-red-400 text-sm mb-4">{error}</p>
         )}
 
-        {forgotMessage && forgotMode && (
-          <p className="text-green-400 text-sm mb-4">
-            {forgotMessage}
-          </p>
+        {/* Forgot password feedback */}
+        {forgotMessage && (
+          <p className="text-green-400 text-sm mb-4">{forgotMessage}</p>
+        )}
+        {forgotError && (
+          <p className="text-red-400 text-sm mb-4">{forgotError}</p>
         )}
 
         {!forgotMode ? (
@@ -102,12 +95,7 @@ const Login = () => {
               placeholder="Username"
               className="w-full p-3 mb-4 rounded-lg bg-[#171515] text-white border border-[#2b2524] placeholder-[#9e9593] focus:outline-none focus:border-[#c45a45]"
               value={form.username}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  username: e.target.value,
-                })
-              }
+              onChange={(e) => setForm({ ...form, username: e.target.value })}
               required
             />
 
@@ -117,20 +105,12 @@ const Login = () => {
                 placeholder="Password"
                 className="w-full p-3 rounded-lg bg-[#171515] text-white border border-[#2b2524] placeholder-[#9e9593] focus:outline-none focus:border-[#c45a45]"
                 value={form.password}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    password: e.target.value,
-                  })
-                }
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
                 required
               />
-
               <button
                 type="button"
-                onClick={() =>
-                  setShowPassword(!showPassword)
-                }
+                onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9e9593] text-sm"
               >
                 {showPassword ? "Hide" : "Show"}
@@ -140,10 +120,7 @@ const Login = () => {
             <div className="text-right mb-5">
               <button
                 type="button"
-                onClick={() => {
-                  setForgotMode(true);
-                  setError("");
-                }}
+                onClick={() => { setForgotMode(true); setError(""); }}
                 className="text-[#c45a45] text-sm hover:underline"
               >
                 Forgot Password?
@@ -159,10 +136,7 @@ const Login = () => {
 
             <p className="text-[#9e9593] mt-4 text-sm text-center">
               Don't have an account?{" "}
-              <Link
-                to="/register"
-                className="text-[#c45a45] hover:underline"
-              >
+              <Link to="/register" className="text-[#c45a45] hover:underline">
                 Register
               </Link>
             </p>
@@ -171,12 +145,10 @@ const Login = () => {
           <>
             <input
               type="email"
-              placeholder="Enter your email"
+              placeholder="Enter your registered email"
               className="w-full p-3 mb-4 rounded-lg bg-[#171515] text-white border border-[#2b2524] placeholder-[#9e9593] focus:outline-none focus:border-[#c45a45]"
               value={email}
-              onChange={(e) =>
-                setEmail(e.target.value)
-              }
+              onChange={(e) => setEmail(e.target.value)}
               required
             />
 
@@ -185,9 +157,7 @@ const Login = () => {
               className="bg-[#c45a45] hover:bg-[#a64633] w-full p-3 text-white rounded-lg font-semibold transition-colors disabled:opacity-50"
               disabled={forgotLoading}
             >
-              {forgotLoading
-                ? "Sending..."
-                : "Send Reset Link"}
+              {forgotLoading ? "Sending..." : "Send Reset Link"}
             </button>
 
             <button
@@ -195,6 +165,7 @@ const Login = () => {
               onClick={() => {
                 setForgotMode(false);
                 setForgotMessage("");
+                setForgotError("");
                 setEmail("");
               }}
               className="w-full mt-3 text-[#c45a45] hover:underline"
