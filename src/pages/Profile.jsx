@@ -17,7 +17,12 @@ function Profile() {
   });
   const [pwLoading, setPwLoading] = useState(false);
   const [pwSuccess, setPwSuccess] = useState("");
-  const [pwError, setPwError] = useState("");
+  const [pwError, setPwError]     = useState("");
+
+  // Show/hide toggles for each password field
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew]         = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
     fetchProfile();
@@ -34,7 +39,7 @@ function Profile() {
 
   const updateProfile = async (e) => {
     e.preventDefault();
-    setLoading(true); // ✅ Fixed: was incorrectly calling loading(true)
+    setLoading(true);
     setSuccess("");
     setError("");
 
@@ -50,7 +55,7 @@ function Profile() {
       console.error(err);
       setError("Failed to update profile. Please try again.");
     } finally {
-      setLoading(false); // ✅ Fixed: was incorrectly calling loading(false)
+      setLoading(false);
     }
   };
 
@@ -76,6 +81,10 @@ function Profile() {
       });
       setPwSuccess("Password changed successfully!");
       setPasswords({ current_password: "", new_password: "", confirm_password: "" });
+      // Reset visibility after successful change
+      setShowCurrent(false);
+      setShowNew(false);
+      setShowConfirm(false);
     } catch (err) {
       console.error(err);
       const msg = err?.response?.data?.detail || "Failed to change password. Please check your current password.";
@@ -93,6 +102,27 @@ function Profile() {
   const inputBg       = "bg-[#171515]";
 
   const inputClass = `w-full ${inputBg} p-3 rounded-lg border ${borderCol} text-white focus:outline-none focus:border-[#c45a45] transition-colors`;
+
+  // Reusable password input with show/hide toggle
+  const PasswordInput = ({ value, onChange, placeholder, show, onToggle, extraClass = "" }) => (
+    <div className="relative">
+      <input
+        type={show ? "text" : "password"}
+        className={`${inputClass} pr-16 ${extraClass}`}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        required
+      />
+      <button
+        type="button"
+        onClick={onToggle}
+        className={`absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium transition-colors ${mutedText} hover:text-white`}
+      >
+        {show ? "Hide" : "Show"}
+      </button>
+    </div>
+  );
 
   return (
     <DashboardLayout>
@@ -148,7 +178,6 @@ function Profile() {
           )}
 
           <div className="grid md:grid-cols-2 gap-6">
-            {/* Full Name */}
             <div>
               <label className={`${mutedText} text-xs uppercase tracking-wider mb-1.5 block`}>Full Name</label>
               <input
@@ -160,7 +189,6 @@ function Profile() {
               />
             </div>
 
-            {/* Email — read-only */}
             <div>
               <label className={`${mutedText} text-xs uppercase tracking-wider mb-1.5 block`}>Email Address</label>
               <input
@@ -171,7 +199,6 @@ function Profile() {
               />
             </div>
 
-            {/* Phone */}
             <div>
               <label className={`${mutedText} text-xs uppercase tracking-wider mb-1.5 block`}>Phone Number</label>
               <input
@@ -183,7 +210,6 @@ function Profile() {
               />
             </div>
 
-            {/* Country */}
             <div>
               <label className={`${mutedText} text-xs uppercase tracking-wider mb-1.5 block`}>Country</label>
               <input
@@ -226,48 +252,47 @@ function Profile() {
           )}
 
           <div className="grid md:grid-cols-2 gap-6">
+
             {/* Current Password — full width */}
             <div className="md:col-span-2">
               <label className={`${mutedText} text-xs uppercase tracking-wider mb-1.5 block`}>Current Password</label>
-              <input
-                type="password"
-                className={inputClass}
+              <PasswordInput
                 value={passwords.current_password}
                 onChange={(e) => setPasswords({ ...passwords, current_password: e.target.value })}
                 placeholder="Enter your current password"
-                required
+                show={showCurrent}
+                onToggle={() => setShowCurrent(!showCurrent)}
               />
             </div>
 
             {/* New Password */}
             <div>
               <label className={`${mutedText} text-xs uppercase tracking-wider mb-1.5 block`}>New Password</label>
-              <input
-                type="password"
-                className={inputClass}
+              <PasswordInput
                 value={passwords.new_password}
                 onChange={(e) => setPasswords({ ...passwords, new_password: e.target.value })}
                 placeholder="Min. 8 characters"
-                required
+                show={showNew}
+                onToggle={() => setShowNew(!showNew)}
               />
             </div>
 
             {/* Confirm New Password */}
             <div>
               <label className={`${mutedText} text-xs uppercase tracking-wider mb-1.5 block`}>Confirm New Password</label>
-              <input
-                type="password"
-                className={`${inputClass} ${
+              <PasswordInput
+                value={passwords.confirm_password}
+                onChange={(e) => setPasswords({ ...passwords, confirm_password: e.target.value })}
+                placeholder="Re-enter new password"
+                show={showConfirm}
+                onToggle={() => setShowConfirm(!showConfirm)}
+                extraClass={
                   passwords.confirm_password && passwords.confirm_password !== passwords.new_password
                     ? "border-red-500/60 focus:border-red-500"
                     : passwords.confirm_password && passwords.confirm_password === passwords.new_password
                     ? "border-emerald-500/60 focus:border-emerald-500"
                     : ""
-                }`}
-                value={passwords.confirm_password}
-                onChange={(e) => setPasswords({ ...passwords, confirm_password: e.target.value })}
-                placeholder="Re-enter new password"
-                required
+                }
               />
               {passwords.confirm_password && passwords.confirm_password !== passwords.new_password && (
                 <p className="text-red-400 text-xs mt-1">Passwords do not match</p>
@@ -276,6 +301,7 @@ function Profile() {
                 <p className="text-emerald-400 text-xs mt-1">Passwords match</p>
               )}
             </div>
+
           </div>
 
           <div className={`flex justify-end pt-4 border-t ${borderCol}`}>
