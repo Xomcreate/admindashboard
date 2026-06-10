@@ -9,6 +9,7 @@ import {
   FaCheckCircle, FaClock, FaGlobe, FaTimes,
   FaUsers, FaLink, FaCopy, FaGift, FaNetworkWired,
   FaChartBar, FaExpand, FaCompress,
+  FaShieldAlt, FaExclamationTriangle, FaUpload, FaIdCard, FaCamera, FaTimesCircle,
 } from "react-icons/fa";
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip,
@@ -294,7 +295,7 @@ const AssetCard = ({ asset, onClick }) => {
           </div>
           <div>
             <p className="text-xs font-bold text-white leading-none">{asset.symbol}</p>
-            <p className="text-[10px] text-[#9e9593] mt-0.5 leading-none truncate max-w-20">{asset.name}</p>
+            <p className="text-[10px] text-[#9e9593] mt-0.5 leading-none truncate max-w-18">{asset.name}</p>
           </div>
         </div>
         <span className={`text-[11px] font-bold flex items-center gap-0.5 ${isPositive ? "text-emerald-400" : "text-red-400"}`}>
@@ -303,11 +304,11 @@ const AssetCard = ({ asset, onClick }) => {
         </span>
       </div>
       <SparklineSVG data={asset.sparkline} color={asset.color} />
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-bold text-white">
+      <div className="flex items-center justify-between gap-1">
+        <p className="text-sm font-bold text-white truncate">
           ${asset.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}
         </p>
-        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${signalStyle}`}>
+        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${signalStyle}`}>
           {signalLabel}
         </span>
       </div>
@@ -651,6 +652,292 @@ const AssetChartModal = ({ asset: initialAsset, allAssets, onClose }) => {
   );
 };
 
+/* ════════════════════════════════════════
+   KYC VERIFY ACCOUNT COMPONENT
+   ════════════════════════════════════════ */
+
+/* ── Alert banner shown at top when unverified/rejected ── */
+const KYCAlertBanner = ({ status, onVerifyClick }) => {
+  const [dismissed, setDismissed] = useState(false);
+  if (dismissed || status === "verified" || status === "pending") return null;
+
+  const isRejected = status === "rejected";
+  return (
+    <div className={`relative flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium ${
+      isRejected
+        ? "bg-red-500/10 border-red-500/25 text-red-300"
+        : "bg-yellow-500/10 border-yellow-500/25 text-yellow-300"
+    }`}>
+      <FaExclamationTriangle className={`text-base shrink-0 ${isRejected ? "text-red-400" : "text-yellow-400"}`} />
+      <p className="flex-1 text-[13px]">
+        {isRejected
+          ? "Your identity verification was rejected. Please resubmit your documents."
+          : "Your account is not verified. Verify your identity to unlock full platform access."}
+      </p>
+      <button
+        onClick={onVerifyClick}
+        className={`shrink-0 text-[11px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-lg transition-all ${
+          isRejected
+            ? "bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-300"
+            : "bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/30 text-yellow-300"
+        }`}
+      >
+        {isRejected ? "Resubmit" : "Verify Now"}
+      </button>
+      <button
+        onClick={() => setDismissed(true)}
+        className="shrink-0 text-white/20 hover:text-white/50 transition-colors ml-1"
+      >
+        <FaTimes className="text-xs" />
+      </button>
+    </div>
+  );
+};
+
+/* ── File upload slot ── */
+const UploadSlot = ({ label, icon, file, onChange, accept = "image/*,.pdf" }) => {
+  const inputRef = useRef(null);
+  return (
+    <div
+      onClick={() => inputRef.current?.click()}
+      className={`relative flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed cursor-pointer transition-all duration-200 py-5 px-3 text-center
+        ${file
+          ? "border-emerald-500/40 bg-emerald-500/5 hover:border-emerald-500/60"
+          : "border-[#2e2726] bg-[#121010] hover:border-[#c45a45]/40 hover:bg-[#c45a45]/5"
+        }`}
+    >
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        className="hidden"
+        onChange={e => onChange(e.target.files[0] || null)}
+      />
+      {file ? (
+        <>
+          <FaCheckCircle className="text-emerald-400 text-xl" />
+          <p className="text-[11px] font-semibold text-emerald-400 truncate max-w-full px-1">{file.name}</p>
+          <p className="text-[10px] text-[#9e9593]">Click to replace</p>
+        </>
+      ) : (
+        <>
+          <span className="text-[#9e9593] text-lg">{icon}</span>
+          <p className="text-[11px] font-semibold text-white">{label}</p>
+          <p className="text-[10px] text-[#9e9593]">JPG, PNG or PDF · max 5MB</p>
+        </>
+      )}
+    </div>
+  );
+};
+
+/* ── Main KYC Card ── */
+const VerifyAccountCard = ({ kycStatus, onSubmitSuccess }) => {
+  const [idFront,  setIdFront]  = useState(null);
+  const [idBack,   setIdBack]   = useState(null);
+  const [selfie,   setSelfie]   = useState(null);
+  const [docType,  setDocType]  = useState("national_id");
+  const [submitting, setSubmitting] = useState(false);
+  const [error,    setError]    = useState("");
+
+  const canSubmit = idFront && idBack && selfie && !submitting;
+
+  const handleSubmit = async () => {
+    if (!canSubmit) return;
+    setSubmitting(true);
+    setError("");
+    try {
+      const form = new FormData();
+      form.append("document_type", docType);
+      form.append("id_front",  idFront);
+      form.append("id_back",   idBack);
+      form.append("selfie",    selfie);
+      await API.post("kyc/submit/", form, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      onSubmitSuccess();
+    } catch (err) {
+      setError(err?.response?.data?.detail || "Submission failed. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  /* ── Verified state ── */
+  if (kycStatus === "verified") {
+    return (
+      <div className="bg-[#1f1b1b] border border-emerald-500/25 rounded-2xl p-5 flex items-center gap-4">
+        <div className="w-11 h-11 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0">
+          <FaShieldAlt className="text-emerald-400 text-lg" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold text-white flex items-center gap-2">
+            Identity Verified
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
+              <FaCheckCircle className="text-[9px]" /> Verified
+            </span>
+          </p>
+          <p className="text-[11px] text-[#9e9593] mt-0.5">Your account is fully verified. All platform features are unlocked.</p>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Pending state ── */
+  if (kycStatus === "pending") {
+    return (
+      <div className="bg-[#1f1b1b] border border-yellow-500/25 rounded-2xl p-5 flex items-center gap-4">
+        <div className="w-11 h-11 rounded-xl bg-yellow-500/10 border border-yellow-500/25 flex items-center justify-center shrink-0">
+          <FaClock className="text-yellow-400 text-lg" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold text-white flex items-center gap-2">
+            Verification Under Review
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
+              <FaClock className="text-[9px]" /> Pending
+            </span>
+          </p>
+          <p className="text-[11px] text-[#9e9593] mt-0.5">Your documents are being reviewed. This usually takes 24–48 hours.</p>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Unverified / Rejected — show form ── */
+  const isRejected = kycStatus === "rejected";
+  return (
+    <div className="bg-[#1f1b1b] border border-[#2e2726] rounded-2xl overflow-hidden">
+      {/* Header */}
+      <div className={`flex items-center justify-between px-5 py-4 border-b ${isRejected ? "border-red-500/20 bg-red-500/5" : "border-[#2e2726]"}`}>
+        <div className="flex items-center gap-3">
+          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+            isRejected ? "bg-red-500/15 border border-red-500/25" : "bg-[#c45a45]/15 border border-[#c45a45]/25"
+          }`}>
+            <FaShieldAlt className={isRejected ? "text-red-400" : "text-[#c45a45]"} />
+          </div>
+          <div>
+            <h2 className="text-sm font-bold text-white">
+              {isRejected ? "Re-submit Identity Verification" : "Verify Your Identity"}
+            </h2>
+            <p className="text-[11px] text-[#9e9593] mt-0.5">
+              {isRejected
+                ? "Your previous submission was rejected. Upload new documents below."
+                : "Complete KYC to unlock withdrawals and higher investment limits."}
+            </p>
+          </div>
+        </div>
+        {/* What you unlock */}
+        <div className="hidden sm:flex items-center gap-1.5 text-[10px] text-[#9e9593] bg-[#121010] border border-[#2e2726] rounded-lg px-3 py-2 shrink-0">
+          <FaShieldAlt className="text-[#c45a45] text-[10px]" />
+          Unlocks withdrawals & higher limits
+        </div>
+      </div>
+
+      <div className="p-5 space-y-5">
+        {/* Doc type selector */}
+        <div>
+          <p className="text-[11px] text-[#9e9593] uppercase tracking-widest mb-2">Document Type</p>
+          <div className="flex gap-2 flex-wrap">
+            {[
+              { value: "national_id",  label: "National ID"    },
+              { value: "passport",     label: "Passport"       },
+              { value: "drivers_license", label: "Driver's License" },
+            ].map(opt => (
+              <button
+                key={opt.value}
+                onClick={() => setDocType(opt.value)}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-150 ${
+                  docType === opt.value
+                    ? "bg-[#c45a45]/15 border-[#c45a45]/40 text-[#c45a45]"
+                    : "bg-[#121010] border-[#2e2726] text-[#9e9593] hover:border-[#c45a45]/25 hover:text-white"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Upload slots */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <UploadSlot
+            label="ID Front"
+            icon={<FaIdCard />}
+            file={idFront}
+            onChange={setIdFront}
+          />
+          <UploadSlot
+            label="ID Back"
+            icon={<FaIdCard />}
+            file={idBack}
+            onChange={setIdBack}
+          />
+          <UploadSlot
+            label="Selfie with ID"
+            icon={<FaCamera />}
+            file={selfie}
+            onChange={setSelfie}
+          />
+        </div>
+
+        {/* Progress indicator */}
+        <div className="flex items-center gap-2">
+          {[idFront, idBack, selfie].map((f, i) => (
+            <div key={i} className={`h-1 flex-1 rounded-full transition-all duration-300 ${f ? "bg-[#c45a45]" : "bg-[#2e2726]"}`} />
+          ))}
+          <span className="text-[10px] text-[#9e9593] shrink-0 ml-1">
+            {[idFront, idBack, selfie].filter(Boolean).length}/3 uploaded
+          </span>
+        </div>
+
+        {/* Guidelines */}
+        <div className="bg-[#121010] border border-[#2e2726] rounded-xl p-3.5 space-y-1.5">
+          <p className="text-[11px] font-bold text-white mb-2">📋 Guidelines</p>
+          {[
+            "Document must be government-issued and valid (not expired).",
+            "All four corners of the ID must be clearly visible.",
+            "For selfie: hold your ID next to your face, ensure good lighting.",
+            "Files must be under 5MB. Accepted formats: JPG, PNG, PDF.",
+          ].map((tip, i) => (
+            <p key={i} className="text-[10px] text-[#9e9593] flex items-start gap-1.5">
+              <span className="text-[#c45a45] mt-0.5 shrink-0">·</span> {tip}
+            </p>
+          ))}
+        </div>
+
+        {/* Error */}
+        {error && (
+          <div className="flex items-center gap-2 text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2.5">
+            <FaTimesCircle className="shrink-0" /> {error}
+          </div>
+        )}
+
+        {/* Submit */}
+        <button
+          onClick={handleSubmit}
+          disabled={!canSubmit}
+          className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all duration-200 ${
+            canSubmit
+              ? "bg-[#c45a45] hover:bg-[#a64633] text-white shadow-lg shadow-[#c45a45]/20 cursor-pointer"
+              : "bg-[#2e2726] text-[#9e9593] cursor-not-allowed"
+          }`}
+        >
+          {submitting ? (
+            <>
+              <div className="w-4 h-4 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+              Submitting…
+            </>
+          ) : (
+            <>
+              <FaUpload className="text-xs" />
+              Submit for Verification
+            </>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+};
+
 /* ─── Referral Card ─── */
 const ReferralCard = ({ profile }) => {
   const [copied, setCopied]     = useState(false);
@@ -738,7 +1025,9 @@ const ReferralCard = ({ profile }) => {
   );
 };
 
-/* ─── Main Component ─── */
+/* ════════════════════════════════════════
+   MAIN COMPONENT
+   ════════════════════════════════════════ */
 const UserDashboard = () => {
   const [profile,       setProfile]       = useState({});
   const [investments,   setInvestments]   = useState([]);
@@ -747,6 +1036,8 @@ const UserDashboard = () => {
   const [loading,       setLoading]       = useState(true);
   const [topLoading,    setTopLoading]    = useState(true);
   const [selectedAsset, setSelectedAsset] = useState(null);
+  const [kycStatus,     setKycStatus]     = useState("unverified"); // unverified | pending | verified | rejected
+  const [showKyc,       setShowKyc]       = useState(false);
 
   useEffect(() => { load(); fetchTopInvestors(); }, []);
 
@@ -756,6 +1047,8 @@ const UserDashboard = () => {
       setProfile(res.data.profile);
       setInvestments(res.data.investments);
       setWithdrawals(res.data.withdrawals);
+      // kyc_status comes from profile
+      setKycStatus(res.data.profile?.kyc_status || "unverified");
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   };
@@ -764,6 +1057,11 @@ const UserDashboard = () => {
     try { const res = await API.get("top-investors/"); setTopList(res.data); }
     catch (err) { console.error(err); }
     finally { setTopLoading(false); }
+  };
+
+  const handleKycSuccess = () => {
+    setKycStatus("pending");
+    setShowKyc(false);
   };
 
   const totalWithdrawals = withdrawals
@@ -799,6 +1097,12 @@ const UserDashboard = () => {
           />
         )}
 
+        {/* ── KYC ALERT BANNER (shows if unverified or rejected) ── */}
+        <KYCAlertBanner
+          status={kycStatus}
+          onVerifyClick={() => setShowKyc(true)}
+        />
+
         {/* ── WELCOME BANNER ── */}
         <div className="relative bg-[#1f1b1b] border border-[#2e2726] rounded-2xl px-6 py-5 overflow-hidden">
           <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-[#c45a45]/8 blur-3xl pointer-events-none" />
@@ -811,6 +1115,26 @@ const UserDashboard = () => {
               <div className="flex items-center gap-2.5 mt-3 flex-wrap">
                 <TierBadge tier={profile.tier || "none"} />
                 <span className="text-xs text-[#9e9593]">{TIER_DESC[profile.tier] || TIER_DESC.none}</span>
+                {/* KYC status badge in welcome banner */}
+                {kycStatus === "verified" && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
+                    <FaShieldAlt className="text-[9px]" /> Verified
+                  </span>
+                )}
+                {kycStatus === "pending" && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
+                    <FaClock className="text-[9px]" /> KYC Pending
+                  </span>
+                )}
+                {(kycStatus === "unverified" || kycStatus === "rejected") && (
+                  <button
+                    onClick={() => setShowKyc(v => !v)}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#c45a45]/10 text-[#c45a45] border border-[#c45a45]/25 hover:bg-[#c45a45]/20 transition-colors cursor-pointer"
+                  >
+                    <FaShieldAlt className="text-[9px]" />
+                    {kycStatus === "rejected" ? "Rejected · Resubmit" : "Not Verified"}
+                  </button>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-6 sm:border-l border-[#2e2726] sm:pl-6 shrink-0">
@@ -825,6 +1149,21 @@ const UserDashboard = () => {
             </div>
           </div>
         </div>
+
+        {/* ── KYC CARD (toggled or always shown when unverified) ── */}
+        {(showKyc || kycStatus === "pending" || kycStatus === "verified") && (
+          <VerifyAccountCard
+            kycStatus={kycStatus}
+            onSubmitSuccess={handleKycSuccess}
+          />
+        )}
+        {/* Always show form inline if rejected (no toggle needed) */}
+        {kycStatus === "rejected" && !showKyc && (
+          <VerifyAccountCard
+            kycStatus={kycStatus}
+            onSubmitSuccess={handleKycSuccess}
+          />
+        )}
 
         {/* ── METRIC CARDS ── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -918,7 +1257,7 @@ const UserDashboard = () => {
           </div>
         </div>
 
-        {/* ── MARKET OVERVIEW ── */}
+        {/* ── MARKET OVERVIEW (responsive fix) ── */}
         <div className="bg-[#1f1b1b] border border-[#2e2726] rounded-2xl p-5">
           <div className="flex items-center justify-between mb-5">
             <div>
@@ -932,14 +1271,23 @@ const UserDashboard = () => {
               Markets Open
             </span>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 *:min-w-0">
+
+          {/* 
+            Responsive grid:
+            - Mobile  (<640px) : 2 columns, horizontal scroll disabled — cards are compact
+            - Tablet  (640px+) : 3 columns
+            - Desktop (1024px+): 6 columns (all in one row)
+            Each card has a min-width so it never becomes unreadably narrow on mobile.
+          */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
             {marketAssets.map(asset => (
               <AssetCard key={asset.symbol} asset={asset} onClick={setSelectedAsset} />
             ))}
           </div>
+
           <div className="flex items-center justify-between mt-4 pt-3 border-t border-[#2e2726] text-[10px] text-[#9e9593]">
             <span>Data updates every 30 seconds</span>
-            <span>Prices indicative only · not financial advice</span>
+            <span className="hidden sm:block">Prices indicative only · not financial advice</span>
           </div>
         </div>
 

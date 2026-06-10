@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../layouts/DashboardLayout";
 import API from "../api/axios";
 import {
   FaShoppingCart, FaCheckCircle, FaTimesCircle, FaTrash,
-  FaPlus, FaSearch, FaFilter, FaChartLine, FaUsers,
+  FaPlus, FaSearch, FaChartLine,
   FaMoneyBillWave, FaClock, FaTimes, FaExclamationTriangle,
-  FaDollarSign, FaPercent, FaSyncAlt, FaCog,
+  FaDollarSign, FaPercent, FaSyncAlt, FaCog, FaWallet,
 } from "react-icons/fa";
 
 /* ─────────────────────────────────────────
@@ -33,13 +34,6 @@ export const STOCKS_LIST = [
 const fmt = (n) =>
   Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-/**
- * Resolves investor display name from various API response shapes:
- *   - { investor_name: "John Doe" }
- *   - { user: { first_name, last_name } }
- *   - { user: { username } }
- *   - { investor: { name } }
- */
 const resolveInvestorName = (inv) => {
   if (inv.investor_name && inv.investor_name.trim()) return inv.investor_name.trim();
   if (inv.user) {
@@ -59,9 +53,6 @@ const resolveInvestorName = (inv) => {
   return "Unknown Investor";
 };
 
-/**
- * Resolves investor email from various API shapes.
- */
 const resolveInvestorEmail = (inv) => {
   if (inv.investor_email && inv.investor_email.trim()) return inv.investor_email.trim();
   if (inv.user?.email) return inv.user.email.trim();
@@ -102,18 +93,8 @@ function ConfirmModal({ open, title, message, confirmLabel, confirmClass, onConf
           </div>
         </div>
         <div className="flex gap-2 pt-1">
-          <button
-            onClick={onCancel}
-            className="flex-1 py-2 rounded-xl text-xs font-semibold bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onConfirm}
-            className={`flex-1 py-2 rounded-xl text-xs font-bold transition-colors ${confirmClass}`}
-          >
-            {confirmLabel}
-          </button>
+          <button onClick={onCancel} className="flex-1 py-2 rounded-xl text-xs font-semibold bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 transition-colors">Cancel</button>
+          <button onClick={onConfirm} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-colors ${confirmClass}`}>{confirmLabel}</button>
         </div>
       </div>
     </div>
@@ -153,7 +134,6 @@ function ProfitModal({ open, investment, onClose, onSuccess }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
       <div className="bg-[#141212] border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl space-y-5">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-emerald-400/10 border border-emerald-400/20 flex items-center justify-center">
@@ -168,8 +148,6 @@ function ProfitModal({ open, investment, onClose, onSuccess }) {
             <FaTimes className="text-xs" />
           </button>
         </div>
-
-        {/* Investor info */}
         <div className="bg-white/3 border border-white/6 rounded-xl p-3.5 space-y-2 text-xs">
           {[
             { label: "Investor",       value: resolveInvestorName(investment) },
@@ -183,28 +161,19 @@ function ProfitModal({ open, investment, onClose, onSuccess }) {
             </div>
           ))}
         </div>
-
-        {/* Mode toggle */}
         <div className="flex gap-2">
           {[
             { key: "fixed",   label: "Fixed ($)",      icon: <FaDollarSign className="text-[10px]" /> },
             { key: "percent", label: "Percentage (%)", icon: <FaPercent    className="text-[10px]" /> },
           ].map(({ key, label, icon }) => (
-            <button
-              key={key}
-              onClick={() => { setMode(key); setValue(""); }}
+            <button key={key} onClick={() => { setMode(key); setValue(""); }}
               className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold border transition-all ${
-                mode === key
-                  ? "bg-[#c45a45]/15 border-[#c45a45]/35 text-white"
-                  : "bg-white/3 border-white/8 text-white/40 hover:border-white/15"
-              }`}
-            >
+                mode === key ? "bg-[#c45a45]/15 border-[#c45a45]/35 text-white" : "bg-white/3 border-white/8 text-white/40 hover:border-white/15"
+              }`}>
               {icon} {label}
             </button>
           ))}
         </div>
-
-        {/* Input */}
         <div>
           <label className="block text-[10px] uppercase tracking-widest text-white/30 mb-1.5">
             {mode === "fixed" ? "Profit Amount (USD)" : "Profit Percentage (%)"}
@@ -213,13 +182,9 @@ function ProfitModal({ open, investment, onClose, onSuccess }) {
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/25 text-xs font-bold">
               {mode === "fixed" ? "$" : "%"}
             </span>
-            <input
-              type="number"
-              min="0"
-              step="0.01"
+            <input type="number" min="0" step="0.01"
               placeholder={mode === "fixed" ? "e.g. 250.00" : "e.g. 25"}
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
+              value={value} onChange={(e) => setValue(e.target.value)}
               className="w-full bg-[#0f0e0e] border border-white/10 rounded-xl pl-7 pr-3 py-2.5 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#c45a45]/50 transition-colors"
             />
           </div>
@@ -229,20 +194,10 @@ function ProfitModal({ open, investment, onClose, onSuccess }) {
             </p>
           )}
         </div>
-
-        {/* Actions */}
         <div className="flex gap-2">
-          <button
-            onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-white/5 border border-white/10 text-white/50 hover:bg-white/8 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={loading || !value}
-            className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/25 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-          >
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-white/5 border border-white/10 text-white/50 hover:bg-white/8 transition-colors">Cancel</button>
+          <button onClick={handleSubmit} disabled={loading || !value}
+            className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/25 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2">
             <FaPlus className="text-[9px]" />
             {loading ? "Adding…" : `Add $${fmt(computed)}`}
           </button>
@@ -262,9 +217,8 @@ function AdminManageView() {
   const [filterStatus,  setFilterStatus]  = useState("All");
   const [actionLoading, setActionLoading] = useState(null);
   const [toast,         setToast]         = useState(null);
-
-  const [profitModal,  setProfitModal]  = useState({ open: false, investment: null });
-  const [confirmModal, setConfirmModal] = useState({ open: false, type: null, investment: null });
+  const [profitModal,   setProfitModal]   = useState({ open: false, investment: null });
+  const [confirmModal,  setConfirmModal]  = useState({ open: false, type: null, investment: null });
 
   useEffect(() => { fetchInvestments(); }, []);
 
@@ -288,7 +242,7 @@ function AdminManageView() {
   const handleApprove = async (inv) => {
     setActionLoading(`approve-${inv.id}`);
     try {
-      await API.patch(`investments/${inv.id}/`, { approved: true, active: true });
+      await API.patch(`investments/${inv.id}/`, { approved: true, active: true, status: "Approved" });
       setInvestments((prev) =>
         prev.map((i) => i.id === inv.id ? { ...i, approved: true, active: true, status: "Approved" } : i)
       );
@@ -348,18 +302,18 @@ function AdminManageView() {
       email.includes(search.toLowerCase());
     const matchStatus =
       filterStatus === "All" ||
-      (filterStatus === "Pending"  && !inv.approved && inv.status !== "Declined") ||
-      (filterStatus === "Approved" && inv.approved) ||
+      (filterStatus === "Pending"  && inv.status === "Pending") ||
+      (filterStatus === "Approved" && inv.status === "Approved") ||
       (filterStatus === "Declined" && inv.status === "Declined");
     return matchSearch && matchStatus;
   });
 
   const totals = {
     all:      investments.length,
-    pending:  investments.filter((i) => !i.approved && i.status !== "Declined").length,
-    approved: investments.filter((i) => i.approved).length,
+    pending:  investments.filter((i) => i.status === "Pending").length,
+    approved: investments.filter((i) => i.status === "Approved").length,
     declined: investments.filter((i) => i.status === "Declined").length,
-    volume:   investments.filter((i) => i.approved).reduce((s, i) => s + parseFloat(i.amount || 0), 0),
+    volume:   investments.filter((i) => i.status === "Approved").reduce((s, i) => s + parseFloat(i.amount || 0), 0),
   };
 
   const confirmConfig = {
@@ -371,7 +325,7 @@ function AdminManageView() {
     },
     decline: {
       title: "Decline Investment",
-      message: "This will reject the investment. The investor will be notified.",
+      message: "This will reject the investment. The amount will be refunded to the investor's wallet.",
       confirmLabel: "Decline",
       confirmClass: "bg-red-500/15 border border-red-500/30 text-red-400 hover:bg-red-500/25",
     },
@@ -385,12 +339,9 @@ function AdminManageView() {
 
   return (
     <div className="space-y-6">
-      {/* Toast */}
       {toast && (
         <div className={`fixed top-5 right-5 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl border text-xs font-semibold shadow-2xl transition-all ${
-          toast.type === "error"
-            ? "bg-red-500/10 border-red-500/25 text-red-400"
-            : "bg-emerald-500/10 border-emerald-500/25 text-emerald-400"
+          toast.type === "error" ? "bg-red-500/10 border-red-500/25 text-red-400" : "bg-emerald-500/10 border-emerald-500/25 text-emerald-400"
         }`}>
           {toast.type === "error" ? <FaTimesCircle /> : <FaCheckCircle />}
           {toast.msg}
@@ -400,10 +351,10 @@ function AdminManageView() {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
-          { label: "Total",    value: totals.all,            icon: <FaChartLine />,     accent: false },
-          { label: "Pending",  value: totals.pending,        icon: <FaClock />,         accent: false, highlight: "text-amber-400" },
-          { label: "Approved", value: totals.approved,       icon: <FaCheckCircle />,   accent: false, highlight: "text-emerald-400" },
-          { label: "Declined", value: totals.declined,       icon: <FaTimesCircle />,   accent: false, highlight: "text-red-400" },
+          { label: "Total",    value: totals.all,               icon: <FaChartLine />,     accent: false },
+          { label: "Pending",  value: totals.pending,           icon: <FaClock />,         accent: false, highlight: "text-amber-400" },
+          { label: "Approved", value: totals.approved,          icon: <FaCheckCircle />,   accent: false, highlight: "text-emerald-400" },
+          { label: "Declined", value: totals.declined,          icon: <FaTimesCircle />,   accent: false, highlight: "text-red-400" },
           { label: "Volume",   value: `$${fmt(totals.volume)}`, icon: <FaMoneyBillWave />, accent: true },
         ].map((s) => (
           <div key={s.label} className={`bg-[#0f0e0e] border rounded-xl px-4 py-3.5 flex items-center gap-3 ${
@@ -411,9 +362,7 @@ function AdminManageView() {
           }`}>
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs shrink-0 ${
               s.accent ? "bg-[#c45a45]/15 border border-[#c45a45]/25 text-[#c45a45]" : "bg-white/5 border border-white/8 text-white/30"
-            }`}>
-              {s.icon}
-            </div>
+            }`}>{s.icon}</div>
             <div>
               <p className={`text-sm font-bold leading-none ${s.highlight || "text-white"}`}>{s.value}</p>
               <p className="text-white/25 text-[10px] mt-0.5 uppercase tracking-wide">{s.label}</p>
@@ -426,25 +375,17 @@ function AdminManageView() {
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1 max-w-xs">
           <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-white/20 text-xs" />
-          <input
-            type="text"
-            placeholder="Search investor or stock…"
-            value={search}
+          <input type="text" placeholder="Search investor or stock…" value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full bg-[#0f0e0e] border border-white/10 rounded-xl pl-8 pr-3 py-2.5 text-white text-sm placeholder-white/20 focus:outline-none focus:border-[#c45a45]/40 transition-colors"
           />
         </div>
         <div className="flex gap-2 flex-wrap">
           {["All", "Pending", "Approved", "Declined"].map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilterStatus(f)}
+            <button key={f} onClick={() => setFilterStatus(f)}
               className={`px-3 py-2 rounded-xl text-xs font-medium border transition-all ${
-                filterStatus === f
-                  ? "bg-[#c45a45]/15 border-[#c45a45]/35 text-white"
-                  : "bg-transparent border-white/10 text-white/35 hover:text-white/60 hover:border-white/20"
-              }`}
-            >
+                filterStatus === f ? "bg-[#c45a45]/15 border-[#c45a45]/35 text-white" : "bg-transparent border-white/10 text-white/35 hover:text-white/60 hover:border-white/20"
+              }`}>
               {f}
               {f !== "All" && (
                 <span className="ml-1.5 text-[9px] opacity-60">
@@ -454,10 +395,8 @@ function AdminManageView() {
             </button>
           ))}
         </div>
-        <button
-          onClick={fetchInvestments}
-          className="md:ml-auto flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white/50 hover:text-white hover:bg-white/8 text-xs font-medium transition-colors self-start"
-        >
+        <button onClick={fetchInvestments}
+          className="md:ml-auto flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white/50 hover:text-white hover:bg-white/8 text-xs font-medium transition-colors self-start">
           <FaSyncAlt className={`text-[10px] ${loading ? "animate-spin" : ""}`} /> Refresh
         </button>
       </div>
@@ -493,30 +432,23 @@ function AdminManageView() {
               <tbody>
                 {filtered.map((inv) => {
                   const isLoading  = (k) => actionLoading === `${k}-${inv.id}`;
-                  const status     = inv.approved ? "Approved" : inv.status === "Declined" ? "Declined" : "Pending";
+                  const status     = inv.status || (inv.approved ? "Approved" : "Pending");
                   const matchStock = STOCKS_LIST.find((s) =>
                     (inv.category || "").includes(s.ticker) || (inv.category || "").includes(s.name.split(",")[0])
                   );
-                  const investorName  = resolveInvestorName(inv);
-                  const investorEmail = resolveInvestorEmail(inv);
-
                   return (
                     <tr key={inv.id} className="border-b border-white/4 hover:bg-white/2 transition-colors">
-                      {/* Investor */}
                       <td className="px-5 py-4">
-                        <p className="text-white text-xs font-semibold">{investorName}</p>
-                        {investorEmail && (
-                          <p className="text-white/25 text-[10px] mt-0.5">{investorEmail}</p>
+                        <p className="text-white text-xs font-semibold">{resolveInvestorName(inv)}</p>
+                        {resolveInvestorEmail(inv) && (
+                          <p className="text-white/25 text-[10px] mt-0.5">{resolveInvestorEmail(inv)}</p>
                         )}
                       </td>
-                      {/* Stock */}
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-2">
                           {matchStock && (
-                            <span
-                              className="w-7 h-7 rounded-lg flex items-center justify-center text-sm shrink-0"
-                              style={{ background: `${matchStock.color}20`, border: `1px solid ${matchStock.color}35` }}
-                            >
+                            <span className="w-7 h-7 rounded-lg flex items-center justify-center text-sm shrink-0"
+                              style={{ background: `${matchStock.color}20`, border: `1px solid ${matchStock.color}35` }}>
                               {matchStock.icon}
                             </span>
                           )}
@@ -526,63 +458,42 @@ function AdminManageView() {
                           </div>
                         </div>
                       </td>
-                      {/* Amount */}
                       <td className="px-5 py-4 text-right">
                         <p className="text-white text-xs font-bold">${fmt(inv.amount)}</p>
                       </td>
-                      {/* Profit */}
                       <td className="px-5 py-4 text-right">
                         <p className="text-emerald-400 text-xs font-bold">${fmt(inv.current_profit || 0)}</p>
                       </td>
-                      {/* Status */}
                       <td className="px-5 py-4 text-center">
                         <StatusBadge status={status} />
                       </td>
-                      {/* Date */}
                       <td className="px-5 py-4 text-center text-white/30 text-[11px]">
                         {inv.created_at
                           ? new Date(inv.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
                           : "—"}
                       </td>
-                      {/* Actions */}
                       <td className="px-5 py-4">
                         <div className="flex items-center justify-center gap-1.5 flex-wrap">
                           {status !== "Approved" && (
-                            <button
-                              onClick={() => openConfirm("approve", inv)}
-                              disabled={!!actionLoading}
-                              title="Approve"
-                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-400/10 border border-emerald-400/20 text-emerald-400 hover:bg-emerald-400/20 text-[10px] font-semibold disabled:opacity-40 transition-colors"
-                            >
+                            <button onClick={() => openConfirm("approve", inv)} disabled={!!actionLoading}
+                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-400/10 border border-emerald-400/20 text-emerald-400 hover:bg-emerald-400/20 text-[10px] font-semibold disabled:opacity-40 transition-colors">
                               {isLoading("approve") ? <FaSyncAlt className="animate-spin text-[9px]" /> : <FaCheckCircle className="text-[9px]" />}
                               Approve
                             </button>
                           )}
                           {status !== "Declined" && (
-                            <button
-                              onClick={() => openConfirm("decline", inv)}
-                              disabled={!!actionLoading}
-                              title="Decline"
-                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-400/10 border border-amber-400/20 text-amber-400 hover:bg-amber-400/20 text-[10px] font-semibold disabled:opacity-40 transition-colors"
-                            >
+                            <button onClick={() => openConfirm("decline", inv)} disabled={!!actionLoading}
+                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-400/10 border border-amber-400/20 text-amber-400 hover:bg-amber-400/20 text-[10px] font-semibold disabled:opacity-40 transition-colors">
                               {isLoading("decline") ? <FaSyncAlt className="animate-spin text-[9px]" /> : <FaTimesCircle className="text-[9px]" />}
                               Decline
                             </button>
                           )}
-                          <button
-                            onClick={() => setProfitModal({ open: true, investment: inv })}
-                            disabled={!!actionLoading}
-                            title="Add Profit"
-                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#c45a45]/10 border border-[#c45a45]/25 text-[#e07060] hover:bg-[#c45a45]/20 text-[10px] font-semibold disabled:opacity-40 transition-colors"
-                          >
+                          <button onClick={() => setProfitModal({ open: true, investment: inv })} disabled={!!actionLoading}
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#c45a45]/10 border border-[#c45a45]/25 text-[#e07060] hover:bg-[#c45a45]/20 text-[10px] font-semibold disabled:opacity-40 transition-colors">
                             <FaPlus className="text-[9px]" /> Profit
                           </button>
-                          <button
-                            onClick={() => openConfirm("delete", inv)}
-                            disabled={!!actionLoading}
-                            title="Delete"
-                            className="w-7 h-7 rounded-lg bg-red-500/8 border border-red-500/15 text-red-400/50 hover:text-red-400 hover:bg-red-500/15 flex items-center justify-center disabled:opacity-40 transition-colors"
-                          >
+                          <button onClick={() => openConfirm("delete", inv)} disabled={!!actionLoading}
+                            className="w-7 h-7 rounded-lg bg-red-500/8 border border-red-500/15 text-red-400/50 hover:text-red-400 hover:bg-red-500/15 flex items-center justify-center disabled:opacity-40 transition-colors">
                             {isLoading("delete") ? <FaSyncAlt className="animate-spin text-[9px]" /> : <FaTrash className="text-[9px]" />}
                           </button>
                         </div>
@@ -596,7 +507,6 @@ function AdminManageView() {
         )}
       </div>
 
-      {/* Modals */}
       <ProfitModal
         open={profitModal.open}
         investment={profitModal.investment}
@@ -618,11 +528,10 @@ function AdminManageView() {
 }
 
 /* ─────────────────────────────────────────
-   SHARED PURCHASE STOCKS GRID
-   (used by both UserStocksView and admin
-    Purchase tab)
+   STOCK PURCHASE GRID
 ───────────────────────────────────────── */
-function StockPurchaseGrid({ isAdmin = false }) {
+function StockPurchaseGrid({ isAdmin = false, walletBalance = 0, onBalanceRefresh }) {
+  const navigate    = useNavigate();
   const [amounts,   setAmounts]   = useState({});
   const [loadingId, setLoadingId] = useState(null);
   const [toast,     setToast]     = useState(null);
@@ -638,10 +547,20 @@ function StockPurchaseGrid({ isAdmin = false }) {
   const handleInvest = async (stock, e) => {
     e.preventDefault();
     const val = parseFloat(amounts[stock.id] || 0);
+
     if (!val || val < stock.min || val > stock.max) {
       showToast(`Enter an amount between $${stock.min.toLocaleString()} and $${stock.max.toLocaleString()}.`, "error");
       return;
     }
+
+    if (val > walletBalance) {
+      showToast(
+        `Insufficient balance. Your wallet has $${fmt(walletBalance)} but this investment requires $${fmt(val)}.`,
+        "insufficient"
+      );
+      return;
+    }
+
     setLoadingId(stock.id);
     try {
       await API.post("investments/", {
@@ -651,12 +570,19 @@ function StockPurchaseGrid({ isAdmin = false }) {
       });
       showToast(
         isAdmin
-          ? `$${val.toLocaleString()} invested in ${stock.name} (auto-approved as admin).`
+          ? `$${val.toLocaleString()} invested in ${stock.name}.`
           : `$${val.toLocaleString()} invested in ${stock.name}. Pending approval.`
       );
       setAmounts((p) => ({ ...p, [stock.id]: "" }));
+      // Refresh balance after successful investment
+      if (onBalanceRefresh) onBalanceRefresh();
     } catch (err) {
-      showToast(err.response?.data?.detail || "Failed to submit investment.", "error");
+      const detail = err.response?.data?.detail || err.response?.data?.error || "";
+      if (detail.toLowerCase().includes("insufficient")) {
+        showToast(detail, "insufficient");
+      } else {
+        showToast(detail || "Failed to submit investment.", "error");
+      }
     } finally {
       setLoadingId(null);
     }
@@ -664,36 +590,50 @@ function StockPurchaseGrid({ isAdmin = false }) {
 
   return (
     <>
-      {/* Toast */}
       {toast && (
-        <div className={`fixed top-5 right-5 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl border text-xs font-semibold shadow-2xl ${
-          toast.type === "error"
+        <div className={`fixed top-5 right-5 z-50 flex items-start gap-3 px-4 py-3.5 rounded-xl border text-xs font-semibold shadow-2xl max-w-sm ${
+          toast.type === "insufficient"
+            ? "bg-amber-500/10 border-amber-500/25 text-amber-300"
+            : toast.type === "error"
             ? "bg-red-500/10 border-red-500/25 text-red-400"
             : "bg-emerald-500/10 border-emerald-500/25 text-emerald-400"
         }`}>
-          {toast.type === "error" ? <FaTimesCircle /> : <FaCheckCircle />}
-          {toast.msg}
+          <div className="shrink-0 mt-0.5">
+            {toast.type === "insufficient" ? <FaWallet className="text-amber-400" />
+              : toast.type === "error" ? <FaTimesCircle />
+              : <FaCheckCircle />}
+          </div>
+          <div className="flex-1">
+            <p className="leading-relaxed">{toast.msg}</p>
+            {toast.type === "insufficient" && (
+              <button onClick={() => navigate("/fund-account")}
+                className="mt-2 w-full py-1.5 rounded-lg bg-amber-500/20 border border-amber-500/30 text-amber-300 hover:bg-amber-500/30 transition-colors text-[11px] font-bold flex items-center justify-center gap-1.5">
+                <FaWallet className="text-[10px]" /> Fund Account Now
+              </button>
+            )}
+          </div>
+          <button onClick={() => setToast(null)} className="shrink-0 text-white/20 hover:text-white/60 transition-colors">
+            <FaTimes className="text-[10px]" />
+          </button>
         </div>
       )}
 
-      {/* Stock Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {STOCKS_LIST.map((stock) => {
           const amt       = parseFloat(amounts[stock.id] || 0);
           const shares    = amt > 0 ? (amt / stock.price).toFixed(4) : "—";
           const isLoading = loadingId === stock.id;
+          const canAfford = walletBalance >= stock.min;
+          const willAfford = !amt || walletBalance >= amt;
+
           return (
-            <div
-              key={stock.id}
-              className="bg-[#0f0e0e] rounded-2xl border border-white/[0.07] p-5 flex flex-col justify-between hover:border-[#c45a45]/30 hover:shadow-lg hover:shadow-[#c45a45]/5 transition-all duration-300"
-            >
-              {/* Stock Header */}
+            <div key={stock.id}
+              className={`bg-[#0f0e0e] rounded-2xl border border-white/[0.07] p-5 flex flex-col justify-between hover:border-[#c45a45]/30 hover:shadow-lg hover:shadow-[#c45a45]/5 transition-all duration-300 ${!canAfford ? "opacity-60" : ""}`}>
+
               <div>
                 <div className="flex items-center gap-3 mb-4">
-                  <div
-                    className="w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0"
-                    style={{ background: `${stock.color}18`, border: `1px solid ${stock.color}35` }}
-                  >
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0"
+                    style={{ background: `${stock.color}18`, border: `1px solid ${stock.color}35` }}>
                     {stock.icon}
                   </div>
                   <div className="min-w-0">
@@ -704,13 +644,12 @@ function StockPurchaseGrid({ isAdmin = false }) {
                   </div>
                 </div>
 
-                {/* Stats */}
                 <div className="space-y-2 bg-white/2 border border-white/5 rounded-xl p-3 text-xs mb-4">
                   {[
-                    { label: "Price / Share",   value: `$${stock.price.toFixed(2)}`,      cls: "text-emerald-400 font-bold" },
-                    { label: "Min. Investment", value: `$${stock.min.toLocaleString()}`,   cls: "text-white/60 font-semibold" },
-                    { label: "Max. Investment", value: `$${stock.max.toLocaleString()}`,   cls: "text-white/60 font-semibold" },
-                    { label: "Est. Shares",     value: shares,                             cls: "text-white font-bold" },
+                    { label: "Price / Share",   value: `$${stock.price.toFixed(2)}`,    cls: "text-emerald-400 font-bold" },
+                    { label: "Min. Investment", value: `$${stock.min.toLocaleString()}`, cls: "text-white/60 font-semibold" },
+                    { label: "Max. Investment", value: `$${stock.max.toLocaleString()}`, cls: "text-white/60 font-semibold" },
+                    { label: "Est. Shares",     value: shares,                           cls: "text-white font-bold" },
                   ].map(({ label, value, cls }) => (
                     <div key={label} className="flex items-center justify-between">
                       <span className="text-white/25">{label}</span>
@@ -718,35 +657,60 @@ function StockPurchaseGrid({ isAdmin = false }) {
                     </div>
                   ))}
                 </div>
+
+                {!canAfford && (
+                  <div className="mb-4 flex items-center gap-2 bg-amber-500/8 border border-amber-500/20 rounded-lg px-3 py-2">
+                    <FaWallet className="text-amber-400 text-[10px] shrink-0" />
+                    <p className="text-amber-400/80 text-[10px] leading-relaxed">
+                      Need ${stock.min.toLocaleString()} minimum.{" "}
+                      <button onClick={() => navigate("/fund-account")}
+                        className="underline text-amber-400 font-semibold hover:text-amber-300">
+                        Fund account
+                      </button>
+                    </p>
+                  </div>
+                )}
               </div>
 
-              {/* Form */}
               <form onSubmit={(e) => handleInvest(stock, e)} className="space-y-3">
                 <div>
-                  <label className="block text-[10px] uppercase tracking-widest text-white/25 mb-1.5">
-                    Amount to Invest
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-[10px] uppercase tracking-widest text-white/25">
+                      Amount to Invest
+                    </label>
+                    <span className={`text-[10px] font-semibold ${walletBalance >= (amt || stock.min) ? "text-emerald-400" : "text-amber-400"}`}>
+                      Bal: ${fmt(walletBalance)}
+                    </span>
+                  </div>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/25 text-xs font-bold">$</span>
-                    <input
-                      type="number"
+                    <input type="number"
                       placeholder={`${stock.min.toLocaleString()}`}
-                      min={stock.min}
-                      max={stock.max}
+                      min={stock.min} max={stock.max}
                       value={amounts[stock.id] || ""}
                       onChange={(e) => handleAmountChange(stock.id, e.target.value)}
-                      className="w-full bg-[#0A0A0B] border border-white/10 rounded-xl pl-7 pr-3 py-2.5 text-white text-sm placeholder-white/15 focus:outline-none focus:border-[#c45a45]/50 transition-colors"
+                      className={`w-full bg-[#0A0A0B] border rounded-xl pl-7 pr-3 py-2.5 text-white text-sm placeholder-white/15 focus:outline-none transition-colors ${
+                        !willAfford && amt > 0
+                          ? "border-amber-500/40 focus:border-amber-500"
+                          : "border-white/10 focus:border-[#c45a45]/50"
+                      }`}
                       required
                     />
                   </div>
+                  {amt > 0 && amt > walletBalance && (
+                    <p className="text-amber-400 text-[10px] mt-1 flex items-center gap-1">
+                      <FaExclamationTriangle className="text-[9px]" />
+                      Insufficient balance — need ${fmt(amt - walletBalance)} more
+                    </p>
+                  )}
                 </div>
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full bg-[#c45a45] hover:bg-[#d06a55] disabled:opacity-50 disabled:cursor-wait text-white text-xs font-bold py-2.5 rounded-xl transition-all duration-200 uppercase tracking-wider shadow-md shadow-[#c45a45]/20 flex items-center justify-center gap-2"
-                >
+                <button type="submit"
+                  disabled={isLoading || (amt > walletBalance && amt > 0)}
+                  className="w-full bg-[#c45a45] hover:bg-[#d06a55] disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold py-2.5 rounded-xl transition-all duration-200 uppercase tracking-wider shadow-md shadow-[#c45a45]/20 flex items-center justify-center gap-2">
                   {isLoading ? (
                     <><FaSyncAlt className="animate-spin text-[10px]" /> Submitting…</>
+                  ) : amt > walletBalance && amt > 0 ? (
+                    <><FaWallet className="text-[10px]" /> Fund Account First</>
                   ) : (
                     <><FaShoppingCart className="text-[10px]" /> Invest Now</>
                   )}
@@ -762,9 +726,26 @@ function StockPurchaseGrid({ isAdmin = false }) {
 
 /* ─────────────────────────────────────────
    ADMIN VIEW — tab-aware wrapper
+   Now fetches real admin wallet balance
 ───────────────────────────────────────── */
 function AdminStocksView() {
-  const [activeTab, setActiveTab] = useState("manage"); // "manage" | "purchase"
+  const navigate = useNavigate();
+  const [activeTab,      setActiveTab]      = useState("manage");
+  const [walletBalance,  setWalletBalance]  = useState(0);
+  const [balanceLoading, setBalanceLoading] = useState(true);
+
+  const fetchBalance = async () => {
+    try {
+      const res = await API.get("user-dashboard/");
+      setWalletBalance(parseFloat(res.data?.profile?.wallet_balance || 0));
+    } catch (err) {
+      console.error("Failed to fetch admin wallet balance", err);
+    } finally {
+      setBalanceLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchBalance(); }, []);
 
   const tabs = [
     { key: "manage",   label: "Manage Investments", icon: <FaCog className="text-[11px]" /> },
@@ -773,7 +754,6 @@ function AdminStocksView() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 mb-1">
@@ -789,38 +769,73 @@ function AdminStocksView() {
           </p>
         </div>
 
-        {/* Tab Toggle */}
-        <div className="flex gap-1.5 bg-[#0f0e0e] border border-white/8 rounded-xl p-1 self-start md:self-center">
-          {tabs.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
-                activeTab === tab.key
-                  ? "bg-[#c45a45]/15 border border-[#c45a45]/30 text-white"
-                  : "text-white/35 hover:text-white/60 border border-transparent"
-              }`}
-            >
-              {tab.icon}
-              {tab.label}
-            </button>
-          ))}
+        <div className="flex items-center gap-3 flex-wrap justify-end">
+          {/* Admin wallet balance pill — visible on purchase tab */}
+          {activeTab === "purchase" && (
+            <div className="flex items-center gap-2 bg-[#0f0e0e] border border-white/8 rounded-xl px-4 py-2.5 shrink-0">
+              <FaWallet className="text-[#c45a45] text-xs shrink-0" />
+              <div>
+                <p className="text-[10px] text-white/30 uppercase tracking-wider leading-none">Admin Balance</p>
+                {balanceLoading ? (
+                  <div className="h-4 w-20 bg-white/5 rounded animate-pulse mt-0.5" />
+                ) : (
+                  <p className="text-white font-bold text-sm leading-none mt-0.5">${fmt(walletBalance)}</p>
+                )}
+              </div>
+              <button onClick={() => navigate("/fund-account")}
+                className="ml-2 px-2.5 py-1 rounded-lg bg-[#c45a45]/15 border border-[#c45a45]/30 text-[#c45a45] text-[10px] font-bold hover:bg-[#c45a45]/25 transition-colors">
+                + Fund
+              </button>
+            </div>
+          )}
+
+          <div className="flex gap-1.5 bg-[#0f0e0e] border border-white/8 rounded-xl p-1">
+            {tabs.map((tab) => (
+              <button key={tab.key} onClick={() => setActiveTab(tab.key)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+                  activeTab === tab.key
+                    ? "bg-[#c45a45]/15 border border-[#c45a45]/30 text-white"
+                    : "text-white/35 hover:text-white/60 border border-transparent"
+                }`}>
+                {tab.icon} {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Tab Content */}
       {activeTab === "manage" ? (
         <AdminManageView />
       ) : (
         <div className="space-y-5">
-          {/* Purchase sub-header */}
+          {/* Low balance warning for admin */}
+          {!balanceLoading && walletBalance < 300 && (
+            <div className="flex items-center gap-3 bg-amber-500/8 border border-amber-500/20 rounded-xl px-4 py-3">
+              <FaWallet className="text-amber-400 shrink-0" />
+              <div className="flex-1">
+                <p className="text-amber-300 text-xs font-semibold">Your admin wallet balance is low.</p>
+                <p className="text-amber-400/60 text-[11px] mt-0.5">Fund your account to make stock investments.</p>
+              </div>
+              <button onClick={() => navigate("/fund-account")}
+                className="px-3 py-1.5 rounded-lg bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-bold hover:bg-amber-500/30 transition-colors shrink-0">
+                Fund Account
+              </button>
+            </div>
+          )}
+
           <div className="bg-[#c45a45]/5 border border-[#c45a45]/15 rounded-xl px-4 py-3 text-xs text-white/50 flex items-start gap-2.5">
             <FaExclamationTriangle className="text-[#c45a45]/60 shrink-0 mt-0.5" />
             <span>
-              You are investing as <span className="text-white font-semibold">Admin</span>. Investments submitted here will be posted under your account and may be auto-approved depending on your backend policy.
+              You are investing as <span className="text-white font-semibold">Admin</span>. Investments are posted under your account and deducted from your wallet.
             </span>
           </div>
-          <StockPurchaseGrid isAdmin={true} />
+
+          {/* Pass real admin balance — balance check applies to admin too */}
+          <StockPurchaseGrid
+            isAdmin={true}
+            walletBalance={walletBalance}
+            onBalanceRefresh={fetchBalance}
+          />
         </div>
       )}
     </div>
@@ -828,25 +843,78 @@ function AdminStocksView() {
 }
 
 /* ─────────────────────────────────────────
-   USER VIEW
+   USER VIEW — fetches wallet balance first
 ───────────────────────────────────────── */
 function UserStocksView() {
+  const navigate = useNavigate();
+  const [walletBalance,  setWalletBalance]  = useState(0);
+  const [balanceLoading, setBalanceLoading] = useState(true);
+
+  const fetchBalance = async () => {
+    try {
+      const res = await API.get("user-dashboard/");
+      setWalletBalance(parseFloat(res.data?.profile?.wallet_balance || 0));
+    } catch (err) {
+      console.error("Failed to fetch wallet balance", err);
+    } finally {
+      setBalanceLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchBalance(); }, []);
+
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-start gap-3">
-        <div className="w-9 h-9 rounded-xl bg-[#c45a45]/15 border border-[#c45a45]/30 flex items-center justify-center shrink-0">
-          <FaShoppingCart className="text-[#c45a45] text-sm" />
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+        <div className="flex items-start gap-3">
+          <div className="w-9 h-9 rounded-xl bg-[#c45a45]/15 border border-[#c45a45]/30 flex items-center justify-center shrink-0">
+            <FaShoppingCart className="text-[#c45a45] text-sm" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-white tracking-tight">Purchase Stocks</h1>
+            <p className="text-white/30 text-sm mt-0.5">
+              Deploy capital into top-tier global equities. Contracts accumulate{" "}
+              <span className="text-emerald-400 font-medium">25% daily yields</span> for a 120-day cycle.
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Purchase Stocks</h1>
-          <p className="text-white/30 text-sm mt-0.5">
-            Deploy capital into top-tier global equities. Contracts accumulate{" "}
-            <span className="text-emerald-400 font-medium">25% daily yields</span> for a 120-day cycle.
-          </p>
+
+        <div className="flex items-center gap-2 bg-[#0f0e0e] border border-white/8 rounded-xl px-4 py-2.5 self-start sm:self-auto shrink-0">
+          <FaWallet className="text-[#c45a45] text-xs shrink-0" />
+          <div>
+            <p className="text-[10px] text-white/30 uppercase tracking-wider leading-none">Wallet Balance</p>
+            {balanceLoading ? (
+              <div className="h-4 w-20 bg-white/5 rounded animate-pulse mt-0.5" />
+            ) : (
+              <p className="text-white font-bold text-sm leading-none mt-0.5">${fmt(walletBalance)}</p>
+            )}
+          </div>
+          <button onClick={() => navigate("/fund-account")}
+            className="ml-2 px-2.5 py-1 rounded-lg bg-[#c45a45]/15 border border-[#c45a45]/30 text-[#c45a45] text-[10px] font-bold hover:bg-[#c45a45]/25 transition-colors">
+            + Fund
+          </button>
         </div>
       </div>
-      <StockPurchaseGrid isAdmin={false} />
+
+      {!balanceLoading && walletBalance < 300 && (
+        <div className="flex items-center gap-3 bg-amber-500/8 border border-amber-500/20 rounded-xl px-4 py-3">
+          <FaWallet className="text-amber-400 shrink-0" />
+          <div className="flex-1">
+            <p className="text-amber-300 text-xs font-semibold">Your wallet balance is too low to invest.</p>
+            <p className="text-amber-400/60 text-[11px] mt-0.5">Minimum stock investment starts at $300. Fund your account to get started.</p>
+          </div>
+          <button onClick={() => navigate("/fund-account")}
+            className="px-3 py-1.5 rounded-lg bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-bold hover:bg-amber-500/30 transition-colors shrink-0">
+            Fund Account
+          </button>
+        </div>
+      )}
+
+      <StockPurchaseGrid
+        isAdmin={false}
+        walletBalance={walletBalance}
+        onBalanceRefresh={fetchBalance}
+      />
     </div>
   );
 }

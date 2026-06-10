@@ -3,12 +3,12 @@ import DashboardLayout from "../layouts/DashboardLayout";
 import API from "../api/axios";
 
 function UserWithdrawals() {
-  const [withdrawals,   setWithdrawals]   = useState([]);
-  const [profile,       setProfile]       = useState({ wallet_balance: 0 });
-  const [investments,   setInvestments]   = useState([]);
-  const [form,          setForm]          = useState({ amount: "", wallet_address: "" });
-  const [loading,       setLoading]       = useState(false);
-  const [error,         setError]         = useState("");
+  const [withdrawals,  setWithdrawals]  = useState([]);
+  const [profile,      setProfile]      = useState({ wallet_balance: 0 });
+  const [investments,  setInvestments]  = useState([]);
+  const [form,         setForm]         = useState({ amount: "", wallet_address: "" });
+  const [loading,      setLoading]      = useState(false);
+  const [error,        setError]        = useState("");
 
   useEffect(() => {
     fetchWithdrawals();
@@ -43,23 +43,48 @@ function UserWithdrawals() {
     }
   };
 
-  // Determine if any active investment is still within the 120-day lock
+  // ── Lock logic ────────────────────────────────────────────────────────────
+  //
+  // The backend matures an investment after 120 days by:
+  //   1. Crediting principal + profit to investor.balance
+  //   2. Setting investment.active = False
+  //
+  // So "still locked" means: there is an ACTIVE + APPROVED investment
+  // whose 120-day window has NOT yet elapsed.
+  //
+  // Once it matures the investment becomes inactive and the payout lands
+  // in the wallet — at that point withdrawals are open.
+  //
+  // We intentionally do NOT block withdrawals when the investor has no
+  // active investment at all (they may have already matured).
+
   const now = new Date();
+
   const lockedInvestment = investments.find((inv) => {
-    if (!inv.active || !inv.approved) return false;
-    const start = new Date(inv.created_at);
+    // Only active + approved investments count as "locking"
+    if (!inv.active || inv.status !== "Approved") return false;
+    const start     = new Date(inv.created_at);
     const daysSince = (now - start) / (1000 * 60 * 60 * 24);
     return daysSince < 120;
   });
+
   const isLocked = Boolean(lockedInvestment);
 
-  // Earliest unlock date
+  // Earliest unlock date shown in the banner
   let unlockDate = null;
   if (lockedInvestment) {
     const start = new Date(lockedInvestment.created_at);
-    unlockDate = new Date(start.getTime() + 120 * 24 * 60 * 60 * 1000);
+    unlockDate  = new Date(start.getTime() + 120 * 24 * 60 * 60 * 1000);
   }
 
+  // Days remaining helper
+  const daysRemaining = lockedInvestment
+    ? Math.ceil(
+        (unlockDate - now) / (1000 * 60 * 60 * 24)
+      )
+    : 0;
+
+  // ── Submit ────────────────────────────────────────────────────────────────
   const submitWithdrawal = async (e) => {
     e.preventDefault();
     setError("");
@@ -69,14 +94,22 @@ function UserWithdrawals() {
       return;
     }
 
-    if (parseFloat(form.amount) > parseFloat(profile.wallet_balance)) {
+    const requestedAmount = parseFloat(form.amount);
+    const walletBalance   = parseFloat(profile.wallet_balance);
+
+    if (!form.amount || isNaN(requestedAmount) || requestedAmount <= 0) {
+      setError("Please enter a valid withdrawal amount.");
+      return;
+    }
+
+    if (requestedAmount > walletBalance) {
       setError(
-        `Insufficient balance. Your wallet has $${parseFloat(profile.wallet_balance).toFixed(2)}.`
+        `Insufficient balance. Your wallet has $${walletBalance.toFixed(2)}.`
       );
       return;
     }
 
-    loading(true);
+    setLoading(true);   // ← was bug: was calling loading(true) instead of setLoading(true)
     try {
       await API.post("withdrawals/", form);
       alert("Withdrawal Submitted Successfully!");
@@ -85,15 +118,17 @@ function UserWithdrawals() {
       await fetchProfile();
     } catch (error) {
       console.error(error.response?.data || error);
-      const msg = error.response?.data?.error
-        || error.response?.data?.non_field_errors?.[0]
-        || "Submission failed. Please try again.";
+      const msg =
+        error.response?.data?.error ||
+        error.response?.data?.non_field_errors?.[0] ||
+        "Submission failed. Please try again.";
       setError(msg);
     } finally {
       setLoading(false);
     }
   };
 
+  // ── Cancel ────────────────────────────────────────────────────────────────
   const deleteWithdrawal = async (id) => {
     if (!window.confirm("Are you sure you want to cancel this withdrawal request?")) return;
     try {
@@ -106,6 +141,7 @@ function UserWithdrawals() {
     }
   };
 
+  // ── Helpers ───────────────────────────────────────────────────────────────
   const statusColor = (status) => {
     if (status === "Approved") return "bg-green-500/15 text-green-400 border border-green-500/30";
     if (status === "Rejected") return "bg-red-500/15 text-red-400 border border-red-500/30";
@@ -116,25 +152,33 @@ function UserWithdrawals() {
     .filter((w) => w.status === "Approved")
     .reduce((sum, w) => sum + parseFloat(w.amount || 0), 0);
 
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <DashboardLayout>
-      {/* Root wrapper updated to the warm dark container color */}
       <div className="text-white space-y-8 max-w-3xl mx-auto min-h-screen bg-[#171515] p-4 rounded-xl">
 
         <h1 className="text-3xl font-bold tracking-wide">Withdrawals</h1>
 
-        {/* Lock Banner */}
+        {/* Lock Banner — only shown when investment is still within 120-day window */}
         {isLocked && (
           <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl px-5 py-4 flex items-start gap-3">
             <span className="text-amber-400 text-2xl mt-0.5">🔒</span>
             <div>
               <p className="text-amber-300 font-bold text-sm">Withdrawals Locked</p>
               <p className="text-amber-400/80 text-xs mt-1 leading-relaxed">
-                Your investment plan is currently within the <strong>120-day lock period</strong>. Withdrawals will be available once your plan matures and profits are credited to your wallet.
+                Your investment plan is currently within the{" "}
+                <strong>120-day lock period</strong>. Withdrawals will be available
+                once your plan matures and profits are credited to your wallet.
               </p>
               {unlockDate && (
                 <p className="text-amber-300 text-xs mt-2 font-semibold">
-                  Estimated unlock: {unlockDate.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}
+                  Estimated unlock:{" "}
+                  {unlockDate.toLocaleDateString(undefined, {
+                    year: "numeric", month: "long", day: "numeric",
+                  })}{" "}
+                  <span className="text-amber-400/60 font-normal">
+                    ({daysRemaining} day{daysRemaining !== 1 ? "s" : ""} remaining)
+                  </span>
                 </p>
               )}
             </div>
@@ -162,9 +206,13 @@ function UserWithdrawals() {
         </div>
 
         {/* Form */}
-        <div className={`bg-[#1f1b1b] p-6 rounded-xl border shadow-2xl transition-all ${
-          isLocked ? "border-amber-500/20 opacity-50 pointer-events-none select-none" : "border-[#2e2726]"
-        }`}>
+        <div
+          className={`bg-[#1f1b1b] p-6 rounded-xl border shadow-2xl transition-all ${
+            isLocked
+              ? "border-amber-500/20 opacity-50 pointer-events-none select-none"
+              : "border-[#2e2726]"
+          }`}
+        >
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-lg font-semibold text-neutral-200">New Withdrawal Request</h2>
             {isLocked && (
@@ -221,7 +269,11 @@ function UserWithdrawals() {
               className="w-full bg-[#c45a45] hover:bg-[#a64633] text-white px-6 py-3 rounded-lg font-semibold disabled:opacity-50 transition-colors cursor-pointer shadow-xl"
               disabled={loading || isLocked}
             >
-              {loading ? "Submitting..." : isLocked ? "🔒 Locked Until Day 120" : "Submit Withdrawal"}
+              {loading
+                ? "Submitting..."
+                : isLocked
+                ? `🔒 Locked · ${daysRemaining} day${daysRemaining !== 1 ? "s" : ""} remaining`
+                : "Submit Withdrawal"}
             </button>
           </form>
         </div>
