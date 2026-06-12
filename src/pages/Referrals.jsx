@@ -422,23 +422,33 @@ function AdminManageReferrals() {
    USER REFERRAL VIEW
 ───────────────────────────────────────── */
 function UserReferralView() {
-  const [copied, setCopied]   = useState(false);
-  const [stats,  setStats]    = useState({ referred: 0, active: 0, earnings: "0.00" });
-  const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
 
-  const referralLink = "https://admindashboard-ruddy-beta.vercel.app/dashboard/register?ref=USER123";
+  // FIX: All stats AND the referral link now come from the API.
+  // The link was previously hardcoded as "...?ref=USER123" which meant
+  // every user saw the same broken link instead of their own unique code.
+  const [stats, setStats] = useState({
+    referred:     0,
+    active:       0,
+    earnings:     "0.00",
+    referralLink: "",
+    referralCode: "",
+  });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
         const res = await API.get("referrals/my-stats/");
         setStats({
-          referred: res.data.total_referred  ?? 0,
-          active:   res.data.active_contracts ?? 0,
-          earnings: parseFloat(res.data.total_earnings || 0).toFixed(2),
+          referred:     res.data.total_referred   ?? 0,
+          active:       res.data.active_contracts ?? 0,
+          earnings:     parseFloat(res.data.total_earnings || 0).toFixed(2),
+          referralLink: res.data.referral_link    ?? "",
+          referralCode: res.data.referral_code    ?? "",
         });
-      } catch {
-        // silently fall back to zeros
+      } catch (err) {
+        console.error("Failed to fetch referral stats:", err);
       } finally {
         setLoading(false);
       }
@@ -447,8 +457,9 @@ function UserReferralView() {
   }, []);
 
   const handleCopy = async () => {
+    if (!stats.referralLink) return;
     try {
-      await navigator.clipboard.writeText(referralLink);
+      await navigator.clipboard.writeText(stats.referralLink);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
@@ -461,9 +472,9 @@ function UserReferralView() {
       {/* Quick Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
-          { label: "Total Referred",    value: loading ? "—" : `${stats.referred} Users`,  icon: <FaUsers />,     color: "text-white" },
-          { label: "Active Contracts",  value: loading ? "—" : `${stats.active} Active`,   icon: <FaChartLine />, color: "text-emerald-400" },
-          { label: "Total Earnings",    value: loading ? "—" : `$${stats.earnings}`,       icon: <FaGift />,      color: "text-[#c45a45]" },
+          { label: "Total Referred",   value: loading ? "—" : `${stats.referred} Users`, icon: <FaUsers />,     color: "text-white" },
+          { label: "Active Contracts", value: loading ? "—" : `${stats.active} Active`,  icon: <FaChartLine />, color: "text-emerald-400" },
+          { label: "Total Earnings",   value: loading ? "—" : `$${stats.earnings}`,      icon: <FaGift />,      color: "text-[#c45a45]" },
         ].map((s) => (
           <div key={s.label} className="bg-[#0f0e0e] border border-white/[0.07] rounded-2xl px-5 py-4 flex items-center gap-4">
             <div className="w-10 h-10 rounded-xl bg-[#c45a45]/12 border border-[#c45a45]/20 flex items-center justify-center text-[#c45a45] shrink-0">
@@ -488,11 +499,15 @@ function UserReferralView() {
 
         <div className="flex flex-col sm:flex-row items-stretch gap-3">
           <div className="flex-1 bg-[#171515] border border-white/8 p-3.5 rounded-xl text-xs font-mono break-all text-white/50 flex items-center min-h-11">
-            {referralLink}
+            {loading
+              ? <span className="text-white/20 italic">Loading your referral link…</span>
+              : stats.referralLink || <span className="text-white/20 italic">No link available</span>
+            }
           </div>
           <button
             onClick={handleCopy}
-            className={`flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider text-white transition-all duration-200 shadow-md whitespace-nowrap min-w-32 ${
+            disabled={loading || !stats.referralLink}
+            className={`flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider text-white transition-all duration-200 shadow-md whitespace-nowrap min-w-32 disabled:opacity-40 disabled:cursor-not-allowed ${
               copied
                 ? "bg-emerald-600 hover:bg-emerald-500 shadow-emerald-900/20"
                 : "bg-[#c45a45] hover:bg-[#d06a55] shadow-[#c45a45]/20"

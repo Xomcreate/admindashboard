@@ -1,21 +1,23 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import API from "../api/axios";
 
 const Register = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const refCode = searchParams.get("ref") || "";
 
   const [form, setForm] = useState({
-    username: "",
-    email: "",
-    password: "",
+    username:         "",
+    email:            "",
+    password:         "",
     confirm_password: "",
   });
 
-  const [error, setError]   = useState("");
+  const [error,   setError]   = useState("");
   const [loading, setLoading] = useState(false);
 
-  const [showPassword, setShowPassword]             = useState(false);
+  const [showPassword,        setShowPassword]        = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const submit = async (e) => {
@@ -34,6 +36,7 @@ const Register = () => {
         username: form.username,
         email:    form.email,
         password: form.password,
+        ref:      refCode,        // passed to backend — empty string is safely ignored
       });
 
       alert("Account created successfully! Please log in.");
@@ -57,6 +60,13 @@ const Register = () => {
         className="bg-[#1c1919] border border-[#2b2524] p-8 rounded-xl w-96 shadow-2xl"
       >
         <h1 className="text-white text-2xl font-bold mb-6">Register</h1>
+
+        {/* Show a subtle banner if they arrived via a referral link */}
+        {refCode && (
+          <div className="mb-4 px-3 py-2 rounded-lg bg-[#c45a45]/10 border border-[#c45a45]/25 text-[#c45a45] text-xs font-medium">
+            You were invited via a referral link 🎉
+          </div>
+        )}
 
         {error && (
           <p className="text-red-400 text-sm mb-4">{error}</p>
