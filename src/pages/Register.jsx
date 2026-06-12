@@ -5,6 +5,8 @@ import API from "../api/axios";
 const Register = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+
+  // FIX: read the ?ref= param from the URL so referred users are tracked
   const refCode = searchParams.get("ref") || "";
 
   const [form, setForm] = useState({
@@ -36,7 +38,8 @@ const Register = () => {
         username: form.username,
         email:    form.email,
         password: form.password,
-        ref:      refCode,        // passed to backend — empty string is safely ignored
+        // FIX: always send ref — backend ignores empty strings safely
+        ref:      refCode,
       });
 
       alert("Account created successfully! Please log in.");
@@ -61,7 +64,7 @@ const Register = () => {
       >
         <h1 className="text-white text-2xl font-bold mb-6">Register</h1>
 
-        {/* Show a subtle banner if they arrived via a referral link */}
+        {/* Referral banner — only shown when arriving via a referral link */}
         {refCode && (
           <div className="mb-4 px-3 py-2 rounded-lg bg-[#c45a45]/10 border border-[#c45a45]/25 text-[#c45a45] text-xs font-medium">
             You were invited via a referral link 🎉
@@ -128,6 +131,7 @@ const Register = () => {
         </div>
 
         <button
+          type="submit"
           className="bg-[#c45a45] hover:bg-[#a64633] w-full p-3 text-white font-semibold rounded-lg transition-colors disabled:opacity-50"
           disabled={loading}
         >

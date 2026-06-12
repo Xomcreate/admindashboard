@@ -18,6 +18,7 @@ import {
   FaInfoCircle,
   FaGift,
   FaNetworkWired,
+  FaInbox,
 } from "react-icons/fa";
 
 /* ─────────────────────────────────────────
@@ -120,7 +121,9 @@ function AdminManageReferrals() {
     setLoading(true);
     try {
       const res = await API.get("referrals/");
-      setReferrals(res.data);
+      // FIX: handle both array and paginated { results: [] } response shapes
+      const data = Array.isArray(res.data) ? res.data : (res.data?.results ?? []);
+      setReferrals(data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -250,11 +253,11 @@ function AdminManageReferrals() {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
-          { label: "Total",    value: totals.all,                                        icon: <FaNetworkWired />, accent: false },
-          { label: "Active",   value: totals.active,                                     icon: <FaCheckCircle />,  accent: false, highlight: "text-emerald-400" },
-          { label: "Pending",  value: totals.pending,                                    icon: <FaClock />,        accent: false, highlight: "text-amber-400" },
-          { label: "Inactive", value: totals.inactive,                                   icon: <FaTimesCircle />,  accent: false, highlight: "text-white/40" },
-          { label: "Commissions Paid", value: `$${totals.earnings.toFixed(2)}`,          icon: <FaMoneyBillWave />, accent: true },
+          { label: "Total",            value: totals.all,                       icon: <FaNetworkWired />, accent: false },
+          { label: "Active",           value: totals.active,                    icon: <FaCheckCircle />,  highlight: "text-emerald-400" },
+          { label: "Pending",          value: totals.pending,                   icon: <FaClock />,        highlight: "text-amber-400" },
+          { label: "Inactive",         value: totals.inactive,                  icon: <FaTimesCircle />,  highlight: "text-white/40" },
+          { label: "Commissions Paid", value: `$${totals.earnings.toFixed(2)}`, icon: <FaMoneyBillWave />, accent: true },
         ].map((s) => (
           <div key={s.label} className={`bg-[#0f0e0e] border rounded-xl px-4 py-3.5 flex items-center gap-3 ${
             s.accent ? "border-[#c45a45]/20 shadow-[#c45a45]/5 shadow-lg" : "border-white/[0.07]"
@@ -423,10 +426,6 @@ function AdminManageReferrals() {
 ───────────────────────────────────────── */
 function UserReferralView() {
   const [copied, setCopied] = useState(false);
-
-  // FIX: All stats AND the referral link now come from the API.
-  // The link was previously hardcoded as "...?ref=USER123" which meant
-  // every user saw the same broken link instead of their own unique code.
   const [stats, setStats] = useState({
     referred:     0,
     active:       0,
@@ -434,26 +433,42 @@ function UserReferralView() {
     referralLink: "",
     referralCode: "",
   });
-  const [loading, setLoading] = useState(true);
+  const [referrals, setReferrals] = useState([]);
+  const [loading,   setLoading]   = useState(true);
+  const [listError, setListError] = useState(false);
 
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchAll = async () => {
+      setLoading(true);
+      setListError(false);
       try {
-        const res = await API.get("referrals/my-stats/");
+        // FIX: fetch stats and referral list in parallel
+        const [statsRes, listRes] = await Promise.all([
+          API.get("referrals/my-stats/"),
+          API.get("referrals/"),
+        ]);
+
         setStats({
-          referred:     res.data.total_referred   ?? 0,
-          active:       res.data.active_contracts ?? 0,
-          earnings:     parseFloat(res.data.total_earnings || 0).toFixed(2),
-          referralLink: res.data.referral_link    ?? "",
-          referralCode: res.data.referral_code    ?? "",
+          referred:     statsRes.data.total_referred   ?? 0,
+          active:       statsRes.data.active_contracts ?? 0,
+          earnings:     parseFloat(statsRes.data.total_earnings || 0).toFixed(2),
+          referralLink: statsRes.data.referral_link    ?? "",
+          referralCode: statsRes.data.referral_code    ?? "",
         });
+
+        // FIX: handle both plain array and DRF paginated { results: [] } shapes
+        const listData = Array.isArray(listRes.data)
+          ? listRes.data
+          : (listRes.data?.results ?? []);
+        setReferrals(listData);
       } catch (err) {
-        console.error("Failed to fetch referral stats:", err);
+        console.error("Failed to fetch referral data:", err);
+        setListError(true);
       } finally {
         setLoading(false);
       }
     };
-    fetchStats();
+    fetchAll();
   }, []);
 
   const handleCopy = async () => {
@@ -463,7 +478,7 @@ function UserReferralView() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error("Failed to copy link: ", err);
+      console.error("Failed to copy link:", err);
     }
   };
 
@@ -473,7 +488,7 @@ function UserReferralView() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
           { label: "Total Referred",   value: loading ? "—" : `${stats.referred} Users`, icon: <FaUsers />,     color: "text-white" },
-          { label: "Active Contracts", value: loading ? "—" : `${stats.active} Active`,  icon: <FaChartLine />, color: "text-emerald-400" },
+          { label: "Active Referrals", value: loading ? "—" : `${stats.active} Active`,  icon: <FaChartLine />, color: "text-emerald-400" },
           { label: "Total Earnings",   value: loading ? "—" : `$${stats.earnings}`,      icon: <FaGift />,      color: "text-[#c45a45]" },
         ].map((s) => (
           <div key={s.label} className="bg-[#0f0e0e] border border-white/[0.07] rounded-2xl px-5 py-4 flex items-center gap-4">
@@ -518,6 +533,119 @@ function UserReferralView() {
         </div>
       </div>
 
+      {/* My Referred Users Table */}
+      <div className="bg-[#0f0e0e] border border-white/[0.07] rounded-2xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-[#c45a45]/15 border border-[#c45a45]/25 flex items-center justify-center">
+              <FaUsers className="text-[#c45a45] text-[10px]" />
+            </div>
+            <h3 className="text-sm font-bold text-white">People You've Referred</h3>
+          </div>
+          {!loading && referrals.length > 0 && (
+            <span className="text-[10px] text-white/30 bg-white/5 border border-white/8 px-2.5 py-1 rounded-full">
+              {referrals.length} {referrals.length === 1 ? "record" : "records"}
+            </span>
+          )}
+        </div>
+
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-14 gap-3">
+            <div className="w-7 h-7 rounded-full border-2 border-[#c45a45]/30 border-t-[#c45a45] animate-spin" />
+            <p className="text-white/25 text-xs">Loading your referrals…</p>
+          </div>
+        ) : listError ? (
+          <div className="flex flex-col items-center justify-center py-14 gap-2">
+            <FaExclamationTriangle className="text-[#c45a45]/40 text-2xl" />
+            <p className="text-white/30 text-xs">Could not load referral records.</p>
+          </div>
+        ) : referrals.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-14 gap-3">
+            <FaInbox className="text-white/10 text-3xl" />
+            <div className="text-center">
+              <p className="text-white/30 text-sm font-medium">No referrals yet</p>
+              <p className="text-white/20 text-xs mt-1">Share your link above to start earning commission.</p>
+            </div>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-white/5 text-white/25 text-[10px] uppercase tracking-widest font-semibold">
+                  <th className="px-5 py-3.5 text-left">User</th>
+                  <th className="px-5 py-3.5 text-center">Status</th>
+                  <th className="px-5 py-3.5 text-right">Commission</th>
+                  <th className="px-5 py-3.5 text-center">Joined</th>
+                </tr>
+              </thead>
+              <tbody>
+                {referrals.map((ref) => {
+                  const name   = resolveUserName(ref);
+                  const email  = resolveUserEmail(ref);
+                  const status = (ref.status || "pending").toLowerCase();
+                  const comm   = parseFloat(ref.commission || 0);
+
+                  return (
+                    <tr key={ref.id} className="border-b border-white/4 hover:bg-white/2 transition-colors">
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-7 h-7 rounded-full bg-[#c45a45]/15 border border-[#c45a45]/20 flex items-center justify-center shrink-0">
+                            <span className="text-[#c45a45] text-[9px] font-black uppercase">
+                              {name.charAt(0) || "?"}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="text-white text-xs font-semibold leading-none">{name}</p>
+                            {email && (
+                              <p className="text-white/25 text-[10px] mt-0.5">{email}</p>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4 text-center">
+                        <StatusBadge status={status} />
+                      </td>
+                      <td className="px-5 py-4 text-right">
+                        {status === "active" ? (
+                          <p className="text-emerald-400 text-xs font-bold">${comm.toFixed(2)}</p>
+                        ) : (
+                          <p className="text-white/20 text-xs font-medium">Pending approval</p>
+                        )}
+                      </td>
+                      <td className="px-5 py-4 text-center text-white/30 text-[11px]">
+                        {ref.created_at
+                          ? new Date(ref.created_at).toLocaleDateString(undefined, {
+                              month: "short", day: "numeric", year: "numeric",
+                            })
+                          : "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              {referrals.some((r) => (r.status || "").toLowerCase() === "active") && (
+                <tfoot>
+                  <tr className="border-t border-white/8 bg-white/15">
+                    <td colSpan={2} className="px-5 py-3 text-white/25 text-[10px] uppercase tracking-wide font-semibold">
+                      Total earned
+                    </td>
+                    <td className="px-5 py-3 text-right">
+                      <p className="text-emerald-400 text-xs font-black">
+                        ${referrals
+                          .filter((r) => (r.status || "").toLowerCase() === "active")
+                          .reduce((acc, r) => acc + parseFloat(r.commission || 0), 0)
+                          .toFixed(2)}
+                      </p>
+                    </td>
+                    <td />
+                  </tr>
+                </tfoot>
+              )}
+            </table>
+          </div>
+        )}
+      </div>
+
       {/* How it works */}
       <div className="bg-[#0f0e0e] border border-white/[0.07] rounded-2xl p-6">
         <h3 className="text-xs font-bold uppercase tracking-wider text-white/60 mb-5">How it works</h3>
@@ -536,7 +664,7 @@ function UserReferralView() {
             {
               step: "03",
               title: "Earn Commission",
-              desc: "Receive commission allocations whenever your referrals activate investment contracts.",
+              desc: "Receive commission allocations whenever your referrals are approved by our team.",
             },
           ].map((step, i) => (
             <div key={step.step} className={`space-y-2 ${i > 0 ? "md:border-l border-white/6 md:pl-6" : ""}`}>
@@ -572,7 +700,6 @@ function AdminReferralsView() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 mb-1">
@@ -588,7 +715,6 @@ function AdminReferralsView() {
           </p>
         </div>
 
-        {/* Tab Toggle */}
         <div className="flex gap-1.5 bg-[#0f0e0e] border border-white/8 rounded-xl p-1 self-start md:self-center">
           {tabs.map((tab) => (
             <button
