@@ -46,6 +46,10 @@ const traders = [
     color: "#c45a45",
     copying: false,
     tier: "Starter",
+    minCapital: "$1,000",
+    maxCapital: "$500,000",
+    duration: "14 Days",
+    activeTrades: 143,
   },
   {
     id: 2,
@@ -63,6 +67,10 @@ const traders = [
     color: "#d4875a",
     copying: false,
     tier: "Pro",
+    minCapital: "$2,000",
+    maxCapital: "$750,000",
+    duration: "30 Days",
+    activeTrades: 89,
   },
   {
     id: 3,
@@ -80,6 +88,10 @@ const traders = [
     color: "#9b6ab5",
     copying: false,
     tier: "Starter",
+    minCapital: "$500",
+    maxCapital: "$250,000",
+    duration: "7 Days",
+    activeTrades: 312,
   },
   {
     id: 4,
@@ -97,6 +109,10 @@ const traders = [
     color: "#c45a45",
     copying: false,
     tier: "Institutional",
+    minCapital: "$10,000",
+    maxCapital: "$2,000,000",
+    duration: "30 Days",
+    activeTrades: 42,
   },
   {
     id: 5,
@@ -114,6 +130,10 @@ const traders = [
     color: "#5a8fc4",
     copying: false,
     tier: "Pro",
+    minCapital: "$1,000",
+    maxCapital: "$375,000",
+    duration: "14 Days",
+    activeTrades: 207,
   },
   {
     id: 6,
@@ -131,6 +151,10 @@ const traders = [
     color: "#4db89b",
     copying: false,
     tier: "Starter",
+    minCapital: "$500",
+    maxCapital: "$300,000",
+    duration: "21 Days",
+    activeTrades: 178,
   },
 ];
 
@@ -208,21 +232,6 @@ const resolveUserEmail = (sub) => {
   return "";
 };
 
-const riskColor = { Low: "text-emerald-400", Medium: "text-amber-400", High: "text-red-400" };
-const riskBg = {
-  Low: "bg-emerald-400/10 border-emerald-400/20",
-  Medium: "bg-amber-400/10 border-amber-400/20",
-  High: "bg-red-400/10 border-red-400/20",
-};
-
-const badgeIcon = {
-  Elite: <FaTrophy className="text-[10px]" />,
-  Legend: <FaStar className="text-[10px]" />,
-  "Top Performer": <FaFire className="text-[10px]" />,
-  "Rising Star": <FaBolt className="text-[10px]" />,
-  Verified: <FaCheckCircle className="text-[10px]" />,
-};
-
 const planBadgeColor = {
   Starter: "bg-white/8 border-white/15 text-white/60",
   Pro: "bg-[#c45a45]/10 border-[#c45a45]/25 text-[#e07060]",
@@ -230,7 +239,7 @@ const planBadgeColor = {
 };
 
 const statusStyle = {
-  Pending: "bg-amber-400/10 text-amber-400 border-amber-400/25",
+  Pending:  "bg-amber-400/10 text-amber-400 border-amber-400/25",
   Approved: "bg-emerald-400/10 text-emerald-400 border-emerald-400/25",
   Declined: "bg-red-400/10 text-red-400 border-red-400/25",
 };
@@ -239,7 +248,7 @@ const StatusBadge = ({ status }) => (
   <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md border font-semibold ${statusStyle[status] || statusStyle.Pending}`}>
     {status === "Approved" && <FaCheckCircle className="text-[9px]" />}
     {status === "Declined" && <FaTimesCircle className="text-[9px]" />}
-    {status === "Pending" && <FaClock className="text-[9px]" />}
+    {status === "Pending"  && <FaClock className="text-[9px]" />}
     {status}
   </span>
 );
@@ -278,13 +287,13 @@ function ConfirmModal({ open, title, message, confirmLabel, confirmClass, onConf
    ADMIN — MANAGE COPY TRADING SUBSCRIPTIONS
 ───────────────────────────────────────── */
 function AdminManageCopyTrading() {
-  const [subscriptions, setSubscriptions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [filterStatus, setFilterStatus] = useState("All");
-  const [actionLoading, setActionLoading] = useState(null);
-  const [toast, setToast] = useState(null);
-  const [confirmModal, setConfirmModal] = useState({ open: false, type: null, sub: null });
+  const [subscriptions, setSubscriptions]   = useState([]);
+  const [loading, setLoading]               = useState(true);
+  const [search, setSearch]                 = useState("");
+  const [filterStatus, setFilterStatus]     = useState("All");
+  const [actionLoading, setActionLoading]   = useState(null);
+  const [toast, setToast]                   = useState(null);
+  const [confirmModal, setConfirmModal]     = useState({ open: false, type: null, sub: null });
 
   useEffect(() => { fetchSubscriptions(); }, []);
 
@@ -308,13 +317,19 @@ function AdminManageCopyTrading() {
   const handleApprove = async (sub) => {
     setActionLoading(`approve-${sub.id}`);
     try {
-      await API.patch(`copy-trading-subscriptions/${sub.id}/`, { approved: true, active: true, status: "Approved" });
+      await API.patch(`copy-trading-subscriptions/${sub.id}/`, {
+        approved: true,
+        active: true,
+        status: "Approved",
+      });
       setSubscriptions((prev) =>
-        prev.map((s) => s.id === sub.id ? { ...s, approved: true, active: true, status: "Approved" } : s)
+        prev.map((s) =>
+          s.id === sub.id ? { ...s, approved: true, active: true, status: "Approved" } : s
+        )
       );
       showToast(`Subscription for ${resolveUserName(sub)} approved.`);
     } catch (err) {
-      showToast(err.response?.data?.detail || "Approval failed.", "error");
+      showToast(err.response?.data?.error || err.response?.data?.detail || "Approval failed.", "error");
     } finally {
       setActionLoading(null);
       setConfirmModal({ open: false, type: null, sub: null });
@@ -324,13 +339,19 @@ function AdminManageCopyTrading() {
   const handleDecline = async (sub) => {
     setActionLoading(`decline-${sub.id}`);
     try {
-      await API.patch(`copy-trading-subscriptions/${sub.id}/`, { approved: false, active: false, status: "Declined" });
+      await API.patch(`copy-trading-subscriptions/${sub.id}/`, {
+        approved: false,
+        active: false,
+        status: "Declined",
+      });
       setSubscriptions((prev) =>
-        prev.map((s) => s.id === sub.id ? { ...s, approved: false, active: false, status: "Declined" } : s)
+        prev.map((s) =>
+          s.id === sub.id ? { ...s, approved: false, active: false, status: "Declined" } : s
+        )
       );
       showToast("Subscription declined.", "error");
     } catch (err) {
-      showToast(err.response?.data?.detail || "Decline failed.", "error");
+      showToast(err.response?.data?.error || err.response?.data?.detail || "Decline failed.", "error");
     } finally {
       setActionLoading(null);
       setConfirmModal({ open: false, type: null, sub: null });
@@ -342,16 +363,16 @@ function AdminManageCopyTrading() {
     try {
       await API.delete(`copy-trading-subscriptions/${sub.id}/`);
       setSubscriptions((prev) => prev.filter((s) => s.id !== sub.id));
-      showToast("Subscription record deleted.", "error");
+      showToast("Subscription record deleted.");
     } catch (err) {
-      showToast(err.response?.data?.detail || "Delete failed.", "error");
+      showToast(err.response?.data?.error || err.response?.data?.detail || "Delete failed.", "error");
     } finally {
       setActionLoading(null);
       setConfirmModal({ open: false, type: null, sub: null });
     }
   };
 
-  const openConfirm = (type, sub) => setConfirmModal({ open: true, type, sub });
+  const openConfirm   = (type, sub) => setConfirmModal({ open: true, type, sub });
   const handleConfirm = () => {
     const { type, sub } = confirmModal;
     if (type === "approve") handleApprove(sub);
@@ -360,7 +381,7 @@ function AdminManageCopyTrading() {
   };
 
   const filtered = subscriptions.filter((s) => {
-    const name = resolveUserName(s).toLowerCase();
+    const name  = resolveUserName(s).toLowerCase();
     const email = resolveUserEmail(s).toLowerCase();
     const matchSearch =
       name.includes(search.toLowerCase()) ||
@@ -368,18 +389,18 @@ function AdminManageCopyTrading() {
       (s.plan || "").toLowerCase().includes(search.toLowerCase());
     const matchStatus =
       filterStatus === "All" ||
-      (filterStatus === "Pending" && !s.approved && s.status !== "Declined") ||
+      (filterStatus === "Pending"  && !s.approved && s.status !== "Declined") ||
       (filterStatus === "Approved" && s.approved) ||
       (filterStatus === "Declined" && s.status === "Declined");
     return matchSearch && matchStatus;
   });
 
   const totals = {
-    all: subscriptions.length,
-    pending: subscriptions.filter((s) => !s.approved && s.status !== "Declined").length,
+    all:      subscriptions.length,
+    pending:  subscriptions.filter((s) => !s.approved && s.status !== "Declined").length,
     approved: subscriptions.filter((s) => s.approved).length,
     declined: subscriptions.filter((s) => s.status === "Declined").length,
-    revenue: subscriptions.filter((s) => s.approved).reduce((acc, s) => {
+    revenue:  subscriptions.filter((s) => s.approved).reduce((acc, s) => {
       const p = plans.find((pl) => pl.name === s.plan);
       return acc + (p ? parseInt(p.price.replace("$", "")) : 0);
     }, 0),
@@ -387,20 +408,20 @@ function AdminManageCopyTrading() {
 
   const confirmConfig = {
     approve: {
-      title: "Approve Subscription",
-      message: "This will activate the copy trading plan and allow the user to mirror traders.",
+      title:        "Approve Subscription",
+      message:      "This will activate the copy trading plan and allow the user to mirror traders.",
       confirmLabel: "Approve",
       confirmClass: "bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/25",
     },
     decline: {
-      title: "Decline Subscription",
-      message: "This will reject the copy trading subscription request.",
+      title:        "Decline Subscription",
+      message:      "This will reject the copy trading subscription request.",
       confirmLabel: "Decline",
       confirmClass: "bg-red-500/15 border border-red-500/30 text-red-400 hover:bg-red-500/25",
     },
     delete: {
-      title: "Delete Record",
-      message: "This permanently removes the subscription record. This cannot be undone.",
+      title:        "Delete Record",
+      message:      "This permanently removes the subscription record. This cannot be undone.",
       confirmLabel: "Delete",
       confirmClass: "bg-red-500 hover:bg-red-600 text-white",
     },
@@ -422,10 +443,10 @@ function AdminManageCopyTrading() {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
-          { label: "Total",    value: totals.all,           icon: <FaExchangeAlt />, accent: false },
-          { label: "Pending",  value: totals.pending,       icon: <FaClock />,       accent: false, highlight: "text-amber-400" },
-          { label: "Approved", value: totals.approved,      icon: <FaCheckCircle />, accent: false, highlight: "text-emerald-400" },
-          { label: "Declined", value: totals.declined,      icon: <FaTimesCircle />, accent: false, highlight: "text-red-400" },
+          { label: "Total",    value: totals.all,           icon: <FaExchangeAlt />,  accent: false },
+          { label: "Pending",  value: totals.pending,       icon: <FaClock />,        accent: false, highlight: "text-amber-400" },
+          { label: "Approved", value: totals.approved,      icon: <FaCheckCircle />,  accent: false, highlight: "text-emerald-400" },
+          { label: "Declined", value: totals.declined,      icon: <FaTimesCircle />,  accent: false, highlight: "text-red-400" },
           { label: "MRR",      value: `$${totals.revenue}`, icon: <FaMoneyBillWave />, accent: true },
         ].map((s) => (
           <div key={s.label} className={`bg-[#0f0e0e] border rounded-xl px-4 py-3.5 flex items-center gap-3 ${
@@ -510,8 +531,8 @@ function AdminManageCopyTrading() {
               <tbody>
                 {filtered.map((sub) => {
                   const isLoading = (k) => actionLoading === `${k}-${sub.id}`;
-                  const status = sub.approved ? "Approved" : sub.status === "Declined" ? "Declined" : "Pending";
-                  const planInfo = plans.find((p) => p.name === sub.plan);
+                  const subStatus = sub.approved ? "Approved" : sub.status === "Declined" ? "Declined" : "Pending";
+                  const planInfo  = plans.find((p) => p.name === sub.plan);
                   return (
                     <tr key={sub.id} className="border-b border-white/4 hover:bg-white/2 transition-colors">
                       <td className="px-5 py-4">
@@ -531,16 +552,18 @@ function AdminManageCopyTrading() {
                         </p>
                       </td>
                       <td className="px-5 py-4 text-center">
-                        <StatusBadge status={status} />
+                        <StatusBadge status={subStatus} />
                       </td>
                       <td className="px-5 py-4 text-center text-white/30 text-[11px]">
                         {sub.created_at
-                          ? new Date(sub.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
+                          ? new Date(sub.created_at).toLocaleDateString(undefined, {
+                              month: "short", day: "numeric", year: "numeric",
+                            })
                           : "—"}
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex items-center justify-center gap-1.5 flex-wrap">
-                          {status !== "Approved" && (
+                          {subStatus !== "Approved" && (
                             <button
                               onClick={() => openConfirm("approve", sub)}
                               disabled={!!actionLoading}
@@ -550,7 +573,7 @@ function AdminManageCopyTrading() {
                               Approve
                             </button>
                           )}
-                          {status !== "Declined" && (
+                          {subStatus !== "Declined" && (
                             <button
                               onClick={() => openConfirm("decline", sub)}
                               disabled={!!actionLoading}
@@ -592,10 +615,22 @@ function AdminManageCopyTrading() {
    TRADER CARD
 ───────────────────────────────────────── */
 function TraderCard({ trader, onToggle, hasActivePlan }) {
+  const [investAmount, setInvestAmount] = useState("");
+
+  const stats = [
+    { label: "Min.\nCapital",  value: trader.minCapital   || "$1,000" },
+    { label: "Max.\nCapital",  value: trader.maxCapital   || "$500,000" },
+    { label: "Duration",       value: trader.duration     || "14 Days" },
+    { label: "Win\nPercent",   value: trader.winRate,      green: true },
+    { label: "Followers",      value: trader.followers },
+    { label: "Active\nTrades", value: trader.activeTrades || "—" },
+  ];
+
   return (
-    <div className="group relative bg-[#0f0e0e] border border-white/[0.07] rounded-2xl p-5 hover:border-[#c45a45]/25 transition-all duration-300 hover:shadow-lg hover:shadow-[#c45a45]/5 flex flex-col gap-4">
+    <div className="relative bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl overflow-hidden hover:border-[#c45a45]/30 transition-all duration-300 flex flex-col">
+      {/* Lock overlay */}
       {!hasActivePlan && (
-        <div className="absolute inset-0 rounded-2xl bg-black/40 backdrop-blur-[1px] z-10 flex flex-col items-center justify-center gap-2">
+        <div className="absolute inset-0 rounded-2xl bg-black/55 backdrop-blur-[1px] z-10 flex flex-col items-center justify-center gap-2">
           <div className="w-10 h-10 rounded-full bg-[#c45a45]/20 border border-[#c45a45]/40 flex items-center justify-center">
             <FaLock className="text-[#c45a45] text-sm" />
           </div>
@@ -603,96 +638,107 @@ function TraderCard({ trader, onToggle, hasActivePlan }) {
         </div>
       )}
 
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div
-            className="w-11 h-11 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0"
-            style={{ background: `${trader.color}25`, border: `1px solid ${trader.color}40` }}
-          >
-            <span style={{ color: trader.color }}>{trader.avatar}</span>
+      {/* Avatar + name */}
+      <div className="flex flex-col items-center pt-5 pb-4 px-4 border-b border-[#2a2a2a]">
+        <div
+          className="w-14 h-14 rounded-full flex items-center justify-center font-bold text-base mb-2 border-2"
+          style={{
+            background:   `${trader.color}22`,
+            borderColor:  `${trader.color}55`,
+            color:         trader.color,
+          }}
+        >
+          {trader.avatar}
+        </div>
+        <p className="text-sm font-semibold" style={{ color: trader.color }}>
+          {trader.name}
+        </p>
+        <p className="text-white/30 text-[11px] mt-0.5">{trader.handle}</p>
+      </div>
+
+      {/* 3×2 stat grid */}
+      <div className="grid grid-cols-3 divide-x divide-y divide-[#252525]">
+        {stats.map(({ label, value, green }) => (
+          <div key={label} className="bg-[#161616] px-2 py-3 text-center">
+            <p className="text-[9px] text-white/30 uppercase tracking-wide whitespace-pre-line leading-tight">
+              {label}
+            </p>
+            <p className={`text-[13px] font-bold mt-1 ${green ? "text-emerald-400" : "text-white/80"}`}>
+              {value}
+            </p>
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <p className="text-white text-sm font-semibold leading-none">{trader.name}</p>
-              <span
-                className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-md font-medium"
-                style={{ background: `${trader.color}18`, color: trader.color, border: `1px solid ${trader.color}30` }}
-              >
-                {badgeIcon[trader.badge]}
-                {trader.badge}
-              </span>
-            </div>
-            <p className="text-white/30 text-xs mt-0.5">{trader.handle}</p>
-          </div>
-        </div>
-        <div className={`text-xs px-2 py-1 rounded-lg border font-medium ${riskBg[trader.risk]} ${riskColor[trader.risk]}`}>
-          {trader.risk} Risk
-        </div>
+        ))}
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
-        <div className="bg-white/3 rounded-xl p-3 text-center border border-white/3">
-          <p className="text-emerald-400 text-base font-bold leading-none">{trader.roi}</p>
-          <p className="text-white/30 text-[10px] mt-1 uppercase tracking-wide">Total ROI</p>
+      {/* Invest section */}
+      <div className="px-4 py-4 space-y-3 mt-auto">
+        <p className="text-[10px] text-white/35 uppercase tracking-widest font-semibold">
+          Amount to Invest
+        </p>
+        <div className="flex items-center gap-2 bg-[#111] border border-[#2a2a2a] rounded-xl px-3 py-2.5 focus-within:border-[#c45a45]/40 transition-colors">
+          <span className="text-white/30 text-sm font-semibold">$</span>
+          <input
+            type="number"
+            min="0"
+            placeholder="0.00"
+            value={investAmount}
+            onChange={(e) => setInvestAmount(e.target.value)}
+            className="flex-1 bg-transparent text-white text-sm outline-none placeholder-white/20"
+          />
         </div>
-        <div className="bg-white/3 rounded-xl p-3 text-center border border-white/3">
-          <p className="text-white text-base font-bold leading-none">{trader.winRate}</p>
-          <p className="text-white/30 text-[10px] mt-1 uppercase tracking-wide">Win Rate</p>
-        </div>
-        <div className="bg-white/3 rounded-xl p-3 text-center border border-white/3">
-          <p className="text-white/70 text-base font-bold leading-none">{trader.followers}</p>
-          <p className="text-white/30 text-[10px] mt-1 uppercase tracking-wide">Followers</p>
-        </div>
+        <button
+          onClick={() => onToggle(trader, investAmount)}
+          className="w-full py-3 rounded-xl text-sm font-bold transition-all duration-200 flex items-center justify-center gap-2"
+          style={{
+            background: trader.copying
+              ? "transparent"
+              : `linear-gradient(135deg, ${trader.color}cc, #4eca8b99)`,
+            border: trader.copying ? `1px solid ${trader.color}55` : "none",
+            color:  trader.copying ? trader.color : "#fff",
+          }}
+        >
+          {trader.copying ? (
+            <><FaCheckCircle className="text-xs" /> Copying — Stop</>
+          ) : (
+            <><FaWallet className="text-xs" /> Invest</>
+          )}
+        </button>
       </div>
-
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex gap-1.5 flex-wrap">
-          {trader.tags.map((tag) => (
-            <span key={tag} className="text-[10px] px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-white/40 font-medium">
-              {tag}
-            </span>
-          ))}
-        </div>
-        <div className="text-right">
-          <p className="text-emerald-400 text-xs font-semibold">{trader.monthlyReturn}</p>
-          <p className="text-white/25 text-[10px]">this month</p>
-        </div>
-      </div>
-
-      <button
-        onClick={() => onToggle(trader)}
-        className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-1.5 ${
-          trader.copying
-            ? "bg-[#c45a45]/15 border border-[#c45a45]/40 text-[#c45a45] hover:bg-[#c45a45]/25"
-            : "bg-[#c45a45] hover:bg-[#d06a55] text-white shadow-md shadow-[#c45a45]/20"
-        }`}
-      >
-        {trader.copying
-          ? "✓ Copying — Stop"
-          : <>
-              {!hasActivePlan && <FaLock className="text-[10px] opacity-70" />}
-              Copy Trader
-              <span className="text-[10px] opacity-60 px-1 py-0.5 rounded bg-black/20 font-mono">
-                {trader.tier}
-              </span>
-            </>
-        }
-      </button>
     </div>
   );
 }
 
 /* ─────────────────────────────────────────
    SHARED COPY TRADING VIEW
-   (used by both User and Admin "Trade" tab)
 ───────────────────────────────────────── */
 function CopyTradingView({ isAdmin = false }) {
-  const [traderList, setTraderList] = useState(traders);
-  const [filter, setFilter] = useState("All");
-  const [search, setSearch] = useState("");
-  const [showPlans, setShowPlans] = useState(false);
+  const [traderList, setTraderList]       = useState(traders);
+  const [filter, setFilter]               = useState("All");
+  const [search, setSearch]               = useState("");
+  const [showPlans, setShowPlans]         = useState(false);
+  const [subscribing, setSubscribing]     = useState(false);   // ← NEW: loading state for plan subscription
+  const [planError, setPlanError]         = useState("");       // ← NEW: error message in plan modal
   const [hasActivePlan, setHasActivePlan] = useState(isAdmin);
   const [activePlanName, setActivePlanName] = useState(isAdmin ? "Admin" : null);
+
+  // ── On mount, check if the user already has an approved subscription ──────
+  useEffect(() => {
+    if (isAdmin) return;
+    const checkExistingPlan = async () => {
+      try {
+        const res = await API.get("copy-trading-subscriptions/");
+        const approved = res.data.find((s) => s.approved === true);
+        if (approved) {
+          setHasActivePlan(true);
+          setActivePlanName(approved.plan);
+        }
+      } catch (err) {
+        // silently ignore — user just won't have a plan pre-loaded
+        console.error(err);
+      }
+    };
+    checkExistingPlan();
+  }, [isAdmin]);
 
   const filters = ["All", "Low Risk", "High ROI", "Most Followed"];
 
@@ -704,6 +750,7 @@ function CopyTradingView({ isAdmin = false }) {
   };
 
   const copyingCount = traderList.filter((t) => t.copying).length;
+
   const filtered = traderList.filter((t) => {
     const matchSearch =
       t.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -711,6 +758,30 @@ function CopyTradingView({ isAdmin = false }) {
     if (filter === "Low Risk") return t.risk === "Low" && matchSearch;
     return matchSearch;
   });
+
+  // ── Subscribe to a plan — POST to backend ─────────────────────────────────
+  const handleSubscribe = async (plan) => {
+    setPlanError("");
+    setSubscribing(true);
+    try {
+      await API.post("copy-trading-subscriptions/", { plan: plan.name });
+      // Subscription created — pending admin approval
+      setHasActivePlan(false);         // still pending, not approved yet
+      setActivePlanName(plan.name);
+      setShowPlans(false);
+      // Show a pending notice instead of unlocking traders immediately
+      setPlanError("");
+    } catch (err) {
+      const msg =
+        err.response?.data?.non_field_errors?.[0] ||
+        err.response?.data?.error ||
+        err.response?.data?.detail ||
+        "Subscription failed. Please try again.";
+      setPlanError(msg);
+    } finally {
+      setSubscribing(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -724,14 +795,30 @@ function CopyTradingView({ isAdmin = false }) {
         </div>
       )}
 
-      {/* Notice Banner — shown when no plan (non-admin) */}
-      {!hasActivePlan && !isAdmin && (
+      {/* Pending approval notice — submitted but not yet approved */}
+      {!isAdmin && !hasActivePlan && activePlanName && (
+        <div className="flex items-start gap-3 bg-amber-400/8 border border-amber-400/20 rounded-xl px-4 py-3.5">
+          <FaClock className="text-amber-400 text-sm shrink-0 mt-0.5" />
+          <div>
+            <p className="text-amber-300 text-xs font-semibold">
+              {activePlanName} Plan — Pending Approval
+            </p>
+            <p className="text-white/40 text-[11px] mt-0.5">
+              Your subscription request has been submitted. Traders will unlock once an admin approves your plan.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* No plan banner */}
+      {!hasActivePlan && !isAdmin && !activePlanName && (
         <div className="flex items-start gap-3 bg-amber-400/8 border border-amber-400/20 rounded-xl px-4 py-3.5">
           <FaInfoCircle className="text-amber-400 text-sm shrink-0 mt-0.5" />
           <div>
             <p className="text-amber-300 text-xs font-semibold">Investment Required to Copy Traders</p>
             <p className="text-white/40 text-[11px] mt-0.5">
-              You must subscribe to a plan and make a minimum deposit before copying any trader. Plans start from <span className="text-white/60 font-medium">$49/mo + $500 min. deposit</span>.
+              You must subscribe to a plan and make a minimum deposit before copying any trader. Plans start from{" "}
+              <span className="text-white/60 font-medium">$49/mo + $500 min. deposit</span>.
             </p>
             <button
               onClick={() => setShowPlans(true)}
@@ -747,9 +834,9 @@ function CopyTradingView({ isAdmin = false }) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           { label: "Active Copies", value: copyingCount, icon: <FaUsers /> },
-          { label: "Avg. ROI", value: "+18.4%", icon: <FaChartLine /> },
-          { label: "Top Trader", value: "Elena K.", icon: <FaTrophy /> },
-          { label: "Protected", value: "Insured", icon: <FaShieldAlt /> },
+          { label: "Avg. ROI",      value: "+18.4%",      icon: <FaChartLine /> },
+          { label: "Top Trader",    value: "Elena K.",    icon: <FaTrophy /> },
+          { label: "Protected",     value: "Insured",     icon: <FaShieldAlt /> },
         ].map((s) => (
           <div key={s.label} className="bg-[#0f0e0e] border border-white/[0.07] rounded-2xl px-4 py-3.5 flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-[#c45a45]/12 border border-[#c45a45]/20 flex items-center justify-center text-[#c45a45] text-xs shrink-0">
@@ -791,14 +878,13 @@ function CopyTradingView({ isAdmin = false }) {
           ))}
         </div>
 
-        {/* Plan active badge */}
         {hasActivePlan && activePlanName !== "Admin" && (
           <div className="md:ml-auto flex items-center gap-2 text-xs font-semibold px-4 py-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 self-start md:self-center">
             <FaCheckCircle className="text-[10px]" /> {activePlanName} Plan Active
           </div>
         )}
 
-        {!hasActivePlan && (
+        {!hasActivePlan && !activePlanName && (
           <button
             onClick={() => setShowPlans(true)}
             className="md:ml-auto text-xs font-semibold px-4 py-2 rounded-xl border border-[#c45a45]/40 bg-[#c45a45]/10 hover:bg-[#c45a45]/20 text-[#c45a45] transition-all flex items-center gap-2 self-start md:self-center"
@@ -832,7 +918,7 @@ function CopyTradingView({ isAdmin = false }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
           <div className="bg-[#141212] border border-white/8 w-full max-w-5xl rounded-2xl max-h-[90vh] overflow-y-auto shadow-2xl p-6 md:p-8 relative space-y-6">
             <button
-              onClick={() => setShowPlans(false)}
+              onClick={() => { setShowPlans(false); setPlanError(""); }}
               className="absolute top-5 right-5 text-white/40 hover:text-white p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
             >
               <FaTimes size={14} />
@@ -846,10 +932,18 @@ function CopyTradingView({ isAdmin = false }) {
                 Select Your Copy Trading Plan
               </h2>
               <p className="text-white/40 text-xs md:text-sm">
-                Each plan requires a <span className="text-white/70 font-semibold">monthly subscription fee</span> plus a{" "}
+                Each plan requires a{" "}
+                <span className="text-white/70 font-semibold">monthly subscription fee</span> plus a{" "}
                 <span className="text-white/70 font-semibold">minimum account deposit</span> to activate copy trading.
               </p>
             </div>
+
+            {/* Error message */}
+            {planError && (
+              <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/25 rounded-xl px-4 py-3 text-xs text-red-400">
+                <FaTimesCircle className="shrink-0" /> {planError}
+              </div>
+            )}
 
             {/* Deposit info strip */}
             <div className="flex flex-col sm:flex-row gap-3">
@@ -913,27 +1007,28 @@ function CopyTradingView({ isAdmin = false }) {
                     </ul>
                   </div>
 
+                  {/* ── FIX: call API instead of just setting local state ── */}
                   <button
-                    onClick={() => {
-                      setHasActivePlan(true);
-                      setActivePlanName(plan.name);
-                      setShowPlans(false);
-                    }}
-                    className={`w-full mt-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-150 flex items-center justify-center gap-2 ${
+                    onClick={() => handleSubscribe(plan)}
+                    disabled={subscribing}
+                    className={`w-full mt-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-150 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
                       plan.popular
                         ? "bg-[#c45a45] hover:bg-[#d06a55] text-white shadow-md shadow-[#c45a45]/20"
                         : "bg-white/5 border border-white/10 text-white hover:bg-white/10"
                     }`}
                   >
-                    <FaWallet className="text-[10px]" />
-                    Pay & Activate {plan.name}
+                    {subscribing ? (
+                      <><FaSyncAlt className="animate-spin text-[10px]" /> Submitting…</>
+                    ) : (
+                      <><FaWallet className="text-[10px]" /> Request {plan.name} Plan</>
+                    )}
                   </button>
                 </div>
               ))}
             </div>
 
             <p className="text-center text-white/20 text-[10px]">
-              By activating a plan, your subscription fee is charged immediately and your minimum deposit is allocated to your trading account. All deposits are subject to our Terms of Service.
+              Your subscription request will be reviewed by an admin. Traders unlock once your plan is approved.
             </p>
           </div>
         </div>
@@ -943,7 +1038,7 @@ function CopyTradingView({ isAdmin = false }) {
 }
 
 /* ─────────────────────────────────────────
-   ADMIN WRAPPER — tab-aware
+   ADMIN WRAPPER
 ───────────────────────────────────────── */
 function AdminCopyTradingView() {
   const [activeTab, setActiveTab] = useState("manage");
@@ -955,7 +1050,6 @@ function AdminCopyTradingView() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 mb-1">
@@ -971,7 +1065,6 @@ function AdminCopyTradingView() {
           </p>
         </div>
 
-        {/* Tab Toggle */}
         <div className="flex gap-1.5 bg-[#0f0e0e] border border-white/8 rounded-xl p-1 self-start md:self-center">
           {tabs.map((tab) => (
             <button
@@ -1022,7 +1115,7 @@ function UserCopyTradingView() {
    ROOT
 ───────────────────────────────────────── */
 function CopyTrading() {
-  const role = localStorage.getItem("role");
+  const role    = localStorage.getItem("role");
   const isAdmin = role === "admin";
 
   return (
