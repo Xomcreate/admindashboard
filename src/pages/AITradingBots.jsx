@@ -63,47 +63,136 @@ const bots = [
   },
 ];
 
-const plans = [
-  {
-    name: "Starter", price: "$49", deposit: "$500", period: "/mo",
-    description: "Run entry-level algorithmic instances under basic configurations.",
-    features: [
-      "Deploy up to 2 concurrent Starter bots",
-      "Maximum runtime cap of 40 hours/wk",
-      "Standard trading signals execution",
-      "Weekly performance email log",
-      "Min. deposit: $500",
-    ],
-    popular: false, depositAmount: 500,
-    unlockedTiers: ["Starter"],
-  },
-  {
-    name: "Pro", price: "$149", deposit: "$2,000", period: "/mo",
-    description: "Optimized for systematic algorithmic traders running continuous strategies.",
-    features: [
-      "Deploy up to 5 Pro & Starter level bots",
-      "True 24/7 perpetual uptime hosting",
-      "Advanced ML trend-matching modules",
-      "Custom balance drawdown safeguard controls",
-      "Min. deposit: $2,000",
-    ],
-    popular: true, depositAmount: 2000,
-    unlockedTiers: ["Starter", "Pro"],
-  },
-  {
-    name: "Institutional", price: "$499", deposit: "$10,000", period: "/mo",
-    description: "Full cluster execution capability with sub-millisecond liquidity routing.",
-    features: [
-      "Run unlimited active bot nodes seamlessly",
-      "Unlock exclusive high-yield Arbitrage matrix",
-      "Raw webhooks integration pipeline",
-      "Assigned risk manager portfolio reviews",
-      "Min. deposit: $10,000",
-    ],
-    popular: false, depositAmount: 10000,
-    unlockedTiers: ["Starter", "Pro", "Institutional"],
-  },
-];
+/* ─────────────────────────────────────────
+   BILLING PERIODS & PLANS
+───────────────────────────────────────── */
+const BILLING_PERIODS = ["weekly", "monthly", "yearly"];
+
+const PLAN_FEATURES = {
+  Starter: [
+    "Deploy up to 2 concurrent Starter bots",
+    "Maximum runtime cap of 40 hours/wk",
+    "Standard trading signals execution",
+    "Weekly performance email log",
+    "Min. deposit: $500",
+  ],
+  Pro: [
+    "Deploy up to 5 Pro & Starter level bots",
+    "True 24/7 perpetual uptime hosting",
+    "Advanced ML trend-matching modules",
+    "Custom balance drawdown safeguard controls",
+    "Min. deposit: $2,000",
+  ],
+  Institutional: [
+    "Run unlimited active bot nodes seamlessly",
+    "Unlock exclusive high-yield Arbitrage matrix",
+    "Raw webhooks integration pipeline",
+    "Assigned risk manager portfolio reviews",
+    "Min. deposit: $10,000",
+  ],
+};
+
+const PLANS_BY_PERIOD = {
+  weekly: [
+    {
+      name: "Starter",
+      price: "$15", priceNum: 15,
+      deposit: "$500", depositAmount: 500,
+      period: "/wk", billingPeriod: "weekly",
+      description: "Run entry-level algorithmic instances under basic configurations.",
+      features: PLAN_FEATURES.Starter,
+      popular: false,
+      unlockedTiers: ["Starter"],
+    },
+    {
+      name: "Pro",
+      price: "$40", priceNum: 40,
+      deposit: "$2,000", depositAmount: 2000,
+      period: "/wk", billingPeriod: "weekly",
+      description: "Optimized for systematic algorithmic traders running continuous strategies.",
+      features: PLAN_FEATURES.Pro,
+      popular: true,
+      unlockedTiers: ["Starter", "Pro"],
+    },
+    {
+      name: "Institutional",
+      price: "$130", priceNum: 130,
+      deposit: "$10,000", depositAmount: 10000,
+      period: "/wk", billingPeriod: "weekly",
+      description: "Full cluster execution capability with sub-millisecond liquidity routing.",
+      features: PLAN_FEATURES.Institutional,
+      popular: false,
+      unlockedTiers: ["Starter", "Pro", "Institutional"],
+    },
+  ],
+  monthly: [
+    {
+      name: "Starter",
+      price: "$49", priceNum: 49,
+      deposit: "$500", depositAmount: 500,
+      period: "/mo", billingPeriod: "monthly",
+      description: "Run entry-level algorithmic instances under basic configurations.",
+      features: PLAN_FEATURES.Starter,
+      popular: false,
+      unlockedTiers: ["Starter"],
+    },
+    {
+      name: "Pro",
+      price: "$149", priceNum: 149,
+      deposit: "$2,000", depositAmount: 2000,
+      period: "/mo", billingPeriod: "monthly",
+      description: "Optimized for systematic algorithmic traders running continuous strategies.",
+      features: PLAN_FEATURES.Pro,
+      popular: true,
+      unlockedTiers: ["Starter", "Pro"],
+    },
+    {
+      name: "Institutional",
+      price: "$499", priceNum: 499,
+      deposit: "$10,000", depositAmount: 10000,
+      period: "/mo", billingPeriod: "monthly",
+      description: "Full cluster execution capability with sub-millisecond liquidity routing.",
+      features: PLAN_FEATURES.Institutional,
+      popular: false,
+      unlockedTiers: ["Starter", "Pro", "Institutional"],
+    },
+  ],
+  yearly: [
+    {
+      name: "Starter",
+      price: "$410", priceNum: 410,
+      deposit: "$500", depositAmount: 500,
+      period: "/yr", billingPeriod: "yearly",
+      description: "Run entry-level algorithmic instances under basic configurations.",
+      features: PLAN_FEATURES.Starter,
+      popular: false,
+      unlockedTiers: ["Starter"],
+      savings: "Save 30%",
+    },
+    {
+      name: "Pro",
+      price: "$1,250", priceNum: 1250,
+      deposit: "$2,000", depositAmount: 2000,
+      period: "/yr", billingPeriod: "yearly",
+      description: "Optimized for systematic algorithmic traders running continuous strategies.",
+      features: PLAN_FEATURES.Pro,
+      popular: true,
+      unlockedTiers: ["Starter", "Pro"],
+      savings: "Save 30%",
+    },
+    {
+      name: "Institutional",
+      price: "$4,190", priceNum: 4190,
+      deposit: "$10,000", depositAmount: 10000,
+      period: "/yr", billingPeriod: "yearly",
+      description: "Full cluster execution capability with sub-millisecond liquidity routing.",
+      features: PLAN_FEATURES.Institutional,
+      popular: false,
+      unlockedTiers: ["Starter", "Pro", "Institutional"],
+      savings: "Save 30%",
+    },
+  ],
+};
 
 /* ─────────────────────────────────────────
    HELPERS
@@ -129,6 +218,23 @@ const resolveUserEmail = (sub) => {
   return "";
 };
 
+// FIX 4: Robust error message extractor — handles all DRF error shapes
+const extractErrorMessage = (err) => {
+  const data = err?.response?.data;
+  if (!data) return "Something went wrong. Please try again.";
+  // DRF ValidationError from perform_create raises as {"detail": "..."} or as a list
+  if (typeof data === "string") return data;
+  if (data.detail) return data.detail;
+  if (data.non_field_errors) return Array.isArray(data.non_field_errors) ? data.non_field_errors[0] : data.non_field_errors;
+  // DRF serializer field errors: { plan: ["..."], billing_period: ["..."] }
+  const firstKey = Object.keys(data)[0];
+  if (firstKey) {
+    const val = data[firstKey];
+    return `${firstKey}: ${Array.isArray(val) ? val[0] : val}`;
+  }
+  return "Subscription request failed. Please try again.";
+};
+
 const riskBg = {
   Low:    "bg-emerald-400/10 border-emerald-400/20 text-emerald-400",
   Medium: "bg-amber-400/10  border-amber-400/20  text-amber-400",
@@ -139,6 +245,12 @@ const planBadgeColor = {
   Starter:       "bg-white/8 border-white/15 text-white/60",
   Pro:           "bg-[#c45a45]/10 border-[#c45a45]/25 text-[#e07060]",
   Institutional: "bg-[#9b6ab5]/10 border-[#9b6ab5]/25 text-[#b88fd4]",
+};
+
+const periodBadgeColor = {
+  weekly:  "bg-blue-400/10 border-blue-400/20 text-blue-300",
+  monthly: "bg-white/8 border-white/15 text-white/50",
+  yearly:  "bg-emerald-400/10 border-emerald-400/20 text-emerald-400",
 };
 
 const statusStyle = {
@@ -155,6 +267,23 @@ const StatusBadge = ({ status }) => (
     {status}
   </span>
 );
+
+/* ─────────────────────────────────────────
+   TOAST (replaces alert())
+───────────────────────────────────────── */
+function Toast({ toast }) {
+  if (!toast) return null;
+  return (
+    <div className={`fixed top-5 right-5 z-999 flex items-start gap-2.5 px-4 py-3 rounded-xl border text-xs font-semibold shadow-2xl max-w-sm ${
+      toast.type === "error"
+        ? "bg-red-500/10 border-red-500/25 text-red-400"
+        : "bg-emerald-500/10 border-emerald-500/25 text-emerald-400"
+    }`}>
+      {toast.type === "error" ? <FaTimesCircle className="shrink-0 mt-0.5" /> : <FaCheckCircle className="shrink-0 mt-0.5" />}
+      <span className="leading-relaxed">{toast.msg}</span>
+    </div>
+  );
+}
 
 /* ─────────────────────────────────────────
    CONFIRM MODAL
@@ -226,7 +355,7 @@ function AdminManageBots() {
       );
       showToast(`Subscription for ${resolveUserName(sub)} approved.`);
     } catch (err) {
-      showToast(err.response?.data?.detail || "Approval failed.", "error");
+      showToast(extractErrorMessage(err), "error");
     } finally {
       setActionLoading(null);
       setConfirmModal({ open: false, type: null, sub: null });
@@ -242,7 +371,7 @@ function AdminManageBots() {
       );
       showToast(`Subscription declined.`, "error");
     } catch (err) {
-      showToast(err.response?.data?.detail || "Decline failed.", "error");
+      showToast(extractErrorMessage(err), "error");
     } finally {
       setActionLoading(null);
       setConfirmModal({ open: false, type: null, sub: null });
@@ -256,7 +385,7 @@ function AdminManageBots() {
       setSubscriptions((prev) => prev.filter((s) => s.id !== sub.id));
       showToast(`Subscription record deleted.`, "error");
     } catch (err) {
-      showToast(err.response?.data?.detail || "Delete failed.", "error");
+      showToast(extractErrorMessage(err), "error");
     } finally {
       setActionLoading(null);
       setConfirmModal({ open: false, type: null, sub: null });
@@ -286,15 +415,24 @@ function AdminManageBots() {
     return matchSearch && matchStatus;
   });
 
+  const toMonthlyEquivalent = (sub) => {
+    const bp = sub.billing_period || "monthly";
+    const allPeriodPlans = Object.values(PLANS_BY_PERIOD).flat();
+    const match = allPeriodPlans.find((p) => p.name === sub.plan && p.billingPeriod === bp);
+    if (!match) return 0;
+    if (bp === "weekly")  return match.priceNum * 4.33;
+    if (bp === "yearly")  return match.priceNum / 12;
+    return match.priceNum;
+  };
+
   const totals = {
     all:      subscriptions.length,
     pending:  subscriptions.filter((s) => !s.approved && s.status !== "Declined").length,
     approved: subscriptions.filter((s) => s.approved).length,
     declined: subscriptions.filter((s) => s.status === "Declined").length,
-    revenue:  subscriptions.filter((s) => s.approved).reduce((acc, s) => {
-      const p = plans.find((pl) => pl.name === s.plan);
-      return acc + (p ? parseInt(p.price.replace("$", "")) : 0);
-    }, 0),
+    mrr: Math.round(
+      subscriptions.filter((s) => s.approved).reduce((acc, s) => acc + toMonthlyEquivalent(s), 0)
+    ),
   };
 
   const confirmConfig = {
@@ -320,25 +458,16 @@ function AdminManageBots() {
 
   return (
     <div className="space-y-6">
-      {toast && (
-        <div className={`fixed top-5 right-5 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl border text-xs font-semibold shadow-2xl ${
-          toast.type === "error"
-            ? "bg-red-500/10 border-red-500/25 text-red-400"
-            : "bg-emerald-500/10 border-emerald-500/25 text-emerald-400"
-        }`}>
-          {toast.type === "error" ? <FaTimesCircle /> : <FaCheckCircle />}
-          {toast.msg}
-        </div>
-      )}
+      <Toast toast={toast} />
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
-          { label: "Total",    value: totals.all,           icon: <FaRobot />,       accent: false },
-          { label: "Pending",  value: totals.pending,       icon: <FaClock />,       accent: false, highlight: "text-amber-400" },
-          { label: "Approved", value: totals.approved,      icon: <FaCheckCircle />, accent: false, highlight: "text-emerald-400" },
-          { label: "Declined", value: totals.declined,      icon: <FaTimesCircle />, accent: false, highlight: "text-red-400" },
-          { label: "MRR",      value: `$${totals.revenue}`, icon: <FaMoneyBillWave />, accent: true },
+          { label: "Total",    value: totals.all,          icon: <FaRobot />,        accent: false },
+          { label: "Pending",  value: totals.pending,      icon: <FaClock />,        accent: false, highlight: "text-amber-400" },
+          { label: "Approved", value: totals.approved,     icon: <FaCheckCircle />,  accent: false, highlight: "text-emerald-400" },
+          { label: "Declined", value: totals.declined,     icon: <FaTimesCircle />,  accent: false, highlight: "text-red-400" },
+          { label: "Est. MRR", value: `$${totals.mrr.toLocaleString()}`, icon: <FaMoneyBillWave />, accent: true },
         ].map((s) => (
           <div key={s.label} className={`bg-[#0f0e0e] border rounded-xl px-4 py-3.5 flex items-center gap-3 ${
             s.accent ? "border-[#c45a45]/20 shadow-[#c45a45]/5 shadow-lg" : "border-white/[0.07]"
@@ -413,6 +542,7 @@ function AdminManageBots() {
                 <tr className="border-b border-white/5 text-white/25 text-[10px] uppercase tracking-widest font-semibold">
                   <th className="px-5 py-3.5 text-left">User</th>
                   <th className="px-5 py-3.5 text-left">Plan</th>
+                  <th className="px-5 py-3.5 text-left">Billing</th>
                   <th className="px-5 py-3.5 text-right">Deposit Req.</th>
                   <th className="px-5 py-3.5 text-center">Status</th>
                   <th className="px-5 py-3.5 text-center">Date</th>
@@ -423,7 +553,9 @@ function AdminManageBots() {
                 {filtered.map((sub) => {
                   const isLoading = (k) => actionLoading === `${k}-${sub.id}`;
                   const status    = sub.approved ? "Approved" : sub.status === "Declined" ? "Declined" : "Pending";
-                  const planInfo  = plans.find((p) => p.name === sub.plan);
+                  const bp        = sub.billing_period || "monthly";
+                  const planInfo  = PLANS_BY_PERIOD[bp]?.find((p) => p.name === sub.plan)
+                                 || PLANS_BY_PERIOD.monthly.find((p) => p.name === sub.plan);
                   return (
                     <tr key={sub.id} className="border-b border-white/4 hover:bg-white/2 transition-colors">
                       <td className="px-5 py-4">
@@ -435,6 +567,11 @@ function AdminManageBots() {
                       <td className="px-5 py-4">
                         <span className={`inline-flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-lg border font-semibold ${planBadgeColor[sub.plan] || planBadgeColor.Starter}`}>
                           <FaRobot className="text-[9px]" /> {sub.plan || "—"} Plan
+                        </span>
+                      </td>
+                      <td className="px-5 py-4">
+                        <span className={`inline-flex items-center text-[10px] px-2 py-0.5 rounded-md border font-semibold capitalize ${periodBadgeColor[bp] || periodBadgeColor.monthly}`}>
+                          {bp}
                         </span>
                       </td>
                       <td className="px-5 py-4 text-right">
@@ -501,7 +638,7 @@ function AdminManageBots() {
 }
 
 /* ─────────────────────────────────────────
-   BOT CARD (used in user + admin trade tab)
+   BOT CARD
 ───────────────────────────────────────── */
 function BotCard({ bot, onToggle, hasActivePlan }) {
   return (
@@ -614,26 +751,85 @@ function BotCard({ bot, onToggle, hasActivePlan }) {
 }
 
 /* ─────────────────────────────────────────
+   BILLING PERIOD TOGGLE
+───────────────────────────────────────── */
+function BillingToggle({ value, onChange }) {
+  return (
+    <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-xl p-1">
+      {BILLING_PERIODS.map((p) => (
+        <button
+          key={p}
+          onClick={() => onChange(p)}
+          className={`relative px-4 py-2 rounded-lg text-xs font-semibold capitalize transition-all ${
+            value === p
+              ? "bg-[#c45a45]/15 border border-[#c45a45]/30 text-white"
+              : "text-white/35 hover:text-white/60 border border-transparent"
+          }`}
+        >
+          {p}
+          {p === "yearly" && (
+            <span className="absolute -top-2.5 -right-1 text-[8px] font-bold bg-emerald-500 text-white px-1.5 py-0.5 rounded-full leading-none">
+              −30%
+            </span>
+          )}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────
    SHARED BOT TRADING VIEW
-   (used by both User and Admin "Trade" tab)
 ───────────────────────────────────────── */
 function BotTradingView({ isAdmin = false }) {
-  const navigate = useNavigate();
-  const [botList,         setBotList]         = useState(bots);
-  const [activeTab,       setActiveTab]       = useState("All");
-  const [showPlans,       setShowPlans]       = useState(false);
-  // Admin bypasses subscription gate
-  const [hasActivePlan,   setHasActivePlan]   = useState(isAdmin);
-  const [activePlanName,  setActivePlanName]  = useState(isAdmin ? "Admin" : null);
-  const [checkingBalance, setCheckingBalance] = useState(false);
-  const [pendingPlan,     setPendingPlan]     = useState(null);
+  const [botList,             setBotList]             = useState(bots);
+  const [activeTab,           setActiveTab]           = useState("All");
+  const [showPlans,           setShowPlans]           = useState(false);
+  const [billingPeriod,       setBillingPeriod]       = useState("monthly");
 
-  // Unlock all bots for admin
-  const displayBots = isAdmin
-    ? botList.map((b) => ({ ...b, locked: false }))
-    : botList;
+  const [hasActivePlan,       setHasActivePlan]       = useState(isAdmin);
+  const [activePlanName,      setActivePlanName]      = useState(isAdmin ? "Admin" : null);
+  const [activeBillingPeriod, setActiveBillingPeriod] = useState(null);
+  const [pendingSub,          setPendingSub]          = useState(null);
+  const [subLoading,          setSubLoading]          = useState(!isAdmin);
+  const [submitLoading,       setSubmitLoading]       = useState(false);
+  const [pendingPlan,         setPendingPlan]         = useState(null);
 
+  // FIX 5: Global toast state for the trading view (replaces alert())
+  const [toast, setToast] = useState(null);
+  const showToast = (msg, type = "success") => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 5000);
+  };
+
+  const plans = PLANS_BY_PERIOD[billingPeriod];
+  const displayBots = isAdmin ? botList.map((b) => ({ ...b, locked: false })) : botList;
   const tabs = ["All", "Running", "Idle", "My Bots"];
+  const activeCount = displayBots.filter((b) => b.active).length;
+
+  useEffect(() => {
+    if (isAdmin) return;
+    const fetchActiveSub = async () => {
+      try {
+        const res = await API.get("bot-subscriptions/my-active/");
+        const data = res.data;
+        if (data.has_active_plan) {
+          setHasActivePlan(true);
+          setActivePlanName(data.plan);
+          setActiveBillingPeriod(data.billing_period);
+          setPendingSub(null);
+        } else if (data.pending) {
+          setPendingSub(data.pending);
+        }
+      } catch (err) {
+        // 404 or network error — no subscription yet
+        console.warn("Could not fetch bot subscription status:", err?.response?.status);
+      } finally {
+        setSubLoading(false);
+      }
+    };
+    fetchActiveSub();
+  }, [isAdmin]);
 
   const handleBotAction = (bot) => {
     if (!hasActivePlan) { setShowPlans(true); return; }
@@ -644,39 +840,45 @@ function BotTradingView({ isAdmin = false }) {
     );
   };
 
+  // FIX 6: Full error handling with toast instead of alert()
   const handleSelectPlan = async (plan) => {
-    setCheckingBalance(true);
+    setSubmitLoading(true);
     setPendingPlan(plan);
     try {
-      const res = await API.get("user-dashboard/");
-      const walletBalance = parseFloat(res.data?.profile?.wallet_balance || 0);
+      await API.post("bot-subscriptions/", {
+        plan: plan.name,
+        billing_period: plan.billingPeriod,
+      });
       setShowPlans(false);
-      if (walletBalance >= plan.depositAmount) {
-        setHasActivePlan(true);
-        setActivePlanName(plan.name);
-        alert(`✅ "${plan.name}" plan activated using your existing balance ($${walletBalance.toFixed(2)})!`);
-      } else {
-        const shortfall = plan.depositAmount - walletBalance;
-        navigate("/fund-account", {
-          state: {
-            fromPlan: true, planName: plan.name, planPrice: plan.price,
-            minDeposit: plan.depositAmount, shortfall, currentBalance: walletBalance,
-            returnTo: "/ai-trading-bots",
-          },
-        });
+
+      // Re-fetch subscription state from server
+      try {
+        const res = await API.get("bot-subscriptions/my-active/");
+        const data = res.data;
+        if (data.has_active_plan) {
+          setHasActivePlan(true);
+          setActivePlanName(data.plan);
+          setActiveBillingPeriod(data.billing_period);
+          setPendingSub(null);
+          showToast(`${plan.name} plan request submitted! Awaiting admin approval.`);
+        } else if (data.pending) {
+          setPendingSub(data.pending);
+          showToast(`${plan.name} plan request submitted! Awaiting admin approval.`);
+        }
+      } catch (fetchErr) {
+        // POST succeeded but re-fetch failed — show generic success
+        showToast("Plan request submitted! Awaiting admin approval.");
       }
     } catch (err) {
-      setShowPlans(false);
-      navigate("/fund-account", {
-        state: { fromPlan: true, planName: plan.name, planPrice: plan.price, minDeposit: plan.depositAmount, returnTo: "/ai-trading-bots" },
-      });
+      // FIX 7: Use the robust error extractor instead of alert()
+      const msg = extractErrorMessage(err);
+      showToast(msg, "error");
     } finally {
-      setCheckingBalance(false);
+      setSubmitLoading(false);
       setPendingPlan(null);
     }
   };
 
-  const activeCount = displayBots.filter((b) => b.active).length;
   const filtered = displayBots.filter((b) => {
     if (activeTab === "Running") return b.active;
     if (activeTab === "Idle")    return !b.active && !b.locked;
@@ -684,8 +886,19 @@ function BotTradingView({ isAdmin = false }) {
     return true;
   });
 
+  if (subLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 gap-3">
+        <div className="w-8 h-8 rounded-full border-2 border-[#c45a45]/30 border-t-[#c45a45] animate-spin" />
+        <p className="text-white/30 text-sm">Checking subscription status…</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
+      <Toast toast={toast} />
+
       {/* Admin notice */}
       {isAdmin && (
         <div className="flex items-start gap-2.5 bg-[#c45a45]/5 border border-[#c45a45]/15 rounded-xl px-4 py-3 text-xs text-white/50">
@@ -696,14 +909,53 @@ function BotTradingView({ isAdmin = false }) {
         </div>
       )}
 
-      {/* Plan banner for non-subscribed user */}
-      {!hasActivePlan && !isAdmin && (
+      {/* Active plan badge */}
+      {hasActivePlan && !isAdmin && activePlanName && (
+        <div className="flex items-center gap-2.5 bg-emerald-400/8 border border-emerald-400/20 rounded-xl px-4 py-3">
+          <FaCheckCircle className="text-emerald-400 text-sm shrink-0" />
+          <div className="flex-1">
+            <p className="text-emerald-300 text-xs font-semibold">
+              {activePlanName} Plan Active
+              {activeBillingPeriod && (
+                <span className="ml-2 text-emerald-400/60 font-normal capitalize">· {activeBillingPeriod}</span>
+              )}
+            </p>
+            <p className="text-white/40 text-[11px] mt-0.5">Your bots are live and ready to deploy.</p>
+          </div>
+          <button
+            onClick={() => setShowPlans(true)}
+            className="text-[11px] text-emerald-400/70 hover:text-emerald-400 transition-colors underline underline-offset-2"
+          >
+            Change plan
+          </button>
+        </div>
+      )}
+
+      {/* Pending approval banner */}
+      {!hasActivePlan && pendingSub && !isAdmin && (
+        <div className="flex items-start gap-3 bg-blue-400/8 border border-blue-400/20 rounded-xl px-4 py-3.5">
+          <FaClock className="text-blue-400 text-sm shrink-0 mt-0.5" />
+          <div>
+            <p className="text-blue-300 text-xs font-semibold">Subscription Pending Admin Approval</p>
+            <p className="text-white/40 text-[11px] mt-0.5">
+              Your{" "}
+              <span className="text-white/60 font-medium capitalize">
+                {pendingSub.plan} ({pendingSub.billing_period})
+              </span>{" "}
+              plan request is being reviewed. Bots will unlock once approved.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* No subscription — prompt to subscribe */}
+      {!hasActivePlan && !pendingSub && !isAdmin && (
         <div className="flex items-start gap-3 bg-amber-400/8 border border-amber-400/20 rounded-xl px-4 py-3.5">
           <FaInfoCircle className="text-amber-400 text-sm shrink-0 mt-0.5" />
           <div>
             <p className="text-amber-300 text-xs font-semibold">Deposit Required to Activate AI Bots</p>
             <p className="text-white/40 text-[11px] mt-0.5">
-              Plans start at <span className="text-white/60 font-medium">$49/mo + $500 min. deposit</span>.
+              Plans start at <span className="text-white/60 font-medium">$15/wk · $49/mo · $410/yr</span> + min. deposit.
             </p>
             <button
               onClick={() => setShowPlans(true)}
@@ -781,71 +1033,118 @@ function BotTradingView({ isAdmin = false }) {
             >
               <FaTimes size={14} />
             </button>
+
             <div className="text-center max-w-xl mx-auto space-y-2">
               <span className="text-[10px] uppercase font-bold tracking-widest text-[#c45a45] bg-[#c45a45]/10 px-2.5 py-1 rounded-md">
-                Subscription + Deposit Required
+                Subscription Required
               </span>
               <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight">AI Bot Compute Plans</h2>
               <p className="text-white/40 text-xs md:text-sm">
-                If your wallet balance already meets the minimum deposit, activation is instant.
+                Your request is reviewed by admin. Bots unlock instantly once approved.
               </p>
             </div>
+
+            <div className="flex justify-center">
+              <BillingToggle value={billingPeriod} onChange={setBillingPeriod} />
+            </div>
+
+            <p className="text-center text-white/25 text-[11px] -mt-2">
+              {billingPeriod === "weekly"  && "Billed every 7 days. Cancel anytime."}
+              {billingPeriod === "monthly" && "Billed once per month. Cancel anytime."}
+              {billingPeriod === "yearly"  && "Billed annually. Save ~30% vs monthly pricing."}
+            </p>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-2">
-              {plans.map((plan) => (
-                <div
-                  key={plan.name}
-                  className={`relative rounded-xl p-5 border flex flex-col justify-between transition-all duration-300 ${
-                    plan.popular
-                      ? "bg-[#1c1818] border-[#c45a45]/40 shadow-xl shadow-[#c45a45]/5"
-                      : "bg-[#0f0e0e] border-white/6 hover:border-white/15"
-                  }`}
-                >
-                  {plan.popular && (
-                    <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[9px] font-bold uppercase tracking-wider bg-[#c45a45] text-white px-2.5 py-0.5 rounded-full shadow-md">
-                      Most Popular
-                    </span>
-                  )}
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="text-base font-bold text-slate-100">{plan.name} Plan</h3>
-                      <p className="text-white/30 text-[11px] mt-1 leading-snug">{plan.description}</p>
-                    </div>
-                    <div className="bg-white/3 border border-white/6 rounded-xl p-3 space-y-2">
-                      <div className="flex items-baseline justify-between">
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-2xl font-black text-white tracking-tight">{plan.price}</span>
-                          <span className="text-white/40 text-xs font-medium">{plan.period}</span>
-                        </div>
-                        <span className="text-[10px] text-white/30 uppercase tracking-wide">Subscription</span>
-                      </div>
-                      <div className="border-t border-white/6 pt-2 flex items-center justify-between">
-                        <span className="text-[10px] text-white/40 uppercase tracking-wide">Min. Deposit</span>
-                        <span className="text-emerald-400 font-bold text-sm">{plan.deposit}</span>
-                      </div>
-                    </div>
-                    <ul className="space-y-2.5 pt-1">
-                      {plan.features.map((feat) => (
-                        <li key={feat} className="flex items-start gap-2 text-[11px] text-slate-300">
-                          <FaCheckCircle className="text-emerald-400 mt-0.5 shrink-0 text-[10px]" />
-                          <span>{feat}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <button
-                    onClick={() => handleSelectPlan(plan)}
-                    disabled={checkingBalance && pendingPlan?.name === plan.name}
-                    className={`w-full mt-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-150 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-wait ${
+              {plans.map((plan) => {
+                const isSubmitting = submitLoading && pendingPlan?.name === plan.name;
+                return (
+                  <div
+                    key={plan.name}
+                    className={`relative rounded-xl p-5 border flex flex-col justify-between transition-all duration-300 ${
                       plan.popular
-                        ? "bg-[#c45a45] hover:bg-[#d06a55] text-white shadow-md shadow-[#c45a45]/20"
-                        : "bg-white/5 border border-white/10 text-white hover:bg-white/10"
+                        ? "bg-[#1c1818] border-[#c45a45]/40 shadow-xl shadow-[#c45a45]/5"
+                        : "bg-[#0f0e0e] border-white/6 hover:border-white/15"
                     }`}
                   >
-                    <FaWallet className="text-[10px]" />
-                    {checkingBalance && pendingPlan?.name === plan.name ? "Checking balance…" : `Deploy ${plan.name} Node`}
+                    {plan.popular && (
+                      <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[9px] font-bold uppercase tracking-wider bg-[#c45a45] text-white px-2.5 py-0.5 rounded-full shadow-md whitespace-nowrap">
+                        Most Popular
+                      </span>
+                    )}
+                    {billingPeriod === "yearly" && (
+                      <span className="absolute -top-2.5 right-4 text-[9px] font-bold uppercase tracking-wider bg-emerald-500 text-white px-2 py-0.5 rounded-full shadow-md whitespace-nowrap">
+                        Save 30%
+                      </span>
+                    )}
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="text-base font-bold text-slate-100">{plan.name} Plan</h3>
+                        <p className="text-white/30 text-[11px] mt-1 leading-snug">{plan.description}</p>
+                      </div>
+                      <div className="bg-white/3 border border-white/6 rounded-xl p-3 space-y-2">
+                        <div className="flex items-baseline justify-between">
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-2xl font-black text-white tracking-tight">{plan.price}</span>
+                            <span className="text-white/40 text-xs font-medium">{plan.period}</span>
+                          </div>
+                          <span className={`text-[10px] px-2 py-0.5 rounded-md border font-semibold capitalize ${periodBadgeColor[billingPeriod]}`}>
+                            {billingPeriod}
+                          </span>
+                        </div>
+                        <div className="border-t border-white/6 pt-2 flex items-center justify-between">
+                          <span className="text-[10px] text-white/40 uppercase tracking-wide">Min. Deposit</span>
+                          <span className="text-emerald-400 font-bold text-sm">{plan.deposit}</span>
+                        </div>
+                      </div>
+                      <ul className="space-y-2.5 pt-1">
+                        {plan.features.map((feat) => (
+                          <li key={feat} className="flex items-start gap-2 text-[11px] text-slate-300">
+                            <FaCheckCircle className="text-emerald-400 mt-0.5 shrink-0 text-[10px]" />
+                            <span>{feat}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <button
+                      onClick={() => handleSelectPlan(plan)}
+                      disabled={submitLoading}
+                      className={`w-full mt-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-150 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-wait ${
+                        plan.popular
+                          ? "bg-[#c45a45] hover:bg-[#d06a55] text-white shadow-md shadow-[#c45a45]/20"
+                          : "bg-white/5 border border-white/10 text-white hover:bg-white/10"
+                      }`}
+                    >
+                      <FaWallet className="text-[10px]" />
+                      {isSubmitting ? "Submitting…" : `Request ${plan.name} Plan`}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="border-t border-white/5 pt-4">
+              <p className="text-center text-white/20 text-[10px] uppercase tracking-widest mb-3">Price comparison</p>
+              <div className="grid grid-cols-3 gap-3">
+                {BILLING_PERIODS.map((bp) => (
+                  <button
+                    key={bp}
+                    onClick={() => setBillingPeriod(bp)}
+                    className={`rounded-xl border p-3 text-center transition-all ${
+                      billingPeriod === bp
+                        ? "border-[#c45a45]/30 bg-[#c45a45]/8"
+                        : "border-white/5 bg-white/2 hover:border-white/15"
+                    }`}
+                  >
+                    <p className={`text-[10px] tracking-wider font-semibold mb-1.5 capitalize ${billingPeriod === bp ? "text-white/60" : "text-white/25"}`}>{bp}</p>
+                    {PLANS_BY_PERIOD[bp].map((p) => (
+                      <div key={p.name} className="flex items-center justify-between text-[10px] py-0.5">
+                        <span className="text-white/30">{p.name}</span>
+                        <span className={`font-semibold ${billingPeriod === bp ? "text-white/70" : "text-white/25"}`}>{p.price}<span className="text-white/25 font-normal">{p.period}</span></span>
+                      </div>
+                    ))}
                   </button>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -855,7 +1154,7 @@ function BotTradingView({ isAdmin = false }) {
 }
 
 /* ─────────────────────────────────────────
-   ADMIN WRAPPER — tab-aware
+   ADMIN WRAPPER
 ───────────────────────────────────────── */
 function AdminBotsView() {
   const [activeTab, setActiveTab] = useState("manage");
@@ -867,7 +1166,6 @@ function AdminBotsView() {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 mb-1">
@@ -882,8 +1180,6 @@ function AdminBotsView() {
               : "Deploy and control bots directly as admin."}
           </p>
         </div>
-
-        {/* Tab Toggle */}
         <div className="flex gap-1.5 bg-[#0f0e0e] border border-white/8 rounded-xl p-1 self-start md:self-center">
           {tabs.map((tab) => (
             <button
@@ -900,7 +1196,6 @@ function AdminBotsView() {
           ))}
         </div>
       </div>
-
       {activeTab === "manage" ? <AdminManageBots /> : <BotTradingView isAdmin={true} />}
     </div>
   );

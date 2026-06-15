@@ -216,8 +216,8 @@ const SparklineSVG = ({ data, color }) => {
     y: parseFloat((H-((v-min)/range)*(H-6)-3).toFixed(1)),
   }));
   const polyline = pts.map(p => `${p.x},${p.y}`).join(" ");
-  const polygon = `${polyline} ${W},${H} 0,${H}`;
-  const last = pts[pts.length-1];
+  const polygon  = `${polyline} ${W},${H} 0,${H}`;
+  const last     = pts[pts.length-1];
   return (
     <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="w-full h-11">
       <polygon points={polygon} fill={color} opacity="0.08" />
@@ -323,11 +323,11 @@ const AssetCard = ({ asset, onClick }) => {
    BYBIT-STYLE CHART MODAL
    ════════════════════════════════════════ */
 const AssetChartModal = ({ asset: initialAsset, allAssets, onClose }) => {
-  const [asset, setAsset]         = useState(initialAsset);
-  const [rangeIdx, setRangeIdx]   = useState(0);
-  const [expanded, setExpanded]   = useState(false);
-  const [hoverIdx, setHoverIdx]   = useState(-1);
-  const [tooltip, setTooltip]     = useState(null);
+  const [asset, setAsset]       = useState(initialAsset);
+  const [rangeIdx, setRangeIdx] = useState(0);
+  const [expanded, setExpanded] = useState(false);
+  const [hoverIdx, setHoverIdx] = useState(-1);
+  const [tooltip, setTooltip]   = useState(null);
 
   const candleRef = useRef(null);
   const volRef    = useRef(null);
@@ -336,7 +336,7 @@ const AssetChartModal = ({ asset: initialAsset, allAssets, onClose }) => {
 
   const candles = useMemo(() => {
     const all = buildCandles(asset.history, 0.018);
-    const n = RANGES[rangeIdx];
+    const n   = RANGES[rangeIdx];
     return n ? all.slice(-n) : all;
   }, [asset, rangeIdx]);
 
@@ -349,7 +349,11 @@ const AssetChartModal = ({ asset: initialAsset, allAssets, onClose }) => {
   const rsiColor = lastRsi > 70 ? "#f6465d" : lastRsi < 30 ? "#0ecb81" : "#f0b90b";
 
   useEffect(() => { document.body.style.overflow = "hidden"; return () => { document.body.style.overflow = ""; }; }, []);
-  useEffect(() => { const h = e => { if (e.key === "Escape") onClose(); }; window.addEventListener("keydown", h); return () => window.removeEventListener("keydown", h); }, [onClose]);
+  useEffect(() => {
+    const h = e => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [onClose]);
 
   const dpr = () => window.devicePixelRatio || 1;
   function setupCtx(el, w, h) {
@@ -361,7 +365,7 @@ const AssetChartModal = ({ asset: initialAsset, allAssets, onClose }) => {
   const drawCharts = useCallback(() => {
     const chartsCol = wrapRef.current?.querySelector(".bybit-col");
     if (!chartsCol || !candleRef.current || !volRef.current || !rsiRef.current) return;
-    const W = chartsCol.clientWidth || 480;
+    const W    = chartsCol.clientWidth || 480;
     const mono = "'JetBrains Mono','Fira Code',monospace";
 
     const CW = W, CH = 220;
@@ -450,7 +454,7 @@ const AssetChartModal = ({ asset: initialAsset, allAssets, onClose }) => {
   const handleMouseMove = useCallback(e => {
     const el = candleRef.current; if (!el) return;
     const rect = el.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
+    const mx   = e.clientX - rect.left;
     const padL=64,padR=14, chartW=el.clientWidth-padL-padR, gap=chartW/candles.length;
     const i = Math.max(0, Math.min(candles.length-1, Math.floor((mx-padL)/gap)));
     if (i !== hoverIdx) setHoverIdx(i);
@@ -467,7 +471,7 @@ const AssetChartModal = ({ asset: initialAsset, allAssets, onClose }) => {
 
   const handleMouseLeave = useCallback(() => { setHoverIdx(-1); setTooltip(null); }, []);
 
-  const pos = asset.change >= 0;
+  const pos  = asset.change >= 0;
   const mono = "'JetBrains Mono','Fira Code',monospace";
 
   const statPills = [
@@ -498,6 +502,7 @@ const AssetChartModal = ({ asset: initialAsset, allAssets, onClose }) => {
           transition:"max-width 0.3s ease",
         }}
       >
+        {/* Asset tabs */}
         <div style={{display:"flex",gap:4,padding:"8px 14px",borderBottom:"1px solid rgba(255,255,255,0.06)",background:"#131720",overflowX:"auto",scrollbarWidth:"none"}}>
           {allAssets.map(a => (
             <button key={a.symbol}
@@ -518,6 +523,7 @@ const AssetChartModal = ({ asset: initialAsset, allAssets, onClose }) => {
           ))}
         </div>
 
+        {/* Header */}
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 16px",borderBottom:"1px solid rgba(255,255,255,0.06)",background:"#131720",flexWrap:"wrap",gap:10}}>
           <div style={{display:"flex",alignItems:"center",gap:12}}>
             <div style={{width:40,height:40,borderRadius:10,background:`${asset.color}18`,border:`1px solid ${asset.color}30`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:800,color:asset.color,letterSpacing:"0.04em"}}>
@@ -557,6 +563,7 @@ const AssetChartModal = ({ asset: initialAsset, allAssets, onClose }) => {
           </div>
         </div>
 
+        {/* Stat pills */}
         <div style={{display:"flex",gap:0,borderBottom:"1px solid rgba(255,255,255,0.05)",overflowX:"auto",scrollbarWidth:"none"}}>
           {statPills.map(s=>(
             <div key={s.label} style={{padding:"8px 14px",borderRight:"1px solid rgba(255,255,255,0.05)",minWidth:80,flexShrink:0}}>
@@ -566,6 +573,7 @@ const AssetChartModal = ({ asset: initialAsset, allAssets, onClose }) => {
           ))}
         </div>
 
+        {/* Charts + order book */}
         <div style={{display:"flex",flex:1,overflow:"hidden"}}>
           <div className="bybit-col" style={{flex:1,minWidth:0,display:"flex",flexDirection:"column",overflow:"hidden"}}>
             <div style={{position:"relative",borderBottom:"1px solid rgba(255,255,255,0.04)"}}>
@@ -610,6 +618,7 @@ const AssetChartModal = ({ asset: initialAsset, allAssets, onClose }) => {
             </div>
           </div>
 
+          {/* Order book */}
           <div style={{width:128,flexShrink:0,borderLeft:"1px solid rgba(255,255,255,0.06)",display:"flex",flexDirection:"column",background:"#0f1217",fontSize:10,fontFamily:mono}}>
             <div style={{fontSize:9,color:"rgba(255,255,255,0.25)",textTransform:"uppercase",letterSpacing:"0.1em",padding:"8px 10px 4px",borderBottom:"1px solid rgba(255,255,255,0.05)"}}>Order Book</div>
             <div style={{flex:1,overflow:"hidden"}}>
@@ -653,14 +662,11 @@ const AssetChartModal = ({ asset: initialAsset, allAssets, onClose }) => {
 };
 
 /* ════════════════════════════════════════
-   KYC VERIFY ACCOUNT COMPONENT
+   KYC COMPONENTS
    ════════════════════════════════════════ */
-
-/* ── Alert banner shown at top when unverified/rejected ── */
 const KYCAlertBanner = ({ status, onVerifyClick }) => {
   const [dismissed, setDismissed] = useState(false);
-  if (dismissed || status === "verified" || status === "pending") return null;
-
+  if (dismissed || status === "verified" || status === "approved" || status === "pending") return null;
   const isRejected = status === "rejected";
   return (
     <div className={`relative flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium ${
@@ -684,17 +690,13 @@ const KYCAlertBanner = ({ status, onVerifyClick }) => {
       >
         {isRejected ? "Resubmit" : "Verify Now"}
       </button>
-      <button
-        onClick={() => setDismissed(true)}
-        className="shrink-0 text-white/20 hover:text-white/50 transition-colors ml-1"
-      >
+      <button onClick={() => setDismissed(true)} className="shrink-0 text-white/20 hover:text-white/50 transition-colors ml-1">
         <FaTimes className="text-xs" />
       </button>
     </div>
   );
 };
 
-/* ── File upload slot ── */
 const UploadSlot = ({ label, icon, file, onChange, accept = "image/*,.pdf" }) => {
   const inputRef = useRef(null);
   return (
@@ -706,13 +708,7 @@ const UploadSlot = ({ label, icon, file, onChange, accept = "image/*,.pdf" }) =>
           : "border-[#2e2726] bg-[#121010] hover:border-[#c45a45]/40 hover:bg-[#c45a45]/5"
         }`}
     >
-      <input
-        ref={inputRef}
-        type="file"
-        accept={accept}
-        className="hidden"
-        onChange={e => onChange(e.target.files[0] || null)}
-      />
+      <input ref={inputRef} type="file" accept={accept} className="hidden" onChange={e => onChange(e.target.files[0] || null)} />
       {file ? (
         <>
           <FaCheckCircle className="text-emerald-400 text-xl" />
@@ -730,14 +726,13 @@ const UploadSlot = ({ label, icon, file, onChange, accept = "image/*,.pdf" }) =>
   );
 };
 
-/* ── Main KYC Card ── */
 const VerifyAccountCard = ({ kycStatus, onSubmitSuccess }) => {
-  const [idFront,  setIdFront]  = useState(null);
-  const [idBack,   setIdBack]   = useState(null);
-  const [selfie,   setSelfie]   = useState(null);
-  const [docType,  setDocType]  = useState("national_id");
+  const [idFront,    setIdFront]    = useState(null);
+  const [idBack,     setIdBack]     = useState(null);
+  const [selfie,     setSelfie]     = useState(null);
+  const [docType,    setDocType]    = useState("national_id");
   const [submitting, setSubmitting] = useState(false);
-  const [error,    setError]    = useState("");
+  const [error,      setError]      = useState("");
 
   const canSubmit = idFront && idBack && selfie && !submitting;
 
@@ -748,9 +743,9 @@ const VerifyAccountCard = ({ kycStatus, onSubmitSuccess }) => {
     try {
       const form = new FormData();
       form.append("document_type", docType);
-      form.append("id_front",  idFront);
-      form.append("id_back",   idBack);
-      form.append("selfie",    selfie);
+      form.append("id_front",      idFront);
+      form.append("id_back",       idBack);
+      form.append("selfie",        selfie);
       await API.post("kyc/submit/", form, {
         headers: { "Content-Type": "multipart/form-data" },
       });
@@ -762,8 +757,8 @@ const VerifyAccountCard = ({ kycStatus, onSubmitSuccess }) => {
     }
   };
 
-  /* ── Verified state ── */
-  if (kycStatus === "verified") {
+  /* ── Verified ── */
+  if (kycStatus === "verified" || kycStatus === "approved") {
     return (
       <div className="bg-[#1f1b1b] border border-emerald-500/25 rounded-2xl p-5 flex items-center gap-4">
         <div className="w-11 h-11 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0">
@@ -782,7 +777,7 @@ const VerifyAccountCard = ({ kycStatus, onSubmitSuccess }) => {
     );
   }
 
-  /* ── Pending state ── */
+  /* ── Pending ── */
   if (kycStatus === "pending") {
     return (
       <div className="bg-[#1f1b1b] border border-yellow-500/25 rounded-2xl p-5 flex items-center gap-4">
@@ -806,7 +801,6 @@ const VerifyAccountCard = ({ kycStatus, onSubmitSuccess }) => {
   const isRejected = kycStatus === "rejected";
   return (
     <div className="bg-[#1f1b1b] border border-[#2e2726] rounded-2xl overflow-hidden">
-      {/* Header */}
       <div className={`flex items-center justify-between px-5 py-4 border-b ${isRejected ? "border-red-500/20 bg-red-500/5" : "border-[#2e2726]"}`}>
         <div className="flex items-center gap-3">
           <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
@@ -825,7 +819,6 @@ const VerifyAccountCard = ({ kycStatus, onSubmitSuccess }) => {
             </p>
           </div>
         </div>
-        {/* What you unlock */}
         <div className="hidden sm:flex items-center gap-1.5 text-[10px] text-[#9e9593] bg-[#121010] border border-[#2e2726] rounded-lg px-3 py-2 shrink-0">
           <FaShieldAlt className="text-[#c45a45] text-[10px]" />
           Unlocks withdrawals & higher limits
@@ -833,14 +826,14 @@ const VerifyAccountCard = ({ kycStatus, onSubmitSuccess }) => {
       </div>
 
       <div className="p-5 space-y-5">
-        {/* Doc type selector */}
+        {/* Doc type */}
         <div>
           <p className="text-[11px] text-[#9e9593] uppercase tracking-widest mb-2">Document Type</p>
           <div className="flex gap-2 flex-wrap">
             {[
-              { value: "national_id",  label: "National ID"    },
-              { value: "passport",     label: "Passport"       },
-              { value: "drivers_license", label: "Driver's License" },
+              { value: "national_id",      label: "National ID"       },
+              { value: "passport",         label: "Passport"          },
+              { value: "drivers_license",  label: "Driver's License"  },
             ].map(opt => (
               <button
                 key={opt.value}
@@ -859,27 +852,12 @@ const VerifyAccountCard = ({ kycStatus, onSubmitSuccess }) => {
 
         {/* Upload slots */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <UploadSlot
-            label="ID Front"
-            icon={<FaIdCard />}
-            file={idFront}
-            onChange={setIdFront}
-          />
-          <UploadSlot
-            label="ID Back"
-            icon={<FaIdCard />}
-            file={idBack}
-            onChange={setIdBack}
-          />
-          <UploadSlot
-            label="Selfie with ID"
-            icon={<FaCamera />}
-            file={selfie}
-            onChange={setSelfie}
-          />
+          <UploadSlot label="ID Front"     icon={<FaIdCard />}  file={idFront} onChange={setIdFront} />
+          <UploadSlot label="ID Back"      icon={<FaIdCard />}  file={idBack}  onChange={setIdBack}  />
+          <UploadSlot label="Selfie with ID" icon={<FaCamera />} file={selfie}  onChange={setSelfie}  />
         </div>
 
-        {/* Progress indicator */}
+        {/* Progress bar */}
         <div className="flex items-center gap-2">
           {[idFront, idBack, selfie].map((f, i) => (
             <div key={i} className={`h-1 flex-1 rounded-full transition-all duration-300 ${f ? "bg-[#c45a45]" : "bg-[#2e2726]"}`} />
@@ -940,8 +918,8 @@ const VerifyAccountCard = ({ kycStatus, onSubmitSuccess }) => {
 
 /* ─── Referral Card ─── */
 const ReferralCard = ({ profile }) => {
-  const [copied, setCopied]     = useState(false);
-  const [refStats, setRefStats] = useState({ referred: 0, active: 0, earnings: "0.00" });
+  const [copied,     setCopied]     = useState(false);
+  const [refStats,   setRefStats]   = useState({ referred: 0, active: 0, earnings: "0.00" });
   const [refLoading, setRefLoading] = useState(true);
   const referralLink = `https://admindashboard-ruddy-beta.vercel.app/dashboard/register?ref=${profile.ref_code || "USER123"}`;
 
@@ -950,7 +928,7 @@ const ReferralCard = ({ profile }) => {
       try {
         const res = await API.get("referrals/my-stats/");
         setRefStats({
-          referred: res.data.total_referred  ?? 0,
+          referred: res.data.total_referred   ?? 0,
           active:   res.data.active_contracts ?? 0,
           earnings: parseFloat(res.data.total_earnings || 0).toFixed(2),
         });
@@ -981,9 +959,9 @@ const ReferralCard = ({ profile }) => {
       <div className="p-5 space-y-5">
         <div className="grid grid-cols-3 gap-3">
           {[
-            { label: "Total Referred",   value: refLoading ? "—" : refStats.referred,       icon: <FaUsers />,     color: "text-white" },
+            { label: "Total Referred",   value: refLoading ? "—" : refStats.referred,       icon: <FaUsers />,     color: "text-white"       },
             { label: "Active Contracts", value: refLoading ? "—" : refStats.active,         icon: <FaChartLine />, color: "text-emerald-400" },
-            { label: "Commissions",      value: refLoading ? "—" : `$${refStats.earnings}`, icon: <FaGift />,      color: "text-[#c45a45]" },
+            { label: "Commissions",      value: refLoading ? "—" : `$${refStats.earnings}`, icon: <FaGift />,      color: "text-[#c45a45]"   },
           ].map(s => (
             <div key={s.label} className="bg-[#121010] border border-[#2e2726] rounded-xl px-4 py-3 flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-[#c45a45]/10 border border-[#c45a45]/20 flex items-center justify-center text-[#c45a45] text-xs shrink-0">{s.icon}</div>
@@ -1036,21 +1014,30 @@ const UserDashboard = () => {
   const [loading,       setLoading]       = useState(true);
   const [topLoading,    setTopLoading]    = useState(true);
   const [selectedAsset, setSelectedAsset] = useState(null);
-  const [kycStatus,     setKycStatus]     = useState("unverified"); // unverified | pending | verified | rejected
+  const [kycStatus,     setKycStatus]     = useState("unverified");
   const [showKyc,       setShowKyc]       = useState(false);
 
-  useEffect(() => { load(); fetchTopInvestors(); }, []);
-
-  const load = async () => {
+  /* ── Data fetching ── */
+  const load = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
-      const res = await API.get("user-dashboard/");
+      const res            = await API.get("user-dashboard/");
+      const newKycStatus   = res.data.profile?.kyc_status || "unverified";
       setProfile(res.data.profile);
       setInvestments(res.data.investments);
       setWithdrawals(res.data.withdrawals);
-      // kyc_status comes from profile
-      setKycStatus(res.data.profile?.kyc_status || "unverified");
-    } catch (err) { console.error(err); }
-    finally { setLoading(false); }
+      setKycStatus(prev => {
+        // Auto-close the KYC form/card if admin just approved
+        if (prev !== newKycStatus && (newKycStatus === "approved" || newKycStatus === "verified")) {
+          setShowKyc(false);
+        }
+        return newKycStatus;
+      });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      if (!silent) setLoading(false);
+    }
   };
 
   const fetchTopInvestors = async () => {
@@ -1059,9 +1046,27 @@ const UserDashboard = () => {
     finally { setTopLoading(false); }
   };
 
-  const handleKycSuccess = () => {
+  useEffect(() => {
+    load();
+    fetchTopInvestors();
+
+    // Re-fetch silently when user switches back to the tab
+    const handleFocus = () => load(true);
+    window.addEventListener("focus", handleFocus);
+
+    // Poll every 30 s so status refreshes without user action
+    const interval = setInterval(() => load(true), 30_000);
+
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+      clearInterval(interval);
+    };
+  }, []);
+
+  const handleKycSuccess = async () => {
     setKycStatus("pending");
     setShowKyc(false);
+    await load(true); // sync with backend immediately
   };
 
   const totalWithdrawals = withdrawals
@@ -1069,8 +1074,11 @@ const UserDashboard = () => {
     .reduce((sum, w) => sum + parseFloat(w.amount || 0), 0);
 
   const currentSignal = signalData[signalData.length - 1].strength;
-  const signalLabel = currentSignal >= 80 ? "Strong Buy" : currentSignal >= 60 ? "Buy" : currentSignal >= 40 ? "Neutral" : "Weak";
-  const signalColor = currentSignal >= 80 ? "text-emerald-400" : currentSignal >= 60 ? "text-yellow-400" : currentSignal >= 40 ? "text-[#9e9593]" : "text-red-400";
+  const signalLabel   = currentSignal >= 80 ? "Strong Buy" : currentSignal >= 60 ? "Buy" : currentSignal >= 40 ? "Neutral" : "Weak";
+  const signalColor   = currentSignal >= 80 ? "text-emerald-400" : currentSignal >= 60 ? "text-yellow-400" : currentSignal >= 40 ? "text-[#9e9593]" : "text-red-400";
+
+  /* ── Derive a normalised status for rendering ── */
+  const normalizedKyc = kycStatus === "approved" ? "verified" : kycStatus;
 
   if (loading) {
     return (
@@ -1097,9 +1105,9 @@ const UserDashboard = () => {
           />
         )}
 
-        {/* ── KYC ALERT BANNER (shows if unverified or rejected) ── */}
+        {/* ── KYC ALERT BANNER ── */}
         <KYCAlertBanner
-          status={kycStatus}
+          status={normalizedKyc}
           onVerifyClick={() => setShowKyc(true)}
         />
 
@@ -1115,24 +1123,25 @@ const UserDashboard = () => {
               <div className="flex items-center gap-2.5 mt-3 flex-wrap">
                 <TierBadge tier={profile.tier || "none"} />
                 <span className="text-xs text-[#9e9593]">{TIER_DESC[profile.tier] || TIER_DESC.none}</span>
-                {/* KYC status badge in welcome banner */}
-                {kycStatus === "verified" && (
+
+                {/* KYC badge */}
+                {(normalizedKyc === "verified") && (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
                     <FaShieldAlt className="text-[9px]" /> Verified
                   </span>
                 )}
-                {kycStatus === "pending" && (
+                {normalizedKyc === "pending" && (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
                     <FaClock className="text-[9px]" /> KYC Pending
                   </span>
                 )}
-                {(kycStatus === "unverified" || kycStatus === "rejected") && (
+                {(normalizedKyc === "unverified" || normalizedKyc === "rejected") && (
                   <button
                     onClick={() => setShowKyc(v => !v)}
                     className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#c45a45]/10 text-[#c45a45] border border-[#c45a45]/25 hover:bg-[#c45a45]/20 transition-colors cursor-pointer"
                   >
                     <FaShieldAlt className="text-[9px]" />
-                    {kycStatus === "rejected" ? "Rejected · Resubmit" : "Not Verified"}
+                    {normalizedKyc === "rejected" ? "Rejected · Resubmit" : "Not Verified"}
                   </button>
                 )}
               </div>
@@ -1150,17 +1159,22 @@ const UserDashboard = () => {
           </div>
         </div>
 
-        {/* ── KYC CARD (toggled or always shown when unverified) ── */}
-        {(showKyc || kycStatus === "pending" || kycStatus === "verified") && (
+        {/* ── KYC CARD ──
+            Show when:
+            • user toggled it open (showKyc)
+            • status is pending (show the "under review" card automatically)
+            • status is verified/approved (show the "verified" card automatically)
+            • status is rejected (always show the re-submit form, no toggle needed)
+        ── */}
+        {(showKyc || normalizedKyc === "pending" || normalizedKyc === "verified") && (
           <VerifyAccountCard
-            kycStatus={kycStatus}
+            kycStatus={normalizedKyc}
             onSubmitSuccess={handleKycSuccess}
           />
         )}
-        {/* Always show form inline if rejected (no toggle needed) */}
-        {kycStatus === "rejected" && !showKyc && (
+        {normalizedKyc === "rejected" && !showKyc && (
           <VerifyAccountCard
-            kycStatus={kycStatus}
+            kycStatus={normalizedKyc}
             onSubmitSuccess={handleKycSuccess}
           />
         )}
@@ -1257,7 +1271,7 @@ const UserDashboard = () => {
           </div>
         </div>
 
-        {/* ── MARKET OVERVIEW (responsive fix) ── */}
+        {/* ── MARKET OVERVIEW ── */}
         <div className="bg-[#1f1b1b] border border-[#2e2726] rounded-2xl p-5">
           <div className="flex items-center justify-between mb-5">
             <div>
@@ -1271,20 +1285,11 @@ const UserDashboard = () => {
               Markets Open
             </span>
           </div>
-
-          {/* 
-            Responsive grid:
-            - Mobile  (<640px) : 2 columns, horizontal scroll disabled — cards are compact
-            - Tablet  (640px+) : 3 columns
-            - Desktop (1024px+): 6 columns (all in one row)
-            Each card has a min-width so it never becomes unreadably narrow on mobile.
-          */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
             {marketAssets.map(asset => (
               <AssetCard key={asset.symbol} asset={asset} onClick={setSelectedAsset} />
             ))}
           </div>
-
           <div className="flex items-center justify-between mt-4 pt-3 border-t border-[#2e2726] text-[10px] text-[#9e9593]">
             <span>Data updates every 30 seconds</span>
             <span className="hidden sm:block">Prices indicative only · not financial advice</span>

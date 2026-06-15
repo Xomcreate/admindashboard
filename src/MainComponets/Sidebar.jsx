@@ -1,10 +1,10 @@
-// src/MainComponets/Sidebar.jsx
+// src/MainComponents/Sidebar.jsx
 import { useLocation, Link } from "react-router-dom";
 import {
   FaHome, FaUsers, FaMoneyBill, FaWallet, FaGift, FaBan,
   FaUserCircle, FaSignOutAlt, FaTimes, FaCog, FaChartLine,
   FaExchangeAlt, FaRobot, FaHistory, FaShoppingCart, FaUserFriends,
-  FaReceipt, FaArrowDown,
+  FaReceipt, FaArrowDown, FaUserShield, // Imported FaUserShield for KYC
 } from "react-icons/fa";
 
 const SectionLabel = ({ label }) => (
@@ -69,11 +69,13 @@ const Sidebar = ({ isOpen, onClose }) => {
         { path: "/copy-trading",     name: "Copy Trading", icon: <FaExchangeAlt />, badge: "New" },
         { path: "/ai-trading-bots",  name: "AI Bots",      icon: <FaRobot />        },
         { path: "/purchase-stocks",  name: "Stocks",       icon: <FaShoppingCart /> },
+        { path: "/kyc-verify",     name: "KYC Approvals", icon: <FaUserShield /> },
       ],
     },
     {
       label: "Reports",
       links: [
+        // { path: "/kyc-verify",     name: "KYC Approvals", icon: <FaUserShield /> }, // Added KYC Approvals route here
         { path: "/transactions",   name: "Transactions",  icon: <FaReceipt />     },
         { path: "/profit-history", name: "Profit History",icon: <FaHistory />     },
         { path: "/referrals",      name: "Referrals",     icon: <FaUserFriends /> },
@@ -115,7 +117,6 @@ const Sidebar = ({ isOpen, onClose }) => {
       label: "Account",
       links: [
         { path: "/profile",  name: "Profile",  icon: <FaUserCircle /> },
-        // { path: "/settings", name: "Settings", icon: <FaCog />        },
       ],
     },
   ];

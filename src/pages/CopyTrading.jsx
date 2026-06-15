@@ -5,12 +5,8 @@ import {
   FaExchangeAlt,
   FaChartLine,
   FaUserCircle,
-  FaStar,
   FaCheckCircle,
-  FaFire,
-  FaLock,
   FaSearch,
-  FaBolt,
   FaShieldAlt,
   FaUsers,
   FaTrophy,
@@ -23,7 +19,8 @@ import {
   FaTrash,
   FaExclamationTriangle,
   FaMoneyBillWave,
-  FaCrown,
+  FaStopCircle,
+  FaHourglassHalf,
 } from "react-icons/fa";
 
 /* ─────────────────────────────────────────
@@ -44,7 +41,6 @@ const traders = [
     monthlyReturn: "+18.2%",
     badge: "Top Performer",
     color: "#c45a45",
-    copying: false,
     tier: "Starter",
     minCapital: "$1,000",
     maxCapital: "$500,000",
@@ -65,7 +61,6 @@ const traders = [
     monthlyReturn: "+22.5%",
     badge: "Elite",
     color: "#d4875a",
-    copying: false,
     tier: "Pro",
     minCapital: "$2,000",
     maxCapital: "$750,000",
@@ -86,7 +81,6 @@ const traders = [
     monthlyReturn: "+9.8%",
     badge: "Rising Star",
     color: "#9b6ab5",
-    copying: false,
     tier: "Starter",
     minCapital: "$500",
     maxCapital: "$250,000",
@@ -107,7 +101,6 @@ const traders = [
     monthlyReturn: "+28.1%",
     badge: "Legend",
     color: "#c45a45",
-    copying: false,
     tier: "Institutional",
     minCapital: "$10,000",
     maxCapital: "$2,000,000",
@@ -128,7 +121,6 @@ const traders = [
     monthlyReturn: "+14.6%",
     badge: "Top Performer",
     color: "#5a8fc4",
-    copying: false,
     tier: "Pro",
     minCapital: "$1,000",
     maxCapital: "$375,000",
@@ -149,7 +141,6 @@ const traders = [
     monthlyReturn: "+17.9%",
     badge: "Verified",
     color: "#4db89b",
-    copying: false,
     tier: "Starter",
     minCapital: "$500",
     maxCapital: "$300,000",
@@ -158,58 +149,18 @@ const traders = [
   },
 ];
 
-const plans = [
-  {
-    name: "Starter",
-    price: "$49",
-    deposit: "$500",
-    period: "/mo",
-    description: "Perfect for exploring platform-assisted manual trades.",
-    features: [
-      "Access to 3 Starter Tier Traders",
-      "Max $2,500 copying allocation",
-      "Standard execution latency",
-      "Discord Group Access",
-      "Min. deposit: $500",
-    ],
-    popular: false,
-    depositAmount: 500,
-  },
-  {
-    name: "Pro",
-    price: "$149",
-    deposit: "$2,000",
-    period: "/mo",
-    description: "Most popular choice for steady monthly growth curves.",
-    features: [
-      "Access to Elite & Pro Tier Traders",
-      "Max $15,000 copying allocation",
-      "Priority real-time execution",
-      "Advanced risk-management metrics",
-      "24/7 priority desk",
-      "Min. deposit: $2,000",
-    ],
-    popular: true,
-    depositAmount: 2000,
-  },
-  {
-    name: "Institutional",
-    price: "$499",
-    deposit: "$10,000",
-    period: "/mo",
-    description: "Full alpha pipeline access for heavy asset deployment.",
-    features: [
-      "Unlock ALL Legend & Institutional Traders",
-      "No allocation cap barriers",
-      "Sub-millisecond execution vectors",
-      "Direct 1-on-1 account engineer",
-      "Custom webhooks API integration",
-      "Min. deposit: $10,000",
-    ],
-    popular: false,
-    depositAmount: 10000,
-  },
-];
+/* Map plan -> minimum required deposit (mirrors backend COPY_TRADING_PLAN_DEPOSITS) */
+const COPY_PLAN_DEPOSITS = {
+  Starter: 500,
+  Pro: 2000,
+  Institutional: 10000,
+};
+const COPY_PLAN_FEES = {
+  Starter: 49,
+  Pro: 149,
+  Institutional: 499,
+};
+const COPY_PLAN_ORDER = ["Starter", "Pro", "Institutional"];
 
 /* ─────────────────────────────────────────
    HELPERS
@@ -232,16 +183,27 @@ const resolveUserEmail = (sub) => {
   return "";
 };
 
-const planBadgeColor = {
-  Starter: "bg-white/8 border-white/15 text-white/60",
-  Pro: "bg-[#c45a45]/10 border-[#c45a45]/25 text-[#e07060]",
-  Institutional: "bg-[#9b6ab5]/10 border-[#9b6ab5]/25 text-[#b88fd4]",
+/* Returns a friendly "Xd Yh left" / "Ends today" string from copy_ends_at */
+const formatTimeRemaining = (endsAt) => {
+  if (!endsAt) return null;
+  const end = new Date(endsAt).getTime();
+  const now = Date.now();
+  const diffMs = end - now;
+  if (diffMs <= 0) return "Ending soon";
+
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+  if (days > 0) return `${days}d ${hours}h left`;
+  if (hours > 0) return `${hours}h left`;
+  return "Less than 1h left";
 };
 
 const statusStyle = {
   Pending:  "bg-amber-400/10 text-amber-400 border-amber-400/25",
   Approved: "bg-emerald-400/10 text-emerald-400 border-emerald-400/25",
   Declined: "bg-red-400/10 text-red-400 border-red-400/25",
+  Expired:  "bg-white/10 text-white/40 border-white/15",
 };
 
 const StatusBadge = ({ status }) => (
@@ -249,6 +211,7 @@ const StatusBadge = ({ status }) => (
     {status === "Approved" && <FaCheckCircle className="text-[9px]" />}
     {status === "Declined" && <FaTimesCircle className="text-[9px]" />}
     {status === "Pending"  && <FaClock className="text-[9px]" />}
+    {status === "Expired"  && <FaHourglassHalf className="text-[9px]" />}
     {status}
   </span>
 );
@@ -271,11 +234,136 @@ function ConfirmModal({ open, title, message, confirmLabel, confirmClass, onConf
           </div>
         </div>
         <div className="flex gap-2 pt-1">
-          <button onClick={onCancel} className="flex-1 py-2 rounded-xl text-xs font-semibold bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 transition-colors">
+          <button
+            onClick={onCancel}
+            className="flex-1 py-2 rounded-xl text-xs font-semibold bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 transition-colors"
+          >
             Cancel
           </button>
-          <button onClick={onConfirm} className={`flex-1 py-2 rounded-xl text-xs font-bold transition-colors ${confirmClass}`}>
+          <button
+            onClick={onConfirm}
+            className={`flex-1 py-2 rounded-xl text-xs font-bold transition-colors ${confirmClass}`}
+          >
             {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────
+   INVEST / SUBSCRIBE MODAL
+   Creates a CopyTradingSubscription (plan + copied_trader)
+───────────────────────────────────────── */
+function InvestModal({ open, trader, onConfirm, onCancel, loading, error }) {
+  const [plan, setPlan] = useState("Starter");
+
+  useEffect(() => {
+    if (open && trader) {
+      setPlan(trader.tier && COPY_PLAN_ORDER.includes(trader.tier) ? trader.tier : "Starter");
+    }
+  }, [open, trader]);
+
+  if (!open || !trader) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+      <div className="bg-[#141212] border border-white/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl space-y-5">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm border-2"
+              style={{
+                background:  `${trader.color}22`,
+                borderColor: `${trader.color}55`,
+                color:        trader.color,
+              }}
+            >
+              {trader.avatar}
+            </div>
+            <div>
+              <p className="text-white text-sm font-bold">{trader.name}</p>
+              <p className="text-white/30 text-[11px]">{trader.handle}</p>
+            </div>
+          </div>
+          <button
+            onClick={onCancel}
+            className="text-white/30 hover:text-white p-1.5 rounded-lg hover:bg-white/5 transition-colors"
+          >
+            <FaTimes size={13} />
+          </button>
+        </div>
+
+        {/* Stats strip */}
+        <div className="grid grid-cols-3 gap-2">
+          {[
+            { label: "Win Rate",  value: trader.winRate,      green: true },
+            { label: "Duration",  value: trader.duration },
+            { label: "Min Cap",   value: trader.minCapital },
+          ].map(({ label, value, green }) => (
+            <div key={label} className="bg-[#0f0e0e] border border-white/6 rounded-xl px-2 py-2.5 text-center">
+              <p className="text-[9px] text-white/30 uppercase tracking-wide">{label}</p>
+              <p className={`text-xs font-bold mt-0.5 ${green ? "text-emerald-400" : "text-white/80"}`}>{value}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Plan selection */}
+        <div className="space-y-2">
+          <p className="text-[10px] text-white/40 uppercase tracking-widest font-semibold">Copy Trading Plan</p>
+          <div className="grid grid-cols-3 gap-2">
+            {COPY_PLAN_ORDER.map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setPlan(p)}
+                className={`rounded-xl border px-2 py-2.5 text-center transition-all ${
+                  plan === p
+                    ? "border-[#c45a45]/50 bg-[#c45a45]/10"
+                    : "border-white/8 bg-[#0f0e0e] hover:border-white/20"
+                }`}
+              >
+                <p className={`text-xs font-bold ${plan === p ? "text-white" : "text-white/60"}`}>{p}</p>
+                <p className="text-[10px] text-white/30 mt-0.5">${COPY_PLAN_FEES[p]}/mo</p>
+                <p className="text-[9px] text-emerald-400 mt-0.5">
+                  Min ${COPY_PLAN_DEPOSITS[p].toLocaleString()}
+                </p>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Error */}
+        {error && (
+          <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/25 rounded-xl px-3 py-2.5 text-xs text-red-400">
+            <FaTimesCircle className="shrink-0 text-[10px]" /> {error}
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="flex gap-2">
+          <button
+            onClick={onCancel}
+            className="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-white/5 border border-white/10 text-white/50 hover:bg-white/8 hover:text-white/70 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => onConfirm(plan)}
+            disabled={loading}
+            className="flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            style={{
+              background: `linear-gradient(135deg, ${trader.color}cc, #4eca8b99)`,
+              color: "#fff",
+            }}
+          >
+            {loading ? (
+              <><FaSyncAlt className="animate-spin text-[10px]" /> Submitting…</>
+            ) : (
+              <><FaWallet className="text-[10px]" /> Subscribe & Copy</>
+            )}
           </button>
         </div>
       </div>
@@ -287,13 +375,13 @@ function ConfirmModal({ open, title, message, confirmLabel, confirmClass, onConf
    ADMIN — MANAGE COPY TRADING SUBSCRIPTIONS
 ───────────────────────────────────────── */
 function AdminManageCopyTrading() {
-  const [subscriptions, setSubscriptions]   = useState([]);
-  const [loading, setLoading]               = useState(true);
-  const [search, setSearch]                 = useState("");
-  const [filterStatus, setFilterStatus]     = useState("All");
-  const [actionLoading, setActionLoading]   = useState(null);
-  const [toast, setToast]                   = useState(null);
-  const [confirmModal, setConfirmModal]     = useState({ open: false, type: null, sub: null });
+  const [subscriptions, setSubscriptions] = useState([]);
+  const [loading, setLoading]             = useState(true);
+  const [search, setSearch]               = useState("");
+  const [filterStatus, setFilterStatus]   = useState("All");
+  const [actionLoading, setActionLoading] = useState(null);
+  const [toast, setToast]                 = useState(null);
+  const [confirmModal, setConfirmModal]   = useState({ open: false, type: null, sub: null });
 
   useEffect(() => { fetchSubscriptions(); }, []);
 
@@ -317,17 +405,13 @@ function AdminManageCopyTrading() {
   const handleApprove = async (sub) => {
     setActionLoading(`approve-${sub.id}`);
     try {
-      await API.patch(`copy-trading-subscriptions/${sub.id}/`, {
-        approved: true,
-        active: true,
+      const res = await API.patch(`copy-trading-subscriptions/${sub.id}/`, {
         status: "Approved",
       });
       setSubscriptions((prev) =>
-        prev.map((s) =>
-          s.id === sub.id ? { ...s, approved: true, active: true, status: "Approved" } : s
-        )
+        prev.map((s) => (s.id === sub.id ? res.data : s))
       );
-      showToast(`Subscription for ${resolveUserName(sub)} approved.`);
+      showToast(`Subscription for ${resolveUserName(sub)} approved. Copy session started.`);
     } catch (err) {
       showToast(err.response?.data?.error || err.response?.data?.detail || "Approval failed.", "error");
     } finally {
@@ -339,15 +423,11 @@ function AdminManageCopyTrading() {
   const handleDecline = async (sub) => {
     setActionLoading(`decline-${sub.id}`);
     try {
-      await API.patch(`copy-trading-subscriptions/${sub.id}/`, {
-        approved: false,
-        active: false,
+      const res = await API.patch(`copy-trading-subscriptions/${sub.id}/`, {
         status: "Declined",
       });
       setSubscriptions((prev) =>
-        prev.map((s) =>
-          s.id === sub.id ? { ...s, approved: false, active: false, status: "Declined" } : s
-        )
+        prev.map((s) => (s.id === sub.id ? res.data : s))
       );
       showToast("Subscription declined.", "error");
     } catch (err) {
@@ -387,35 +467,36 @@ function AdminManageCopyTrading() {
       name.includes(search.toLowerCase()) ||
       email.includes(search.toLowerCase()) ||
       (s.plan || "").toLowerCase().includes(search.toLowerCase());
+
+    const subStatus = s.status || (s.approved ? "Approved" : "Pending");
+
     const matchStatus =
       filterStatus === "All" ||
-      (filterStatus === "Pending"  && !s.approved && s.status !== "Declined") ||
-      (filterStatus === "Approved" && s.approved) ||
-      (filterStatus === "Declined" && s.status === "Declined");
+      (filterStatus === "Pending"  && subStatus === "Pending") ||
+      (filterStatus === "Approved" && subStatus === "Approved") ||
+      (filterStatus === "Declined" && subStatus === "Declined") ||
+      (filterStatus === "Expired"  && subStatus === "Expired");
     return matchSearch && matchStatus;
   });
 
   const totals = {
     all:      subscriptions.length,
-    pending:  subscriptions.filter((s) => !s.approved && s.status !== "Declined").length,
-    approved: subscriptions.filter((s) => s.approved).length,
-    declined: subscriptions.filter((s) => s.status === "Declined").length,
-    revenue:  subscriptions.filter((s) => s.approved).reduce((acc, s) => {
-      const p = plans.find((pl) => pl.name === s.plan);
-      return acc + (p ? parseInt(p.price.replace("$", "")) : 0);
-    }, 0),
+    pending:  subscriptions.filter((s) => (s.status || "Pending") === "Pending").length,
+    approved: subscriptions.filter((s) => (s.status || "") === "Approved").length,
+    declined: subscriptions.filter((s) => (s.status || "") === "Declined").length,
+    expired:  subscriptions.filter((s) => (s.status || "") === "Expired").length,
   };
 
   const confirmConfig = {
     approve: {
       title:        "Approve Subscription",
-      message:      "This will activate the copy trading plan and allow the user to mirror traders.",
+      message:      "This will activate the copy trading plan and start the copy session for the plan's duration.",
       confirmLabel: "Approve",
       confirmClass: "bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/25",
     },
     decline: {
       title:        "Decline Subscription",
-      message:      "This will reject the copy trading subscription request.",
+      message:      "This will reject the copy trading subscription request and stop any active copy session.",
       confirmLabel: "Decline",
       confirmClass: "bg-red-500/15 border border-red-500/30 text-red-400 hover:bg-red-500/25",
     },
@@ -443,18 +524,16 @@ function AdminManageCopyTrading() {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
-          { label: "Total",    value: totals.all,           icon: <FaExchangeAlt />,  accent: false },
-          { label: "Pending",  value: totals.pending,       icon: <FaClock />,        accent: false, highlight: "text-amber-400" },
-          { label: "Approved", value: totals.approved,      icon: <FaCheckCircle />,  accent: false, highlight: "text-emerald-400" },
-          { label: "Declined", value: totals.declined,      icon: <FaTimesCircle />,  accent: false, highlight: "text-red-400" },
-          { label: "MRR",      value: `$${totals.revenue}`, icon: <FaMoneyBillWave />, accent: true },
+          { label: "Total",    value: totals.all,      icon: <FaExchangeAlt />,  highlight: "" },
+          { label: "Pending",  value: totals.pending,  icon: <FaClock />,        highlight: "text-amber-400" },
+          { label: "Approved", value: totals.approved, icon: <FaCheckCircle />,  highlight: "text-emerald-400" },
+          { label: "Declined", value: totals.declined, icon: <FaTimesCircle />,  highlight: "text-red-400" },
+          { label: "Expired",  value: totals.expired,  icon: <FaHourglassHalf />, highlight: "text-white/50" },
         ].map((s) => (
-          <div key={s.label} className={`bg-[#0f0e0e] border rounded-xl px-4 py-3.5 flex items-center gap-3 ${
-            s.accent ? "border-[#c45a45]/20 shadow-[#c45a45]/5 shadow-lg" : "border-white/[0.07]"
-          }`}>
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs shrink-0 ${
-              s.accent ? "bg-[#c45a45]/15 border border-[#c45a45]/25 text-[#c45a45]" : "bg-white/5 border border-white/8 text-white/30"
-            }`}>{s.icon}</div>
+          <div key={s.label} className="bg-[#0f0e0e] border border-white/[0.07] rounded-xl px-4 py-3.5 flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs shrink-0 bg-white/5 border border-white/8 text-white/30">
+              {s.icon}
+            </div>
             <div>
               <p className={`text-sm font-bold leading-none ${s.highlight || "text-white"}`}>{s.value}</p>
               <p className="text-white/25 text-[10px] mt-0.5 uppercase tracking-wide">{s.label}</p>
@@ -476,7 +555,7 @@ function AdminManageCopyTrading() {
           />
         </div>
         <div className="flex gap-2 flex-wrap">
-          {["All", "Pending", "Approved", "Declined"].map((f) => (
+          {["All", "Pending", "Approved", "Declined", "Expired"].map((f) => (
             <button
               key={f}
               onClick={() => setFilterStatus(f)}
@@ -489,7 +568,7 @@ function AdminManageCopyTrading() {
               {f}
               {f !== "All" && (
                 <span className="ml-1.5 text-[9px] opacity-60">
-                  ({f === "Pending" ? totals.pending : f === "Approved" ? totals.approved : totals.declined})
+                  ({f === "Pending" ? totals.pending : f === "Approved" ? totals.approved : f === "Declined" ? totals.declined : totals.expired})
                 </span>
               )}
             </button>
@@ -522,8 +601,9 @@ function AdminManageCopyTrading() {
                 <tr className="border-b border-white/5 text-white/25 text-[10px] uppercase tracking-widest font-semibold">
                   <th className="px-5 py-3.5 text-left">User</th>
                   <th className="px-5 py-3.5 text-left">Plan</th>
-                  <th className="px-5 py-3.5 text-right">Deposit Req.</th>
+                  <th className="px-5 py-3.5 text-left">Copying</th>
                   <th className="px-5 py-3.5 text-center">Status</th>
+                  <th className="px-5 py-3.5 text-center">Time Left</th>
                   <th className="px-5 py-3.5 text-center">Date</th>
                   <th className="px-5 py-3.5 text-center">Actions</th>
                 </tr>
@@ -531,8 +611,8 @@ function AdminManageCopyTrading() {
               <tbody>
                 {filtered.map((sub) => {
                   const isLoading = (k) => actionLoading === `${k}-${sub.id}`;
-                  const subStatus = sub.approved ? "Approved" : sub.status === "Declined" ? "Declined" : "Pending";
-                  const planInfo  = plans.find((p) => p.name === sub.plan);
+                  const subStatus = sub.status || (sub.approved ? "Approved" : "Pending");
+                  const timeLeft = subStatus === "Approved" ? formatTimeRemaining(sub.copy_ends_at) : null;
                   return (
                     <tr key={sub.id} className="border-b border-white/4 hover:bg-white/2 transition-colors">
                       <td className="px-5 py-4">
@@ -542,22 +622,25 @@ function AdminManageCopyTrading() {
                         )}
                       </td>
                       <td className="px-5 py-4">
-                        <span className={`inline-flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-lg border font-semibold ${planBadgeColor[sub.plan] || planBadgeColor.Starter}`}>
-                          <FaExchangeAlt className="text-[9px]" /> {sub.plan || "—"} Plan
+                        <span className="inline-flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-lg border font-semibold bg-white/8 border-white/15 text-white/60">
+                          <FaExchangeAlt className="text-[9px]" /> {sub.plan || "—"}
                         </span>
                       </td>
-                      <td className="px-5 py-4 text-right">
-                        <p className="text-emerald-400 text-xs font-bold">
-                          {planInfo ? planInfo.deposit : "—"}
-                        </p>
+                      <td className="px-5 py-4">
+                        <span className="text-white/50 text-[11px]">{sub.copied_trader || "—"}</span>
                       </td>
                       <td className="px-5 py-4 text-center">
                         <StatusBadge status={subStatus} />
                       </td>
+                      <td className="px-5 py-4 text-center text-white/40 text-[11px]">
+                        {timeLeft || "—"}
+                      </td>
                       <td className="px-5 py-4 text-center text-white/30 text-[11px]">
                         {sub.created_at
                           ? new Date(sub.created_at).toLocaleDateString(undefined, {
-                              month: "short", day: "numeric", year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
                             })
                           : "—"}
                       </td>
@@ -569,7 +652,11 @@ function AdminManageCopyTrading() {
                               disabled={!!actionLoading}
                               className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-400/10 border border-emerald-400/20 text-emerald-400 hover:bg-emerald-400/20 text-[10px] font-semibold disabled:opacity-40 transition-colors"
                             >
-                              {isLoading("approve") ? <FaSyncAlt className="animate-spin text-[9px]" /> : <FaCheckCircle className="text-[9px]" />}
+                              {isLoading("approve") ? (
+                                <FaSyncAlt className="animate-spin text-[9px]" />
+                              ) : (
+                                <FaCheckCircle className="text-[9px]" />
+                              )}
                               Approve
                             </button>
                           )}
@@ -579,8 +666,12 @@ function AdminManageCopyTrading() {
                               disabled={!!actionLoading}
                               className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-400/10 border border-amber-400/20 text-amber-400 hover:bg-amber-400/20 text-[10px] font-semibold disabled:opacity-40 transition-colors"
                             >
-                              {isLoading("decline") ? <FaSyncAlt className="animate-spin text-[9px]" /> : <FaTimesCircle className="text-[9px]" />}
-                              Decline
+                              {isLoading("decline") ? (
+                                <FaSyncAlt className="animate-spin text-[9px]" />
+                              ) : (
+                                <FaTimesCircle className="text-[9px]" />
+                              )}
+                              {subStatus === "Approved" ? "Stop" : "Decline"}
                             </button>
                           )}
                           <button
@@ -588,7 +679,11 @@ function AdminManageCopyTrading() {
                             disabled={!!actionLoading}
                             className="w-7 h-7 rounded-lg bg-red-500/8 border border-red-500/15 text-red-400/50 hover:text-red-400 hover:bg-red-500/15 flex items-center justify-center disabled:opacity-40 transition-colors"
                           >
-                            {isLoading("delete") ? <FaSyncAlt className="animate-spin text-[9px]" /> : <FaTrash className="text-[9px]" />}
+                            {isLoading("delete") ? (
+                              <FaSyncAlt className="animate-spin text-[9px]" />
+                            ) : (
+                              <FaTrash className="text-[9px]" />
+                            )}
                           </button>
                         </div>
                       </td>
@@ -614,9 +709,7 @@ function AdminManageCopyTrading() {
 /* ─────────────────────────────────────────
    TRADER CARD
 ───────────────────────────────────────── */
-function TraderCard({ trader, onToggle, hasActivePlan }) {
-  const [investAmount, setInvestAmount] = useState("");
-
+function TraderCard({ trader, onInvest, copyingState }) {
   const stats = [
     { label: "Min.\nCapital",  value: trader.minCapital   || "$1,000" },
     { label: "Max.\nCapital",  value: trader.maxCapital   || "$500,000" },
@@ -626,26 +719,18 @@ function TraderCard({ trader, onToggle, hasActivePlan }) {
     { label: "Active\nTrades", value: trader.activeTrades || "—" },
   ];
 
-  return (
-    <div className="relative bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl overflow-hidden hover:border-[#c45a45]/30 transition-all duration-300 flex flex-col">
-      {/* Lock overlay */}
-      {!hasActivePlan && (
-        <div className="absolute inset-0 rounded-2xl bg-black/55 backdrop-blur-[1px] z-10 flex flex-col items-center justify-center gap-2">
-          <div className="w-10 h-10 rounded-full bg-[#c45a45]/20 border border-[#c45a45]/40 flex items-center justify-center">
-            <FaLock className="text-[#c45a45] text-sm" />
-          </div>
-          <p className="text-white/60 text-xs font-medium">Subscribe to copy this trader</p>
-        </div>
-      )}
+  const { isCopying, status, timeLeft, stopping } = copyingState || {};
 
+  return (
+    <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl overflow-hidden hover:border-[#c45a45]/30 transition-all duration-300 flex flex-col">
       {/* Avatar + name */}
       <div className="flex flex-col items-center pt-5 pb-4 px-4 border-b border-[#2a2a2a]">
         <div
           className="w-14 h-14 rounded-full flex items-center justify-center font-bold text-base mb-2 border-2"
           style={{
-            background:   `${trader.color}22`,
-            borderColor:  `${trader.color}55`,
-            color:         trader.color,
+            background:  `${trader.color}22`,
+            borderColor: `${trader.color}55`,
+            color:        trader.color,
           }}
         >
           {trader.avatar}
@@ -654,6 +739,18 @@ function TraderCard({ trader, onToggle, hasActivePlan }) {
           {trader.name}
         </p>
         <p className="text-white/30 text-[11px] mt-0.5">{trader.handle}</p>
+
+        {/* Badge */}
+        <span
+          className="mt-2 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border"
+          style={{
+            background:  `${trader.color}18`,
+            borderColor: `${trader.color}40`,
+            color:        trader.color,
+          }}
+        >
+          {trader.badge}
+        </span>
       </div>
 
       {/* 3×2 stat grid */}
@@ -670,37 +767,40 @@ function TraderCard({ trader, onToggle, hasActivePlan }) {
         ))}
       </div>
 
-      {/* Invest section */}
-      <div className="px-4 py-4 space-y-3 mt-auto">
-        <p className="text-[10px] text-white/35 uppercase tracking-widest font-semibold">
-          Amount to Invest
-        </p>
-        <div className="flex items-center gap-2 bg-[#111] border border-[#2a2a2a] rounded-xl px-3 py-2.5 focus-within:border-[#c45a45]/40 transition-colors">
-          <span className="text-white/30 text-sm font-semibold">$</span>
-          <input
-            type="number"
-            min="0"
-            placeholder="0.00"
-            value={investAmount}
-            onChange={(e) => setInvestAmount(e.target.value)}
-            className="flex-1 bg-transparent text-white text-sm outline-none placeholder-white/20"
-          />
-        </div>
+      {/* Status / Invest button */}
+      <div className="px-4 py-4 mt-auto space-y-2">
+        {status === "Pending" && (
+          <div className="flex items-center justify-center gap-1.5 text-[11px] text-amber-400 bg-amber-400/10 border border-amber-400/20 rounded-lg py-1.5">
+            <FaClock className="text-[9px]" /> Subscription Pending Approval
+          </div>
+        )}
+
+        {isCopying && timeLeft && (
+          <div className="flex items-center justify-center gap-1.5 text-[11px] text-emerald-400/80 bg-emerald-400/5 border border-emerald-400/15 rounded-lg py-1.5">
+            <FaHourglassHalf className="text-[9px]" /> {timeLeft}
+          </div>
+        )}
+
         <button
-          onClick={() => onToggle(trader, investAmount)}
-          className="w-full py-3 rounded-xl text-sm font-bold transition-all duration-200 flex items-center justify-center gap-2"
+          onClick={() => onInvest(trader)}
+          disabled={status === "Pending" || stopping}
+          className="w-full py-3 rounded-xl text-sm font-bold transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           style={{
-            background: trader.copying
+            background: isCopying
               ? "transparent"
               : `linear-gradient(135deg, ${trader.color}cc, #4eca8b99)`,
-            border: trader.copying ? `1px solid ${trader.color}55` : "none",
-            color:  trader.copying ? trader.color : "#fff",
+            border: isCopying ? `1px solid ${trader.color}55` : "none",
+            color:  isCopying ? trader.color : "#fff",
           }}
         >
-          {trader.copying ? (
-            <><FaCheckCircle className="text-xs" /> Copying — Stop</>
+          {stopping ? (
+            <><FaSyncAlt className="animate-spin text-xs" /> Stopping…</>
+          ) : isCopying ? (
+            <><FaStopCircle className="text-xs" /> Copying — Click to Stop</>
+          ) : status === "Pending" ? (
+            <><FaClock className="text-xs" /> Awaiting Approval</>
           ) : (
-            <><FaWallet className="text-xs" /> Invest</>
+            <><FaWallet className="text-xs" /> Invest / Copy</>
           )}
         </button>
       </div>
@@ -712,121 +812,148 @@ function TraderCard({ trader, onToggle, hasActivePlan }) {
    SHARED COPY TRADING VIEW
 ───────────────────────────────────────── */
 function CopyTradingView({ isAdmin = false }) {
-  const [traderList, setTraderList]       = useState(traders);
-  const [filter, setFilter]               = useState("All");
-  const [search, setSearch]               = useState("");
-  const [showPlans, setShowPlans]         = useState(false);
-  const [subscribing, setSubscribing]     = useState(false);   // ← NEW: loading state for plan subscription
-  const [planError, setPlanError]         = useState("");       // ← NEW: error message in plan modal
-  const [hasActivePlan, setHasActivePlan] = useState(isAdmin);
-  const [activePlanName, setActivePlanName] = useState(isAdmin ? "Admin" : null);
-
-  // ── On mount, check if the user already has an approved subscription ──────
-  useEffect(() => {
-    if (isAdmin) return;
-    const checkExistingPlan = async () => {
-      try {
-        const res = await API.get("copy-trading-subscriptions/");
-        const approved = res.data.find((s) => s.approved === true);
-        if (approved) {
-          setHasActivePlan(true);
-          setActivePlanName(approved.plan);
-        }
-      } catch (err) {
-        // silently ignore — user just won't have a plan pre-loaded
-        console.error(err);
-      }
-    };
-    checkExistingPlan();
-  }, [isAdmin]);
+  const [filter, setFilter]           = useState("All");
+  const [search, setSearch]           = useState("");
+  const [investModal, setInvestModal] = useState({ open: false, trader: null });
+  const [investLoading, setInvestLoading] = useState(false);
+  const [investError, setInvestError]     = useState("");
+  const [toast, setToast]                 = useState(null);
+  const [mySubscriptions, setMySubscriptions] = useState([]);
+  const [loadingSubs, setLoadingSubs]         = useState(!isAdmin);
+  const [stoppingId, setStoppingId]           = useState(null);
 
   const filters = ["All", "Low Risk", "High ROI", "Most Followed"];
 
-  const toggleCopy = (trader) => {
-    if (!hasActivePlan) { setShowPlans(true); return; }
-    setTraderList((prev) =>
-      prev.map((t) => (t.id === trader.id ? { ...t, copying: !t.copying } : t))
-    );
-  };
+  // Fetch the current user's own copy-trading subscriptions so state survives refresh
+  useEffect(() => {
+    if (isAdmin) return;
+    fetchMySubscriptions();
+  }, [isAdmin]);
 
-  const copyingCount = traderList.filter((t) => t.copying).length;
-
-  const filtered = traderList.filter((t) => {
-    const matchSearch =
-      t.name.toLowerCase().includes(search.toLowerCase()) ||
-      t.handle.toLowerCase().includes(search.toLowerCase());
-    if (filter === "Low Risk") return t.risk === "Low" && matchSearch;
-    return matchSearch;
-  });
-
-  // ── Subscribe to a plan — POST to backend ─────────────────────────────────
-  const handleSubscribe = async (plan) => {
-    setPlanError("");
-    setSubscribing(true);
+  const fetchMySubscriptions = async () => {
+    setLoadingSubs(true);
     try {
-      await API.post("copy-trading-subscriptions/", { plan: plan.name });
-      // Subscription created — pending admin approval
-      setHasActivePlan(false);         // still pending, not approved yet
-      setActivePlanName(plan.name);
-      setShowPlans(false);
-      // Show a pending notice instead of unlocking traders immediately
-      setPlanError("");
+      const res = await API.get("copy-trading-subscriptions/");
+      setMySubscriptions(res.data || []);
     } catch (err) {
-      const msg =
-        err.response?.data?.non_field_errors?.[0] ||
-        err.response?.data?.error ||
-        err.response?.data?.detail ||
-        "Subscription failed. Please try again.";
-      setPlanError(msg);
+      console.error(err);
     } finally {
-      setSubscribing(false);
+      setLoadingSubs(false);
     }
   };
 
+  const showToast = (msg, type = "success") => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 4000);
+  };
+
+  // Find the subscription (if any) tied to a given trader.
+  // Prefer an active (Approved) or Pending sub over old Declined/Expired ones.
+  const getSubFor = (trader) => {
+    const subsForTrader = mySubscriptions.filter((s) => s.copied_trader === trader.name);
+    if (subsForTrader.length === 0) return null;
+    const live = subsForTrader.find((s) => s.status === "Approved" || s.status === "Pending");
+    return live || subsForTrader[0];
+  };
+
+  const openInvest = (trader) => {
+    const existing = getSubFor(trader);
+
+    if (existing && existing.status === "Approved") {
+      // Already copying — stop the active subscription
+      handleStopCopying(existing, trader);
+      return;
+    }
+
+    if (existing && existing.status === "Pending") {
+      // Already awaiting approval, do nothing
+      return;
+    }
+
+    setInvestError("");
+    setInvestModal({ open: true, trader });
+  };
+
+  const handleStopCopying = async (sub, trader) => {
+    setStoppingId(sub.id);
+    try {
+      const res = await API.patch(`copy-trading-subscriptions/${sub.id}/`, {
+        status: "Declined",
+      });
+      setMySubscriptions((prev) => prev.map((s) => (s.id === sub.id ? res.data : s)));
+      showToast(`Stopped copying ${trader.name}.`, "info");
+    } catch (err) {
+      const msg =
+        err.response?.data?.error ||
+        err.response?.data?.detail ||
+        "Could not stop copy trading. Please try again.";
+      showToast(msg, "error");
+    } finally {
+      setStoppingId(null);
+    }
+  };
+
+  const handleInvestConfirm = async (plan) => {
+    const { trader } = investModal;
+    setInvestLoading(true);
+    setInvestError("");
+    try {
+      const res = await API.post("copy-trading-subscriptions/", {
+        plan,
+        copied_trader: trader.name,
+      });
+      setMySubscriptions((prev) => [res.data, ...prev]);
+      setInvestModal({ open: false, trader: null });
+      showToast(
+        `Subscription request submitted for ${plan} plan — copying ${trader.name}. Awaiting admin approval.`
+      );
+    } catch (err) {
+      const msg =
+        err.response?.data?.error ||
+        err.response?.data?.detail ||
+        (Array.isArray(err.response?.data) ? err.response.data.join(" ") : null) ||
+        "Subscription failed. Please try again.";
+      setInvestError(msg);
+    } finally {
+      setInvestLoading(false);
+    }
+  };
+
+  const copyingCount = mySubscriptions.filter((s) => s.status === "Approved").length;
+
+  const filtered = traders.filter((t) => {
+    const matchSearch =
+      t.name.toLowerCase().includes(search.toLowerCase()) ||
+      t.handle.toLowerCase().includes(search.toLowerCase());
+    if (filter === "Low Risk")       return t.risk === "Low" && matchSearch;
+    if (filter === "High ROI")       return parseFloat(t.roi) > 150 && matchSearch;
+    if (filter === "Most Followed")  return parseInt(t.followers) > 10 && matchSearch;
+    return matchSearch;
+  });
+
   return (
     <div className="space-y-6">
+      {/* Toast */}
+      {toast && (
+        <div className={`fixed top-5 right-5 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl border text-xs font-semibold shadow-2xl ${
+          toast.type === "error"
+            ? "bg-red-500/10 border-red-500/25 text-red-400"
+            : toast.type === "info"
+            ? "bg-blue-500/10 border-blue-500/25 text-blue-400"
+            : "bg-emerald-500/10 border-emerald-500/25 text-emerald-400"
+        }`}>
+          {toast.type === "error" ? <FaTimesCircle /> : <FaCheckCircle />}
+          {toast.msg}
+        </div>
+      )}
+
       {/* Admin notice */}
       {isAdmin && (
         <div className="flex items-start gap-2.5 bg-[#c45a45]/5 border border-[#c45a45]/15 rounded-xl px-4 py-3 text-xs text-white/50">
           <FaInfoCircle className="text-[#c45a45]/60 shrink-0 mt-0.5" />
           <span>
-            You are trading as <span className="text-white font-semibold">Admin</span>. All traders are unlocked and subscription gates are bypassed.
+            You are trading as <span className="text-white font-semibold">Admin</span>. All traders are available.
           </span>
-        </div>
-      )}
-
-      {/* Pending approval notice — submitted but not yet approved */}
-      {!isAdmin && !hasActivePlan && activePlanName && (
-        <div className="flex items-start gap-3 bg-amber-400/8 border border-amber-400/20 rounded-xl px-4 py-3.5">
-          <FaClock className="text-amber-400 text-sm shrink-0 mt-0.5" />
-          <div>
-            <p className="text-amber-300 text-xs font-semibold">
-              {activePlanName} Plan — Pending Approval
-            </p>
-            <p className="text-white/40 text-[11px] mt-0.5">
-              Your subscription request has been submitted. Traders will unlock once an admin approves your plan.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* No plan banner */}
-      {!hasActivePlan && !isAdmin && !activePlanName && (
-        <div className="flex items-start gap-3 bg-amber-400/8 border border-amber-400/20 rounded-xl px-4 py-3.5">
-          <FaInfoCircle className="text-amber-400 text-sm shrink-0 mt-0.5" />
-          <div>
-            <p className="text-amber-300 text-xs font-semibold">Investment Required to Copy Traders</p>
-            <p className="text-white/40 text-[11px] mt-0.5">
-              You must subscribe to a plan and make a minimum deposit before copying any trader. Plans start from{" "}
-              <span className="text-white/60 font-medium">$49/mo + $500 min. deposit</span>.
-            </p>
-            <button
-              onClick={() => setShowPlans(true)}
-              className="mt-2 text-[11px] text-amber-400 underline underline-offset-2 hover:text-amber-300 transition-colors"
-            >
-              View plans & deposit requirements →
-            </button>
-          </div>
         </div>
       )}
 
@@ -834,11 +961,14 @@ function CopyTradingView({ isAdmin = false }) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           { label: "Active Copies", value: copyingCount, icon: <FaUsers /> },
-          { label: "Avg. ROI",      value: "+18.4%",      icon: <FaChartLine /> },
-          { label: "Top Trader",    value: "Elena K.",    icon: <FaTrophy /> },
-          { label: "Protected",     value: "Insured",     icon: <FaShieldAlt /> },
+          { label: "Avg. ROI",      value: "+18.4%",     icon: <FaChartLine /> },
+          { label: "Top Trader",    value: "Elena K.",   icon: <FaTrophy /> },
+          { label: "Protected",     value: "Insured",    icon: <FaShieldAlt /> },
         ].map((s) => (
-          <div key={s.label} className="bg-[#0f0e0e] border border-white/[0.07] rounded-2xl px-4 py-3.5 flex items-center gap-3">
+          <div
+            key={s.label}
+            className="bg-[#0f0e0e] border border-white/[0.07] rounded-2xl px-4 py-3.5 flex items-center gap-3"
+          >
             <div className="w-8 h-8 rounded-lg bg-[#c45a45]/12 border border-[#c45a45]/20 flex items-center justify-center text-[#c45a45] text-xs shrink-0">
               {s.icon}
             </div>
@@ -878,32 +1008,32 @@ function CopyTradingView({ isAdmin = false }) {
           ))}
         </div>
 
-        {hasActivePlan && activePlanName !== "Admin" && (
+        {copyingCount > 0 && (
           <div className="md:ml-auto flex items-center gap-2 text-xs font-semibold px-4 py-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 self-start md:self-center">
-            <FaCheckCircle className="text-[10px]" /> {activePlanName} Plan Active
+            <FaCheckCircle className="text-[10px]" /> {copyingCount} Active {copyingCount === 1 ? "Copy" : "Copies"}
           </div>
-        )}
-
-        {!hasActivePlan && !activePlanName && (
-          <button
-            onClick={() => setShowPlans(true)}
-            className="md:ml-auto text-xs font-semibold px-4 py-2 rounded-xl border border-[#c45a45]/40 bg-[#c45a45]/10 hover:bg-[#c45a45]/20 text-[#c45a45] transition-all flex items-center gap-2 self-start md:self-center"
-          >
-            <FaWallet className="text-[10px]" /> Invest & Subscribe to Start
-          </button>
         )}
       </div>
 
       {/* Traders Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-        {filtered.map((trader) => (
-          <TraderCard
-            key={trader.id}
-            trader={trader}
-            onToggle={toggleCopy}
-            hasActivePlan={hasActivePlan}
-          />
-        ))}
+        {filtered.map((trader) => {
+          const sub = isAdmin ? null : getSubFor(trader);
+          const copyingState = {
+            isCopying: sub?.status === "Approved",
+            status: sub?.status,
+            timeLeft: sub?.status === "Approved" ? formatTimeRemaining(sub.copy_ends_at) : null,
+            stopping: stoppingId === sub?.id,
+          };
+          return (
+            <TraderCard
+              key={trader.id}
+              trader={trader}
+              onInvest={openInvest}
+              copyingState={copyingState}
+            />
+          );
+        })}
       </div>
 
       {filtered.length === 0 && (
@@ -913,126 +1043,15 @@ function CopyTradingView({ isAdmin = false }) {
         </div>
       )}
 
-      {/* Plans Modal */}
-      {showPlans && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#141212] border border-white/8 w-full max-w-5xl rounded-2xl max-h-[90vh] overflow-y-auto shadow-2xl p-6 md:p-8 relative space-y-6">
-            <button
-              onClick={() => { setShowPlans(false); setPlanError(""); }}
-              className="absolute top-5 right-5 text-white/40 hover:text-white p-2 bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
-            >
-              <FaTimes size={14} />
-            </button>
-
-            <div className="text-center max-w-xl mx-auto space-y-2">
-              <span className="text-[10px] uppercase font-bold tracking-widest text-[#c45a45] bg-[#c45a45]/10 px-2.5 py-1 rounded-md">
-                Subscription + Deposit Required
-              </span>
-              <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight">
-                Select Your Copy Trading Plan
-              </h2>
-              <p className="text-white/40 text-xs md:text-sm">
-                Each plan requires a{" "}
-                <span className="text-white/70 font-semibold">monthly subscription fee</span> plus a{" "}
-                <span className="text-white/70 font-semibold">minimum account deposit</span> to activate copy trading.
-              </p>
-            </div>
-
-            {/* Error message */}
-            {planError && (
-              <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/25 rounded-xl px-4 py-3 text-xs text-red-400">
-                <FaTimesCircle className="shrink-0" /> {planError}
-              </div>
-            )}
-
-            {/* Deposit info strip */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              {plans.map((plan) => (
-                <div key={plan.name} className="flex-1 flex items-center gap-3 bg-white/3 border border-white/8 rounded-xl px-4 py-3">
-                  <FaWallet className="text-[#c45a45] text-sm shrink-0" />
-                  <div>
-                    <p className="text-white text-xs font-bold">{plan.name} Plan</p>
-                    <p className="text-white/40 text-[11px]">
-                      <span className="text-white/60">{plan.price}/mo</span> + min.{" "}
-                      <span className="text-emerald-400 font-semibold">{plan.deposit} deposit</span>
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-2">
-              {plans.map((plan) => (
-                <div
-                  key={plan.name}
-                  className={`relative rounded-xl p-5 border flex flex-col justify-between transition-all duration-300 ${
-                    plan.popular
-                      ? "bg-[#1c1818] border-[#c45a45]/40 shadow-xl shadow-[#c45a45]/5"
-                      : "bg-[#0f0e0e] border-white/6 hover:border-white/15"
-                  }`}
-                >
-                  {plan.popular && (
-                    <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[9px] font-bold uppercase tracking-wider bg-[#c45a45] text-white px-2.5 py-0.5 rounded-full shadow-md">
-                      Most Popular
-                    </span>
-                  )}
-
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="text-base font-bold text-slate-100">{plan.name} Plan</h3>
-                      <p className="text-white/30 text-[11px] mt-1 leading-snug">{plan.description}</p>
-                    </div>
-
-                    <div className="bg-white/3 border border-white/6 rounded-xl p-3 space-y-2">
-                      <div className="flex items-baseline justify-between">
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-2xl font-black text-white tracking-tight">{plan.price}</span>
-                          <span className="text-white/40 text-xs font-medium">{plan.period}</span>
-                        </div>
-                        <span className="text-[10px] text-white/30 uppercase tracking-wide">Subscription</span>
-                      </div>
-                      <div className="border-t border-white/6 pt-2 flex items-center justify-between">
-                        <span className="text-[10px] text-white/40 uppercase tracking-wide">Min. Deposit</span>
-                        <span className="text-emerald-400 font-bold text-sm">{plan.deposit}</span>
-                      </div>
-                    </div>
-
-                    <ul className="space-y-2.5 pt-1">
-                      {plan.features.map((feat) => (
-                        <li key={feat} className="flex items-start gap-2 text-[11px] text-slate-300">
-                          <FaCheckCircle className="text-emerald-400 mt-0.5 shrink-0 text-[10px]" />
-                          <span>{feat}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  {/* ── FIX: call API instead of just setting local state ── */}
-                  <button
-                    onClick={() => handleSubscribe(plan)}
-                    disabled={subscribing}
-                    className={`w-full mt-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-150 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                      plan.popular
-                        ? "bg-[#c45a45] hover:bg-[#d06a55] text-white shadow-md shadow-[#c45a45]/20"
-                        : "bg-white/5 border border-white/10 text-white hover:bg-white/10"
-                    }`}
-                  >
-                    {subscribing ? (
-                      <><FaSyncAlt className="animate-spin text-[10px]" /> Submitting…</>
-                    ) : (
-                      <><FaWallet className="text-[10px]" /> Request {plan.name} Plan</>
-                    )}
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            <p className="text-center text-white/20 text-[10px]">
-              Your subscription request will be reviewed by an admin. Traders unlock once your plan is approved.
-            </p>
-          </div>
-        </div>
-      )}
+      {/* Invest Modal */}
+      <InvestModal
+        open={investModal.open}
+        trader={investModal.trader}
+        onConfirm={handleInvestConfirm}
+        onCancel={() => { setInvestModal({ open: false, trader: null }); setInvestError(""); }}
+        loading={investLoading}
+        error={investError}
+      />
     </div>
   );
 }
@@ -1060,7 +1079,7 @@ function AdminCopyTradingView() {
           </div>
           <p className="text-white/30 text-sm ml-12">
             {activeTab === "manage"
-              ? "Review and approve user copy trading subscription payments."
+              ? "Review and manage user copy trading subscriptions."
               : "Mirror top traders directly as admin."}
           </p>
         </div>

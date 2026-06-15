@@ -25,6 +25,7 @@ import Transactions from "./pages/Transactions";
 import Settings from "./pages/Settings";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import Loader from "./MainComponets/Loader";
+import Kycverify from "./pages/Kycverify";
 
 function RoleRedirect() {
   const role = localStorage.getItem("role");
@@ -67,17 +68,22 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/home" element={<RoleRedirect />} />
 
+          {/* Admin Protected Context Matrix Routes */}
           <Route path="/dashboard"  element={<AdminRoute><Dashboard /></AdminRoute>} />
           <Route path="/investors"  element={<AdminRoute><Investors /></AdminRoute>} />
           <Route path="/investments"element={<AdminRoute><Investments /></AdminRoute>} />
           <Route path="/withdrawals"element={<AdminRoute><Withdrawals /></AdminRoute>} />
           <Route path="/bonuses"    element={<AdminRoute><Bonuses /></AdminRoute>} />
           <Route path="/blocked"    element={<AdminRoute><BlockedAccounts /></AdminRoute>} />
+          <Route path="/kyc-verify" element={<AdminRoute><Kycverify/></AdminRoute>} /> {/* Assigned Admin Exclusive Route */}
 
+        
+          {/* User Protected Context Matrix Routes */}
           <Route path="/user/dashboard"   element={<UserRoute><UserDashboard /></UserRoute>} />
           <Route path="/user/investments" element={<UserRoute><UserInvestments /></UserRoute>} />
           <Route path="/user/withdrawals" element={<UserRoute><UserWithdrawals /></UserRoute>} />
 
+          {/* Universal Verified Protected Application Routes */}
           <Route path="/fund-account"    element={<ProtectedRoute><FundAccount /></ProtectedRoute>} />
           <Route path="/investment-plans"element={<ProtectedRoute><InvestmentPlans /></ProtectedRoute>} />
           <Route path="/copy-trading"    element={<ProtectedRoute><CopyTrading /></ProtectedRoute>} />
