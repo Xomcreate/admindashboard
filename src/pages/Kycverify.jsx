@@ -42,6 +42,55 @@ const StatCard = ({ label, value, icon, accent = false, highlight = "text-white"
   </div>
 );
 
+/* ─── Single doc image with fallback ─── */
+const DocImage = ({ url, label }) => {
+  const [errored, setErrored] = useState(false);
+
+  if (!url) {
+    return (
+      <div className="aspect-video flex items-center justify-center bg-[#0d0c0c]">
+        <p className="text-[#9e9593] text-[10px]">Not uploaded</p>
+      </div>
+    );
+  }
+
+  if (errored) {
+    return (
+      <div className="aspect-video flex flex-col items-center justify-center bg-[#0d0c0c] gap-2 px-3">
+        <p className="text-[#9e9593] text-[10px] text-center">Preview unavailable</p>
+        <a
+          href={url}
+          target="_blank"
+          rel="noreferrer"
+          className="text-[#c45a45] text-[10px] font-semibold underline hover:text-white transition-colors"
+        >
+          Open file ↗
+        </a>
+      </div>
+    );
+  }
+
+  return (
+    <div className="aspect-video flex items-center justify-center bg-[#0d0c0c] relative group">
+      <img
+        src={url}
+        alt={label}
+        className="w-full h-full object-contain"
+        onError={() => setErrored(true)}
+      />
+      <a
+        href={url}
+        download
+        target="_blank"
+        rel="noreferrer"
+        className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity"
+      >
+        <FaDownload className="text-white text-lg" />
+      </a>
+    </div>
+  );
+};
+
 /* ─── Document Preview Modal ─── */
 const DocPreviewModal = ({ submission, onClose, onApprove, onReject, actioning }) => {
   useEffect(() => {
@@ -57,15 +106,15 @@ const DocPreviewModal = ({ submission, onClose, onApprove, onReject, actioning }
 
   const docs = [
     { label: "ID Front",      url: submission.id_front },
-    { label: "ID Back",        url: submission.id_back  },
-    { label: "Selfie with ID", url: submission.selfie   },
-  ].filter(d => d.url);
+    { label: "ID Back",       url: submission.id_back  },
+    { label: "Selfie with ID", url: submission.selfie  },
+  ];
 
   return (
     <div
       style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(10px)" }}
       className="flex items-center justify-center p-4"
-      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="bg-[#0b0e11] border border-[#2e2726] rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
 
@@ -95,39 +144,17 @@ const DocPreviewModal = ({ submission, onClose, onApprove, onReject, actioning }
 
         {/* Document grid */}
         <div className="flex-1 overflow-y-auto p-5">
-          {docs.length === 0 ? (
-            <div className="flex items-center justify-center h-40 text-[#9e9593] text-xs">
-              No documents on file.
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {docs.map(doc => (
-                <div key={doc.label} className="bg-[#121010] border border-[#2e2726] rounded-xl overflow-hidden">
-                  <div className="aspect-video flex items-center justify-center bg-[#0d0c0c] relative group">
-                    <img
-                      src={doc.url}
-                      alt={doc.label}
-                      className="w-full h-full object-contain"
-                      onError={e => { e.target.style.display = "none"; }}
-                    />
-                    
-                    <a
-                      href={doc.url}
-                      download
-                      target="_blank"
-                      rel="noreferrer"
-                      className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <FaDownload className="text-white text-lg" />
-                    </a>
-                  </div>
-                  <p className="text-[10px] font-bold text-[#9e9593] uppercase tracking-widest px-3 py-2 text-center">
-                    {doc.label}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {docs.map((doc) => (
+              <div key={doc.label} className="bg-[#121010] border border-[#2e2726] rounded-xl overflow-hidden">
+                {/* ★ DocImage handles load errors gracefully per-image */}
+                <DocImage url={doc.url} label={doc.label} />
+                <p className="text-[10px] font-bold text-[#9e9593] uppercase tracking-widest px-3 py-2 text-center">
+                  {doc.label}
+                </p>
+              </div>
+            ))}
+          </div>
 
           {/* Submission meta */}
           <div className="mt-4 bg-[#121010] border border-[#2e2726] rounded-xl p-4 grid grid-cols-2 gap-3">
@@ -136,7 +163,7 @@ const DocPreviewModal = ({ submission, onClose, onApprove, onReject, actioning }
               { label: "Document",  value: submission.doc_type_display || submission.doc },
               { label: "Status",    value: submission.status },
               { label: "User ID",   value: `#${submission.id}` },
-            ].map(m => (
+            ].map((m) => (
               <div key={m.label}>
                 <p className="text-[10px] text-[#9e9593] uppercase tracking-widest mb-0.5">{m.label}</p>
                 <p className="text-xs font-semibold text-white capitalize">{m.value}</p>
@@ -177,7 +204,7 @@ function Kycverify() {
   const [search,    setSearch]    = useState("");
   const [kycList,   setKycList]   = useState([]);
   const [loading,   setLoading]   = useState(true);
-  const [previewId, setPreviewId] = useState(null); 
+  const [previewId, setPreviewId] = useState(null);
   const [actioning, setActioning] = useState(null);
 
   /* ── Fetch KYC submissions ── */
@@ -195,48 +222,51 @@ function Kycverify() {
     fetchKyc();
   }, []);
 
-  /* ── Approve / Reject ── */
+  /* ── Approve ── */
   const handleApprove = async (id) => {
     setActioning(id);
     try {
-      await API.post(`kyc/${id}/approve/`);
-      setKycList(prev => prev.map(k => k.id === id ? { ...k, status: "approved" } : k));
-    } catch (e) { 
-      console.error(e); 
-    } finally { 
-      setActioning(null); 
+      const res = await API.post(`kyc/${id}/approve/`);
+      // ★ Use server response to keep image URLs in sync
+      setKycList((prev) => prev.map((k) => (k.id === id ? res.data : k)));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setActioning(null);
     }
   };
 
+  /* ── Reject ── */
   const handleReject = async (id) => {
     setActioning(id);
     try {
-      await API.post(`kyc/${id}/reject/`);
-      setKycList(prev => prev.map(k => k.id === id ? { ...k, status: "rejected" } : k));
-    } catch (e) { 
-      console.error(e); 
-    } finally { 
-      setActioning(null); 
+      const res = await API.post(`kyc/${id}/reject/`);
+      // ★ Use server response to keep image URLs in sync
+      setKycList((prev) => prev.map((k) => (k.id === id ? res.data : k)));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setActioning(null);
     }
   };
 
   /* ── Derived counts ── */
   const total    = kycList.length;
-  const pending  = kycList.filter(k => k.status === "pending").length;
-  const approved = kycList.filter(k => k.status === "approved").length;
-  const rejected = kycList.filter(k => k.status === "rejected").length;
+  const pending  = kycList.filter((k) => k.status === "pending").length;
+  const approved = kycList.filter((k) => k.status === "approved").length;
+  const rejected = kycList.filter((k) => k.status === "rejected").length;
 
   /* ── Filtered list ── */
-  const filtered = kycList.filter(k => {
+  const filtered = kycList.filter((k) => {
     const matchFilter = filter === "all" || k.status === filter;
-    const matchSearch = !search ||
+    const matchSearch =
+      !search ||
       (k.name  || "").toLowerCase().includes(search.toLowerCase()) ||
       (k.email || "").toLowerCase().includes(search.toLowerCase());
     return matchFilter && matchSearch;
   });
 
-  // Dynamically resolve preview data directly from updated state list
-  const activePreviewItem = kycList.find(k => k.id === previewId);
+  const activePreviewItem = kycList.find((k) => k.id === previewId);
 
   return (
     <DashboardLayout>
@@ -293,12 +323,12 @@ function Kycverify() {
                   type="text"
                   placeholder="Search name or email…"
                   value={search}
-                  onChange={e => setSearch(e.target.value)}
+                  onChange={(e) => setSearch(e.target.value)}
                   className="pl-8 pr-4 py-2 rounded-xl bg-[#121010] border border-[#2e2726] outline-none text-xs text-white placeholder-[#9e9593] focus:border-[#c45a45]/40 transition-colors w-full sm:w-52"
                 />
               </div>
               <div className="flex gap-1.5">
-                {["all", "pending", "approved", "rejected"].map(f => (
+                {["all", "pending", "approved", "rejected"].map((f) => (
                   <button
                     key={f}
                     onClick={() => setFilter(f)}
@@ -344,7 +374,7 @@ function Kycverify() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map(user => (
+                  {filtered.map((user) => (
                     <tr key={user.id} className="border-t border-[#2e2726] hover:bg-[#2e2726]/40 transition-colors">
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-2.5">

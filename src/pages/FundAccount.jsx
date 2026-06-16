@@ -3,9 +3,6 @@ import DashboardLayout from "../layouts/DashboardLayout";
 import API from "../api/axios";
 
 // ─── Media URL fix ─────────────────────────────────────────────────────────────
-// axios baseURL is https://adminback-1.onrender.com/api/
-// Django ImageField returns paths like /media/deposit_proofs/file.jpg
-// We need the root (no /api/) prepended
 const BACKEND_ROOT = "https://adminback-1.onrender.com";
 const mediaUrl = (path) => {
   if (!path) return null;
@@ -303,6 +300,8 @@ function AdminFundAccount() {
   const [deposits, setDeposits]           = useState([]);
   const [loadingList, setLoadingList]     = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null); // id of deposit pending confirmation
+  const [deleteLoading, setDeleteLoading] = useState(null);
   const [imgErrors, setImgErrors]         = useState({});
 
   useEffect(() => {
@@ -321,6 +320,19 @@ function AdminFundAccount() {
       alert(err.response?.data?.error || "Action failed. Please try again.");
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    setDeleteLoading(id);
+    try {
+      await API.delete(`deposits/${id}/`);
+      setDeposits((prev) => prev.filter((d) => d.id !== id));
+      setDeleteConfirm(null);
+    } catch (err) {
+      alert(err.response?.data?.error || "Delete failed. Please try again.");
+    } finally {
+      setDeleteLoading(null);
     }
   };
 
@@ -390,6 +402,8 @@ function AdminFundAccount() {
             <div className="space-y-4">
               {filtered.map((dep) => {
                 const proofSrc = mediaUrl(dep.payment_proof);
+                const isConfirmingDelete = deleteConfirm === dep.id;
+
                 return (
                   <div key={dep.id}
                     className={`${S.cardBg} border ${S.border} rounded-xl overflow-hidden ${
@@ -398,6 +412,7 @@ function AdminFundAccount() {
                       : "border-l-4 border-l-red-500"
                     }`}>
 
+                    {/* Header row */}
                     <div className="flex items-center justify-between px-5 pt-4 pb-3">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-full bg-[#c45a45]/20 flex items-center justify-center text-[#c45a45] font-bold text-sm shrink-0">
@@ -408,7 +423,38 @@ function AdminFundAccount() {
                           <p className={`${S.muted} text-xs`}>{dep.email ?? "—"}</p>
                         </div>
                       </div>
-                      {statusBadge(dep.status)}
+                      <div className="flex items-center gap-2">
+                        {statusBadge(dep.status)}
+                        {/* ── Delete button (always visible to admin) ── */}
+                        {isConfirmingDelete ? (
+                          <div className="flex items-center gap-1.5 bg-red-500/10 border border-red-500/30 rounded-lg px-2 py-1">
+                            <span className="text-red-400 text-xs font-medium">Delete?</span>
+                            <button
+                              onClick={() => handleDelete(dep.id)}
+                              disabled={deleteLoading === dep.id}
+                              className="bg-red-500 hover:bg-red-400 disabled:opacity-50 text-white text-xs font-semibold px-2 py-0.5 rounded transition-colors">
+                              {deleteLoading === dep.id ? "…" : "Yes"}
+                            </button>
+                            <button
+                              onClick={() => setDeleteConfirm(null)}
+                              disabled={deleteLoading === dep.id}
+                              className="bg-white/10 hover:bg-white/20 text-white/70 text-xs font-semibold px-2 py-0.5 rounded transition-colors">
+                              No
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setDeleteConfirm(dep.id)}
+                            className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg border transition-all
+                              ${dep.status === "pending"
+                                ? "bg-white/5 border-white/10 text-white/30 hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/10"
+                                : "bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500/20 hover:border-red-500/40"
+                              }`}
+                            title="Delete deposit record">
+                            🗑 Delete
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     <div className={`grid grid-cols-2 sm:grid-cols-4 gap-3 px-5 pb-4 border-b ${S.border}`}>
