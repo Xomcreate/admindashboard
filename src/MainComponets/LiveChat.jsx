@@ -1,30 +1,34 @@
 import { useState, useRef, useEffect } from "react";
 import { useTheme } from "../context/ThemeContext";
 
-const BOT_RESPONSES = [
-  "Thanks for reaching out! How can I assist you today?",
-  "I'm looking into that for you. Please give me a moment.",
-  "That's a great question! Let me help you with that.",
-  "I understand your concern. Here's what I can do for you.",
-  "Our support team will follow up with you shortly if needed.",
-];
+const API_BASE = import.meta.env.VITE_API_URL || "https://adminback-1.onrender.com/api";
+
+const getSessionKey = () => {
+  let key = localStorage.getItem("chat_session_key");
+  if (!key) {
+    key = crypto.randomUUID();
+    localStorage.setItem("chat_session_key", key);
+  }
+  return key;
+};
 
 const LiveChat = () => {
-  const { isDark } = useTheme(); // Subscribes to changes from your context
-  const [isOpen, setIsOpen] = useState(false);
+  const { isDark } = useTheme();
+  const [isOpen, setIsOpen]           = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
-  const [messages, setMessages] = useState([
+  const [messages, setMessages]       = useState([
     {
-      id: 1,
+      id:   1,
       from: "support",
-      text: "👋 Hi there! Welcome to support. How can we help you today?",
+      text: "👋 Hi there! Welcome to IPO Stock AI support. How can I help you today?",
       time: new Date(),
     },
   ]);
-  const [input, setInput] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
+  const [input, setInput]             = useState("");
+  const [isTyping, setIsTyping]       = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const messagesEndRef = useRef(null);
+  const [isOnline, setIsOnline]       = useState(true);
+  const messagesEndRef                = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -37,11 +41,58 @@ const LiveChat = () => {
     }
   }, [messages, isOpen, isMinimized]);
 
-  const sendMessage = () => {
-    if (!input.trim()) return;
+  // Load history when chat opens (for logged-in users whose session persists)
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const loadHistory = async () => {
+      try {
+        const token      = localStorage.getItem("access_token");
+        const sessionKey = getSessionKey();
+        const headers    = {};
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+
+        const res = await fetch(
+          `${API_BASE}/chat/history/?session_key=${sessionKey}`,
+          { headers }
+        );
+        if (!res.ok) return;
+
+        const data = await res.json();
+        if (data.messages && data.messages.length > 0) {
+          const loaded = data.messages.map((m, i) => ({
+            id:   i + 100,
+            from: m.role === "user" ? "user" : "support",
+            text: m.content,
+            time: new Date(m.created_at),
+          }));
+          setMessages([
+            {
+              id:   1,
+              from: "support",
+              text: "👋 Hi there! Welcome to IPO Stock AI support. How can I help you today?",
+              time: new Date(),
+            },
+            ...loaded,
+          ]);
+        }
+
+        if (data.session_key) {
+          localStorage.setItem("chat_session_key", data.session_key);
+        }
+      } catch {
+        // silently ignore — history is a nice-to-have
+      }
+    };
+
+    loadHistory();
+  }, [isOpen]);
+
+  const sendMessage = async () => {
+    if (!input.trim() || isTyping) return;
 
     const userMsg = {
-      id: Date.now(),
+      id:   Date.now(),
       from: "user",
       text: input.trim(),
       time: new Date(),
@@ -50,22 +101,81 @@ const LiveChat = () => {
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setIsTyping(true);
+    setIsOnline(true);
 
-    // Simulate a bot reply
-    setTimeout(() => {
+    try {
+      const token      = localStorage.getItem("access_token");
+      const sessionKey = getSessionKey();
+      const headers    = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
+      const res = await fetch(`${API_BASE}/chat/message/`, {
+        method:  "POST",
+        headers,
+        body: JSON.stringify({
+          message:     userMsg.text,
+          session_key: sessionKey,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.session_key) {
+        localStorage.setItem("chat_session_key", data.session_key);
+      }
+
       const reply = {
-        id: Date.now() + 1,
+        id:   Date.now() + 1,
         from: "support",
-        text: BOT_RESPONSES[Math.floor(Math.random() * BOT_RESPONSES.length)],
+        text: data.reply || "Sorry, I couldn't get a response. Please try again.",
         time: new Date(),
       };
+
       setIsTyping(false);
       setMessages((prev) => [...prev, reply]);
 
       if (!isOpen || isMinimized) {
         setUnreadCount((c) => c + 1);
       }
-    }, 1500);
+    } catch {
+      setIsTyping(false);
+      setIsOnline(false);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id:   Date.now() + 1,
+          from: "support",
+          text: "Connection error. Please check your internet and try again.",
+          time: new Date(),
+        },
+      ]);
+    }
+  };
+
+  const handleClearChat = async () => {
+    try {
+      const token      = localStorage.getItem("access_token");
+      const sessionKey = getSessionKey();
+      const headers    = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
+      await fetch(`${API_BASE}/chat/clear/`, {
+        method:  "DELETE",
+        headers,
+        body: JSON.stringify({ session_key: sessionKey }),
+      });
+    } catch {
+      // ignore
+    }
+
+    setMessages([
+      {
+        id:   Date.now(),
+        from: "support",
+        text: "👋 Hi there! Welcome to IPO Stock AI support. How can I help you today?",
+        time: new Date(),
+      },
+    ]);
   };
 
   const handleKeyDown = (e) => {
@@ -135,26 +245,32 @@ const LiveChat = () => {
                 <p className="text-sm font-semibold leading-tight text-gray-900 dark:text-white">
                   Support Team
                 </p>
-                <p className="text-green-500 dark:text-green-400 text-xs flex items-center gap-1 font-medium">
-                  Online
+                <p className={`text-xs flex items-center gap-1 font-medium ${isOnline ? "text-green-500 dark:text-green-400" : "text-red-400"}`}>
+                  {isOnline ? "Online · AI-powered" : "Reconnecting..."}
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-1">
+              {/* Clear chat button */}
+              {!isMinimized && (
+                <button
+                  onClick={handleClearChat}
+                  title="Clear chat history"
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-white p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-[#242020] transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              )}
+
               <button
                 onClick={() => setIsMinimized((v) => !v)}
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-white p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-[#242020] transition-colors"
                 aria-label={isMinimized ? "Expand chat" : "Minimize chat"}
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   {isMinimized ? (
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
                   ) : (
@@ -162,35 +278,27 @@ const LiveChat = () => {
                   )}
                 </svg>
               </button>
+
               <button
                 onClick={() => setIsOpen(false)}
                 className="text-gray-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-[#242020] transition-colors"
                 aria-label="Close chat"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
           </div>
 
-          {/* Messages Container */}
+          {/* Messages */}
           {!isMinimized && (
             <>
               <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 bg-gray-50/50 dark:bg-transparent scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-[#242020]">
                 {messages.map((msg) => (
                   <div
                     key={msg.id}
-                    className={`flex items-end gap-2 ${
-                      msg.from === "user" ? "flex-row-reverse" : "flex-row"
-                    }`}
+                    className={`flex items-end gap-2 ${msg.from === "user" ? "flex-row-reverse" : "flex-row"}`}
                   >
                     {msg.from === "support" && (
                       <div className="w-6 h-6 rounded-full bg-[#c45a45]/10 border border-[#c45a45]/20 flex items-center justify-center text-[#c45a45] font-bold text-[10px] shrink-0">
@@ -205,13 +313,7 @@ const LiveChat = () => {
                       }`}
                     >
                       {msg.text}
-                      <p
-                        className={`text-[9px] mt-1 tracking-wide ${
-                          msg.from === "user"
-                            ? "text-white/70 text-right"
-                            : "text-gray-400 dark:text-gray-500"
-                        }`}
-                      >
+                      <p className={`text-[9px] mt-1 tracking-wide ${msg.from === "user" ? "text-white/70 text-right" : "text-gray-400 dark:text-gray-500"}`}>
                         {formatTime(msg.time)}
                       </p>
                     </div>
@@ -243,32 +345,22 @@ const LiveChat = () => {
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder="Type a message..."
-                    className="flex-1 bg-transparent text-sm outline-none text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+                    disabled={isTyping}
+                    className="flex-1 bg-transparent text-sm outline-none text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 disabled:opacity-50"
                   />
                   <button
                     onClick={sendMessage}
-                    disabled={!input.trim()}
+                    disabled={!input.trim() || isTyping}
                     className="w-8 h-8 rounded-lg bg-[#c45a45] text-white flex items-center justify-center disabled:opacity-30 disabled:hover:scale-100 hover:scale-105 active:scale-95 transition-all shrink-0 shadow-sm"
                     aria-label="Send message"
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="w-4 h-4 transform rotate-45 relative -left-0.5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2.5}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.269 20.876L5.999 12zm0 0h7.5"
-                      />
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 transform rotate-45 relative -left-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.269 20.876L5.999 12zm0 0h7.5" />
                     </svg>
                   </button>
                 </div>
                 <p className="text-center text-[9px] font-medium tracking-wider text-gray-400 dark:text-zinc-600 mt-2 uppercase">
-                  Powered by IPO Stock Support
+                  Powered by IPO Stock AI
                 </p>
               </div>
             </>
